@@ -22,6 +22,8 @@ python manage.py collectstatic --no-input
 
 echo "Creating media directory..."
 mkdir -p media/certificates
+mkdir -p media/resumes
+
 
 echo "Applying migrations..."
 python manage.py migrate --noinput || {
