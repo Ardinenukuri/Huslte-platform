@@ -1,0 +1,42 @@
+<!-- templates/authentication/mentor_profile.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mentor Profile</title>
+</head>
+<body>
+    <h1>Mentor Profile</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+    </form>
+
+    <!-- List of Mentees -->
+    <section>
+        <h2>Mentees</h2>
+        <ul>
+            {% for mentee in mentees %}
+            <li>{{ mentee.user.full_name }} - {{ mentee.user.email }}</li>
+            {% empty %}
+            <li>No mentees assigned.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <!-- Feedback and Ratings -->
+    <section>
+        <h2>Feedback and Ratings</h2>
+    <ul>
+        {% for feedback in feedbacks %}
+        <li>
+            <strong>{{ feedback.mentee.full_name }}</strong> - {{ feedback.rating }}/5.0
+            <p>{{ feedback.feedback }}</p>
+        </li>
+        {% empty %}
+        <li>No feedback yet.</li>
+        {% endfor %}
+    </ul>
+    </section>
+</body>
+</html>

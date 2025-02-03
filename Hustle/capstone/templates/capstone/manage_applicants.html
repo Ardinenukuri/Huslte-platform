@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Applicants</title>
+</head>
+<body>
+    <h1>Manage Applicants for {{ job_listing.title }}</h1>
+    <ul>
+        {% for application in job_applications %}
+        <li>
+            <h3>{{ application.user.full_name }}</h3>
+            <p><strong>Status:</strong> {{ application.get_status_display }}</p>
+            <p><strong>Applied At:</strong> {{ application.applied_at }}</p>
+            <a href="{% url 'update_application_status' application.id 'accepted' %}">Accept</a>
+            <a href="{% url 'update_application_status' application.id 'rejected' %}">Reject</a>
+        </li>
+        {% empty %}
+        <li>No applicants yet.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

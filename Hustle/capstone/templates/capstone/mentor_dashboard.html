@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mentor Dashboard</title>
+</head>
+<body>
+    <h1>Welcome, {{ user.full_name }}!</h1>
+    <p>You are logged in as a <strong>Mentor</strong>.</p>
+
+    <!-- Overview Section -->
+    <section>
+        <h2>Overview</h2>
+        <div>
+            <h3>Mentee Activities</h3>
+            <ul>
+                {% for activity in mentee_activities %}
+                <li>{{ activity.activity }} - {{ activity.timestamp }}</li>
+                {% empty %}
+                <li>No recent activities.</li>
+                {% endfor %}
+            </ul>
+
+            <h3>Recent Questions</h3>
+            <ul>
+                {% for question in questions %}
+                <li>{{ question.question }} - {{ question.timestamp }}</li>
+                {% empty %}
+                <li>No recent questions.</li>
+                {% endfor %}
+            </ul>
+
+            <h3>Messages</h3>
+            <ul>
+                {% for message in messages %}
+                <li>{{ message.message }} - {{ message.timestamp }}</li>
+                {% empty %}
+                <li>No recent messages.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+
+    <!-- Navigation Links -->
+    <section>
+        <h2>Navigation</h2>
+        <ul>
+            <li><a href="{% url 'mentor_profile' %}">My Profile</a></li>
+            <li><a href="{%url 'manage_mentorship_requests'%}">Mentorship Requests</a></li>
+            <li><a href= "#">Discussion Forums</a></li>
+            <li><a href="#">Settings</a></li>
+            <li><a href="{% url 'login' %}">Logout</a></li>
+        </ul>
+    </section>
+</body>
+</html>

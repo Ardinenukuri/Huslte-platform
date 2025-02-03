@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Participant Dashboard</title>
+</head>
+<body>
+    <h1>Welcome, {{ user.full_name }}!</h1>
+    <p>You are logged in as a <strong>Participant</strong>.</p>
+
+    <!-- Overview Section -->
+    <section>
+        <h2>Overview</h2>
+        <div>
+            <p>Progress: <progress value="50" max="100"></progress> 50%</p>
+            <p>Notifications: 3 new resources, 2 mentor responses</p>
+        </div>
+    </section>
+
+    <!-- Navigation Links -->
+    <section>
+        <h2>Navigation</h2>
+        <ul>
+            <li><a href="{% url 'participant_profile' %}">My Profile</a></li>
+            <li><a href="{% url 'learning_resources' %}">Learning Resources</a></li>
+            <li><a href="{% url 'submit_mentorship_request' %}">Mentorship Program</a></li>
+            <li><a href="{% url 'job_listings' %}">Job Opportunities</a></li>
+            <li><a href="#">Community Forum</a></li>
+            <li><a href="#">Settings</a></li>
+            <li><a href="{% url 'login' %}">Logout</a></li>
+        </ul>
+        <p>Progress: <progress value="{{ progress }}" max="100"></progress> {{ progress }}%</p>
+<ul>
+    {% for notification in notifications %}
+    <li>{{ notification }}</li>
+    {% endfor %}
+</ul>
+    </section>
+</body>
+</html>

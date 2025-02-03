@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Job Application Tracker</title>
+</head>
+<body>
+    <h1>Job Application Tracker</h1>
+    <ul>
+        {% for application in job_applications %}
+        <li>
+            <h3>{{ application.job_listing.title }}</h3>
+            <p><strong>Status:</strong> {{ application.get_status_display }}</p>
+            <p><strong>Applied At:</strong> {{ application.applied_at }}</p>
+        </li>
+        {% empty %}
+        <li>No applications submitted.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

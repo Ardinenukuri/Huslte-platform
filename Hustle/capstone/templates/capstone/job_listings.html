@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Job Listings</title>
+</head>
+<body>
+    <h1>Job Listings</h1>
+
+    <!-- Search and Filters -->
+    <form method="get">
+        <input type="text" name="location" placeholder="Location">
+        <input type="text" name="industry" placeholder="Industry">
+        <select name="job_type">
+            <option value="">All Types</option>
+            <option value="full_time">Full-Time</option>
+            <option value="part_time">Part-Time</option>
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+
+    <!-- Job Listings -->
+    <ul>
+        {% for job in job_listings %}
+        <li>
+            <h3>{{ job.title }}</h3>
+            <p>{{ job.description }}</p>
+            <p><strong>Location:</strong> {{ job.location }}</p>
+            <p><strong>Industry:</strong> {{ job.industry }}</p>
+            <p><strong>Type:</strong> {{ job.get_job_type_display }}</p>
+            <a href="{% url 'apply_for_job' job.id %}">Apply</a>
+            <a href="{% url 'save_job' job.id %}">Save for Later</a>
+        </li>
+        {% empty %}
+        <li>No job listings found.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

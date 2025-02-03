@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sign Up</title>
+</head>
+<body>
+    <h1>Sign Up</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <p><a id="terms-link" href="#">Read Terms and Conditions</a></p>
+        <button type="submit">Sign Up</button>
+    </form>
+    <script>
+        document.getElementById('id_user_type').addEventListener('change', function() {
+            var userType = this.value;
+            var termsLink = document.getElementById('terms-link');
+            if (userType === 'mentor') {
+                termsLink.href = "{% url 'mentor_terms' %}";
+            } else if (userType === 'participant') {
+                termsLink.href = "{% url 'participant_terms' %}";
+            }
+        });
+    </script>
+</body>
+</html>

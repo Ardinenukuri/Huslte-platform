@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Mentorship Requests</title>
+</head>
+<body>
+    <h1>Manage Mentorship Requests</h1>
+    <ul>
+        {% for request in mentorship_requests %}
+        <li>
+            <p><strong>From:</strong> {{ request.mentee.full_name }}</p>
+            <p><strong>Message:</strong> {{ request.message }}</p>
+            <a href="{% url 'approve_mentorship_request' request.id %}">Approve</a>
+            <a href="{% url 'decline_mentorship_request' request.id %}">Decline</a>
+        </li>
+        {% empty %}
+        <li>No pending requests.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

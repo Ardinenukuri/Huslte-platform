@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Learning Resources</title>
+</head>
+<body>
+    <h1>Learning Resources</h1>
+
+    <!-- Search Form -->
+    <form method="get">
+        {{ form.as_p }}
+        <button type="submit">Search</button>
+    </form>
+
+    <!-- Resource List -->
+    <section>
+        <h2>Resources</h2>
+        <ul>
+            {% for resource in resources %}
+            <li>
+                <h3>{{ resource.title }}</h3>
+                <p>{{ resource.description }}</p>
+                <p><strong>Topic:</strong> {{ resource.topic }}</p>
+                <p><strong>Format:</strong> {{ resource.format }}</p>
+                <p><strong>Difficulty:</strong> {{ resource.difficulty }}</p>
+                <p><a href="{{ resource.url }}" target="_blank">View Resource</a></p>
+                <p><strong>Average Rating:</strong> 
+                    {{ resource.avg_rating|default:"No ratings yet" }}
+                </p>                
+                <p><a href="{% url 'rate_resource' resource.id %}">Rate this resource</a></p>
+            </li>
+            {% empty %}
+            <li>No resources found.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+     <!-- Pagination -->
+     <div class="pagination">
+        <span class="step-links">
+            {% if resources.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ resources.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ resources.number }} of {{ resources.paginator.num_pages }}.
+            </span>
+
+            {% if resources.has_next %}
+                <a href="?page={{ resources.next_page_number }}">next</a>
+                <a href="?page={{ resources.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+</body>
+</html>

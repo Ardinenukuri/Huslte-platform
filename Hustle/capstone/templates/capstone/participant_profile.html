@@ -1,0 +1,31 @@
+<!-- templates/authentication/participant_profile.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Participant Profile</title>
+</head>
+<body>
+    <h1>Participant Profile</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+    </form>
+
+    <!-- Progress Tracker -->
+    <section>
+        <h2>Progress Tracker</h2>
+        <p>Progress: <progress value="{{ progress_percentage }}" max="100"></progress> {{ progress_percentage }}%</p>
+    </section>
+
+    <!-- Uploaded Certifications -->
+    <section>
+        <h2>Certifications</h2>
+        {% if form.instance.certifications %}
+        <p>Current Certification: <a href="{{ form.instance.certifications.url }}">Download</a></p>
+        {% else %}
+        <p>No certifications uploaded.</p>
+        {% endif %}
+    </section>
+</body>
+</html>
