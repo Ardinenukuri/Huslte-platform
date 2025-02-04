@@ -1,3 +1,4 @@
+<!-- templates/authentication/chat_with_mentor.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,6 +9,9 @@
     <div>
         {% for message in chat_messages %}
         <p><strong>{{ message.sender.full_name }}:</strong> {{ message.message }} ({{ message.timestamp }})</p>
+        <p>Upvotes: {{ message.upvotes }} | Downvotes: {{ message.downvotes }}</p>
+        <a href="{% url 'upvote_message' message.id %}">Upvote</a>
+        <a href="{% url 'downvote_message' message.id %}">Downvote</a>
         {% endfor %}
     </div>
     <form method="post">

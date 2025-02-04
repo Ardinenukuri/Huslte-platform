@@ -1,6 +1,21 @@
 from django import forms
-from .models import User, ParticipantProfile, MentorProfile, Feedback, Resource, Rating, ChatMessage,  MentorshipRequest, Session, JobListing, JobApplication
+from .models import User, ParticipantProfile, MentorProfile, Feedback, Resource, Rating, ChatMessage,  MentorshipRequest, Session, JobListing, JobApplication, Thread
 
+
+class ThreadForm(forms.ModelForm):
+    class Meta:
+        model = Thread
+        fields = ['title', 'description', 'tags']  # Include fields you want in the form
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter thread title'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter thread description'}),
+            'tags': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter tags (optional)'}),
+        }
+        labels = {
+            'title': 'Thread Title',
+            'description': 'Description',
+            'tags': 'Tags (comma-separated)',
+        }
 class LoginForm(forms.Form):
     username = forms.CharField(max_length=100)
     password = forms.CharField(widget=forms.PasswordInput)
@@ -66,7 +81,11 @@ class MentorshipRequestForm(forms.ModelForm):
 class SessionForm(forms.ModelForm):
     class Meta:
         model = Session
-        fields = ['scheduled_time', 'notes']
+        fields = ['mentor', 'scheduled_time', 'notes']
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fields['mentor'].queryset = User.objects.filter(user_type='mentor')
 
 class ChatMessageForm(forms.ModelForm):
     class Meta:
@@ -82,3 +101,8 @@ class JobApplicationForm(forms.ModelForm):
     class Meta:
         model = JobApplication
         fields = ['job_listing']
+
+class MentorshipResponseForm(forms.ModelForm):
+    class Meta:
+        model = MentorshipRequest
+        fields = ['status', 'mentor_response']

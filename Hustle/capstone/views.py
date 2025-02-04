@@ -1,12 +1,16 @@
+import datetime
 from msvcrt import getch
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from .forms import LoginForm, SignUpForm, ParticipantProfileForm, MentorProfileForm, FeedbackForm, ResourceSearchForm, ResourceUploadForm, RatingForm, MentorshipRequestForm, SessionForm, ChatMessageForm, JobApplicationForm
+from .forms import LoginForm, SignUpForm, ParticipantProfileForm, MentorProfileForm, FeedbackForm, ResourceSearchForm, ResourceUploadForm, RatingForm, MentorshipRequestForm, SessionForm, ChatMessageForm, JobApplicationForm, MentorshipResponseForm, ThreadForm
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import User, MenteeActivity, Question, Message, ParticipantProfile, MentorProfile, Feedback, Progress, Resource, MentorshipRequest, ChatMessage, Session, JobListing, SavedJob, JobApplication
+from .models import User, MenteeActivity, Question, Message, ParticipantProfile, MentorProfile, Feedback, Progress, Resource, MentorshipRequest, ChatMessage, Session, JobListing, SavedJob, JobApplication, Notification, Thread, Comment, Vote
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse
 from django.db.models import Avg
+from .google_calendar import get_google_calendar_service, create_calendar_event
+from django.core.exceptions import PermissionDenied
+from django.urls import reverse
 
 
 def login_view(request):
@@ -55,14 +59,13 @@ def participant_terms(request):
 
 @login_required
 def participant_dashboard(request):
+    mentorship_requests = MentorshipRequest.objects.filter(mentee=request.user)
     if request.user.user_type != 'participant':
         return redirect('login')  # Redirect to login if user is not a participant
     progress = 75  # Example progress value
-    notifications = [
-        "New resource: Python Basics",
-        "Mentor response: Feedback on your project",
-    ]
+    notifications = Notification.objects.filter(user=request.user, is_seen=False).order_by('-created_at')
     context = {
+        'mentorship_requests': mentorship_requests,  
         'user': request.user,
         'progress': progress,
         'notifications': notifications,
@@ -71,9 +74,10 @@ def participant_dashboard(request):
 
 @login_required
 def mentor_dashboard(request):
-    if request.user.user_type != 'mentor':
+    if request.user.user_type != 'mentor'and not request.user.is_superuser:
         return redirect('login')  # Redirect to login if user is not a mentor
     #Fetch data for the mentor
+    mentorship_requests = MentorshipRequest.objects.filter(mentor=request.user, status='pending')
     mentee_activities = MenteeActivity.objects.filter(mentor=request.user).order_by('-timestamp')[:5]  # Last 5 activities
     questions = Question.objects.filter(mentor=request.user).order_by('-timestamp')[:5]  # Last 5 questions
     messages = Message.objects.filter(mentor=request.user).order_by('-timestamp')[:5]  # Last 5 messages
@@ -83,6 +87,7 @@ def mentor_dashboard(request):
         'mentee_activities': mentee_activities,
         'questions': questions,
         'messages': messages,
+        'mentorship_requests': mentorship_requests,
     }
     
     return render(request, 'capstone/mentor_dashboard.html', context)
@@ -94,7 +99,7 @@ def participant_profile(request):
     total_tasks = progress.count()
     completed_tasks = progress.filter(completed=True).count()
     progress_percentage = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
-
+    
     if request.method == 'POST':
         form = ParticipantProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
@@ -102,7 +107,7 @@ def participant_profile(request):
             return redirect('participant_profile')
     else:
         form = ParticipantProfileForm(instance=profile)
-    return render(request, 'capstone/participant_profile.html', {'form': form, 'progress_percentage': progress_percentage})
+    return render(request, 'capstone/participant_profile.html', {'form': form, 'progress_percentage': progress_percentage,})
 
 @login_required
 def mentor_profile(request):
@@ -178,7 +183,14 @@ def upload_resource(request):
         form = ResourceUploadForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('learning_resources')
+            # Create notifications for all participants
+            participants = User.objects.filter(user_type='participant')
+            for participant in participants:
+                Notification.objects.create(
+                    user=participant,
+                    message=f"A new resource has been uploaded: {Resource.title}"
+                )
+            return redirect('mentor_dashboard')
     else:
         form = ResourceUploadForm()
     return render(request, 'capstone/upload_resource.html', {'form': form})
@@ -220,26 +232,47 @@ def schedule_session(request, request_id):
             session = form.save(commit=False)
             session.mentorship_request = mentorship_request
             session.save()
-            return redirect('mentee_dashboard')
+
+            # Create a Google Calendar event
+            event_link = create_calendar_event(
+                summary=f"Session with {mentorship_request.mentor.full_name}",
+                description=session.notes,
+                start_time=session.scheduled_time.isoformat(),
+                end_time=(session.scheduled_time + datetime.timedelta(hours=1)).isoformat(),
+                timezone='UTC',
+                attendees=[{'email': mentorship_request.mentor.email}]
+            )
+
+            # Notify the mentor and mentee
+            Notification.objects.create(
+                user=mentorship_request.mentor,
+                message=f"A session has been scheduled with {request.user.full_name} on {session.scheduled_time}. Event link: {event_link}"
+            )
+            Notification.objects.create(
+                user=request.user,
+                message=f"A session has been scheduled with {mentorship_request.mentor.full_name} on {session.scheduled_time}. Event link: {event_link}"
+            )
+
+            return redirect('participant_dashboard')
     else:
         form = SessionForm()
     return render(request, 'capstone/schedule_session.html', {'form': form, 'mentorship_request': mentorship_request})
 
 @login_required
 def chat_with_mentor(request, request_id):
-    mentorship_request = get_object_or_404(MentorshipRequest, id=request_id, mentee=request.user)
-    chat_messages = ChatMessage.objects.filter(mentorship_request=mentorship_request).order_by('timestamp')
+    mentorship_requests = get_object_or_404(MentorshipRequest, id=request_id, mentee=request.user)
+    chat_messages = ChatMessage.objects.filter(mentorship_request=mentorship_requests).order_by('timestamp')
     if request.method == 'POST':
         form = ChatMessageForm(request.POST)
         if form.is_valid():
             chat_message = form.save(commit=False)
-            chat_message.mentorship_request = mentorship_request
+            chat_message.mentorship_request = mentorship_requests
             chat_message.sender = request.user
             chat_message.save()
             return redirect('chat_with_mentor', request_id=request_id)
     else:
         form = ChatMessageForm()
-    return render(request, 'capstone/chat_with_mentor.html', {'form': form, 'chat_messages': chat_messages, 'mentorship_request': mentorship_request})
+    return render(request, 'capstone/chat_with_mentor.html', {'form': form, 'chat_messages': chat_messages, 'mentorship_requests': mentorship_requests})
 
 @login_required
 def manage_mentorship_requests(request):
@@ -249,16 +282,38 @@ def manage_mentorship_requests(request):
 @login_required
 def approve_mentorship_request(request, request_id):
     mentorship_request = get_object_or_404(MentorshipRequest, id=request_id, mentor=request.user)
-    mentorship_request.status = 'approved'
-    mentorship_request.save()
-    return redirect('manage_mentorship_requests')
+    if request.method == 'POST':
+        form = MentorshipResponseForm(request.POST, instance=mentorship_request)
+        if form.is_valid():
+            mentorship_request.status = 'approved'  # Explicitly set status
+            form.save()
+            # Create a notification for the mentee
+            Notification.objects.create(
+                user=mentorship_request.mentee,
+                message=f"Your mentorship request has been approved by {request.user.full_name}. Response: {mentorship_request.mentor_response}"
+            )
+            return redirect('manage_mentorship_requests')
+    else:
+        form = MentorshipResponseForm(initial={'status': 'approved'})
+    return render(request, 'capstone/mentorship_response.html', {'form': form, 'mentorship_request': mentorship_request})
 
 @login_required
 def decline_mentorship_request(request, request_id):
     mentorship_request = get_object_or_404(MentorshipRequest, id=request_id, mentor=request.user)
-    mentorship_request.status = 'declined'
-    mentorship_request.save()
-    return redirect('manage_mentorship_requests')
+    if request.method == 'POST':
+        form = MentorshipResponseForm(request.POST, instance=mentorship_request)
+        if form.is_valid():
+            mentorship_request.status = 'declined'  # Explicitly set status
+            form.save()
+            # Create a notification for the mentee
+            Notification.objects.create(
+                user=mentorship_request.mentee,
+                message=f"Your mentorship request has been declined by {request.user.full_name}. Response: {mentorship_request.mentor_response}"
+            )
+            return redirect('manage_mentorship_requests')
+    else:
+        form = MentorshipResponseForm(initial={'status': 'declined'})
+    return render(request, 'capstone/mentorship_response.html', {'form': form, 'mentorship_request': mentorship_request})
 
 @login_required
 def chat_with_mentee(request, request_id):
@@ -351,3 +406,120 @@ def manage_applicants(request, job_id):
 
 def update_application_status(request, application_id, status):
     return JsonResponse({"message": "Application status updated!"})
+
+
+@login_required
+def mark_notification_seen(request, notification_id):
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notification.is_seen = True
+    notification.save()
+    return redirect('participant_dashboard')
+
+@login_required
+def upvote_message(request, message_id):
+    message = get_object_or_404(ChatMessage, id=message_id)
+    message.upvotes += 1
+    message.save()
+    return redirect('chat_with_mentor', request_id=message.mentorship_request.id)
+
+@login_required
+def downvote_message(request, message_id):
+    message = get_object_or_404(ChatMessage, id=message_id)
+    message.downvotes += 1
+    message.save()
+    return redirect('chat_with_mentor', request_id=message.mentorship_request.id)
+
+@login_required
+def add_to_google_calendar(request, session_id):
+    session = get_object_or_404(Session, id=session_id, mentorship_request__mentor=request.user)
+    event_link = create_calendar_event(
+        summary=f"Session with {session.mentorship_request.mentee.full_name}",
+        description=session.notes,
+        start_time=session.scheduled_time.isoformat(),
+        end_time=(session.scheduled_time + datetime.timedelta(hours=1)).isoformat(),
+        timezone='UTC',
+        attendees=[{'email': session.mentorship_request.mentee.email}]
+    )
+    # Notify the mentee
+    Notification.objects.create(
+        user=session.mentorship_request.mentee,
+        message=f"A session has been scheduled with {request.user.full_name} on {session.scheduled_time}. Event link: {event_link}"
+    )
+    return redirect('manage_schedule')
+
+
+@login_required
+def google_callback(request):
+    # Handle the Google OAuth 2.0 callback
+    get_google_calendar_service()
+    return redirect('participant_dashboard')
+
+@login_required
+def create_thread(request):
+    if request.method == 'POST':
+        form = ThreadForm(request.POST)
+        if form.is_valid():
+            thread = form.save(commit=False)
+            thread.created_by = request.user  # Set the thread creator to the logged-in user
+            thread.save()
+            return redirect('thread_detail', thread_id=thread.id)  # Redirect to the thread detail page
+    else:
+        form = ThreadForm()  # Display an empty form for GET requests
+    return render(request, 'capstone/create_thread.html', {'form': form})
+
+@login_required
+def reply_to_thread(request, thread_id):
+    thread = Thread.objects.get(id=thread_id)
+    if request.method == 'POST':
+        text = request.POST.get('text')
+        Comment.objects.create(thread=thread, user=request.user, text=text)
+        return redirect('thread_detail', thread_id=thread.id)
+    return render(request, 'capstone/reply_to_thread.html', {'thread': thread})
+
+@login_required
+def vote_comment(request, comment_id, vote_type):
+    comment = get_object_or_404(Comment, id=comment_id)  # Fetch the comment or return 404 if not found
+
+    # Check if the user has already voted on this comment
+    existing_vote = Vote.objects.filter(user=request.user, comment=comment).first()
+    if existing_vote:
+        # If the user has already voted, update the existing vote
+        if existing_vote.vote_type != vote_type:
+            # If the vote type is different, update the vote and adjust the comment's vote count
+            if vote_type == 'upvote':
+                comment.upvotes += 1
+                comment.downvotes -= 1
+            else:
+                comment.upvotes -= 1
+                comment.downvotes += 1
+            existing_vote.vote_type = vote_type
+            existing_vote.save()
+    else:
+        # If the user hasn't voted yet, create a new vote
+        if vote_type == 'upvote':
+            comment.upvotes += 1
+        else:
+            comment.downvotes += 1
+        Vote.objects.create(user=request.user, comment=comment, vote_type=vote_type)
+
+    # Save the updated vote counts
+    comment.save()
+
+    # Redirect back to the thread detail page
+    return redirect('thread_detail', thread_id=comment.thread.id)
+
+@login_required
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+    thread_id = comment.thread.id
+    comment.delete()
+    return redirect(reverse('thread_detail', args=[thread_id]))
+
+
+def list_threads(request):
+    threads = Thread.objects.all().order_by('-created_at')  # Fetch all threads, ordered by most recent
+    return render(request, 'capstone/list_threads.html', {'threads': threads})
+
+def thread_detail(request, thread_id):
+    thread = get_object_or_404(Thread, id=thread_id)
+    return render(request, 'capstone/thread_detail.html', {'thread': thread})

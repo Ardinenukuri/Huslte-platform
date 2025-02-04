@@ -127,6 +127,7 @@ class MentorshipRequest(models.Model):
     mentor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_requests')
     message = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    mentor_response = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -134,6 +135,7 @@ class MentorshipRequest(models.Model):
 
 class Session(models.Model):
     mentorship_request = models.ForeignKey(MentorshipRequest, on_delete=models.CASCADE, related_name='sessions')
+    mentor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='scheduled_sessions')
     scheduled_time = models.DateTimeField()
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -190,3 +192,62 @@ class JobApplication(models.Model):
 
     def __str__(self):
         return f"{self.user.full_name} applied for {self.job_listing.title}"
+    
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    is_seen = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Notification for {self.user.username}"
+    
+class ChatMessage(models.Model):
+    mentorship_request = models.ForeignKey(MentorshipRequest, on_delete=models.CASCADE, related_name='chat_messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    message = models.TextField()
+    upvotes = models.IntegerField(default=0)
+    downvotes = models.IntegerField(default=0)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Message from {self.sender.full_name} at {self.timestamp}"
+
+
+class Thread(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='threads')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    tags = models.CharField(max_length=100, blank=True)  # Optional: For categorizing threads
+
+    def __str__(self):
+        return self.title
+
+
+class Comment(models.Model):
+    thread = models.ForeignKey(Thread, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    upvotes = models.IntegerField(default=0)
+    downvotes = models.IntegerField(default=0)
+
+    
+
+    def __str__(self):
+        return f"Comment by {self.user.username} on {self.thread.title}"
+
+class Vote(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='votes')
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='votes')
+    vote_type = models.CharField(max_length=10, choices=[('upvote', 'Upvote'), ('downvote', 'Downvote')])
+
+    class Meta:
+        unique_together = ('user', 'comment')  # Prevent duplicate votes by the same user on the same comment
+
+    def __str__(self):
+        return f"{self.vote_type} by {self.user.username} on {self.comment.text[:50]}"

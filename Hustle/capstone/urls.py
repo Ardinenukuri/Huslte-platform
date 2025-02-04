@@ -31,6 +31,17 @@ urlpatterns = [
     path('employer-dashboard/', views.employer_dashboard, name='employer_dashboard'),
     path('manage-applicants/<int:job_id>/', views.manage_applicants, name='manage_applicants'),
     path('update-application-status/<int:application_id>/<str:status>/', views.update_application_status, name='update_application_status'),
+    path('mark-notification-seen/<int:notification_id>/', views.mark_notification_seen, name='mark_notification_seen'),
+    path('add-to-google-calendar/<int:session_id>/', views.add_to_google_calendar, name='add_to_google_calendar'),
+    path('upvote-message/<int:message_id>/', views.upvote_message, name='upvote_message'),
+    path('downvote-message/<int:message_id>/', views.downvote_message, name='downvote_message'),
+    path('google/callback/', views.google_callback, name='google_callback'),
+    path('thread/<int:thread_id>/', views.thread_detail, name='thread_detail'),
+    path('create_thread/', views.create_thread, name='create_thread'),
+    path('reply/<int:thread_id>/', views.reply_to_thread, name='reply_to_thread'),
+    path('vote/<int:comment_id>/<str:vote_type>/', views.vote_comment, name='vote_comment'),
+    path('delete_comment/<int:comment_id>/', views.delete_comment, name='delete_comment'),
+    path('threads/', views.list_threads, name='list_threads')
 ]
 
 if settings.DEBUG:

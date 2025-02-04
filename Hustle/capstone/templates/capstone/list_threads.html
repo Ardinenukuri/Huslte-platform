@@ -1,0 +1,18 @@
+<!-- list_threads.html -->
+<h1>Discussion Forum</h1>
+<a href="{% url 'create_thread' %}">Create New Thread</a>  <!-- Link to create a new thread -->
+
+{% if threads %}
+    <ul>
+        {% for thread in threads %}
+            <li>
+                <h3><a href="{% url 'thread_detail' thread.id %}">{{ thread.title }}</a></h3>
+                <p>{{ thread.description|truncatewords:30 }}</p>
+                <p>Created by: {{ thread.created_by.username }} | {{ thread.created_at }}</p>
+                
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No threads available. Be the first to <a href="{% url 'create_thread' %}">create a thread</a>!</p>
+{% endif %}

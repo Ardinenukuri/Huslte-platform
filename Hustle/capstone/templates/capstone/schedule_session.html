@@ -2,13 +2,22 @@
 <html>
 <head>
     <title>Schedule Session</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body>
     <h1>Schedule Session</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
+        <input type="text" id="scheduled_time" name="scheduled_time" placeholder="Select Date and Time">
         <button type="submit">Schedule</button>
     </form>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        flatpickr("#scheduled_time", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+        });
+    </script>
 </body>
 </html>

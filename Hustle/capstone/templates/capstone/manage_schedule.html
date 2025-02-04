@@ -11,6 +11,7 @@
             <p><strong>Mentee:</strong> {{ session.mentorship_request.mentee.full_name }}</p>
             <p><strong>Scheduled Time:</strong> {{ session.scheduled_time }}</p>
             <p><strong>Notes:</strong> {{ session.notes }}</p>
+            <a href="{{ session.event_link }}" target="_blank">Add to Google Calendar</a>
         </li>
         {% empty %}
         <li>No sessions scheduled.</li>

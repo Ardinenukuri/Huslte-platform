@@ -10,6 +10,9 @@
         <li>
             <p><strong>From:</strong> {{ request.mentee.full_name }}</p>
             <p><strong>Message:</strong> {{ request.message }}</p>
+            {% if request.mentor_response %}
+            <p><strong>Your Response:</strong> {{ request.mentor_response }}</p>
+            {% endif %}
             <a href="{% url 'approve_mentorship_request' request.id %}">Approve</a>
             <a href="{% url 'decline_mentorship_request' request.id %}">Decline</a>
         </li>
