@@ -64,6 +64,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'capstone.context_processors.mentorship_requests',
             ],
         },
     },
@@ -133,12 +134,42 @@ AUTH_USER_MODEL = 'capstone.User'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.your-email-provider.com'
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'ardinemartinenukuri@gmail.com'
 EMAIL_HOST_PASSWORD = 'wydy fire wftg dkzx'
+DEFAULT_FROM_EMAIL = 'Hustle Platform <ardinemartinenukuri@gmail.com>'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+# Only needed in production
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+GOOGLE_OAUTH_REDIRECT_URI = "http://localhost:8000/oauth2callback/"
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': "970736657449-8sr2v9k1rgtntp452ms3qklisb8asfr2.apps.googleusercontent.com",
+            'secret': "YOUR_CLIENT_SECRET",
+            'key': ""
+        },
+        'AUTH_PARAMS': {
+            'access_type': 'offline',
+        },
+        'OAUTH_PKCE_ENABLED': True,
+    }
+}
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Using Redis as a broker
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+INSTALLED_APPS += ['django_celery_beat']
