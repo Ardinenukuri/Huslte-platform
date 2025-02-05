@@ -1,3 +1,4 @@
+
 {% extends 'mentor-base.html' %}
 {% block title %}Mentor Dashboard - Hustle Platform{% endblock %}
 {% block mentor_content %}
@@ -18,7 +19,7 @@
             <li class="list-group-item">
                 <p><strong>New Mentorship Request:</strong> {{ request.mentee.full_name }}</p>
                 <p><strong>Message:</strong> {{ request.message }}</p>
-                    <a href="{% url 'chat_with_mentee' request.id %}">Chat With Mentee</a> <!-- Pass request.id -->
+                    <a href="{% url 'manage_mentorship_requests' %}">Respond</a> <!-- Pass request.id -->
                 
             </li>
         {% empty %}

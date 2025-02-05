@@ -81,7 +81,7 @@ class MentorshipRequestForm(forms.ModelForm):
 class SessionForm(forms.ModelForm):
     class Meta:
         model = Session
-        fields = ['mentor', 'scheduled_time', 'notes']
+        fields = ['mentor','notes', 'scheduled_time']
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -125,3 +125,16 @@ class DeleteAccountForm(forms.Form):
         label="I understand that this action cannot be undone.",
         required=True,
     )
+
+class JobUploadForm(forms.ModelForm):
+    """Form for mentors to upload job listings."""
+    class Meta:
+        model = JobListing
+        fields = ['title', 'description', 'location', 'industry', 'job_type']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter job title'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter job description', 'rows': 4}),
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter job location'}),
+            'industry': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter industry'}),
+            'job_type': forms.Select(attrs={'class': 'form-select'}),
+        }

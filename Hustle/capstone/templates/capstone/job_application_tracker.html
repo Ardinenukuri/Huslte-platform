@@ -1,20 +1,32 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Job Application Tracker</title>
-</head>
-<body>
-    <h1>Job Application Tracker</h1>
-    <ul>
+{% extends 'participant-base.html' %}
+{% block title %}Job Application Tracker - Hustle Platform{% endblock %}
+
+{% block participant_content %}
+<div class="container mt-4">
+    <h1 class="mb-4 text-center">Job Application Tracker</h1>
+
+    {% if job_applications %}
+    <div class="row">
         {% for application in job_applications %}
-        <li>
-            <h3>{{ application.job_listing.title }}</h3>
-            <p><strong>Status:</strong> {{ application.get_status_display }}</p>
-            <p><strong>Applied At:</strong> {{ application.applied_at }}</p>
-        </li>
-        {% empty %}
-        <li>No applications submitted.</li>
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h4 class="card-title">{{ application.job_listing.title }}</h4>
+                    <p class="text-muted"><strong>Status:</strong> 
+                        <span class="badge {% if application.status == 'pending' %}bg-warning{% elif application.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ application.get_status_display }}
+                        </span>
+                    </p>
+                    <p><strong>Applied At:</strong> {{ application.applied_at }}</p>
+                </div>
+            </div>
+        </div>
         {% endfor %}
-    </ul>
-</body>
-</html>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        No applications submitted yet.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

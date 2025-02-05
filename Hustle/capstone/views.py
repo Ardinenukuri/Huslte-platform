@@ -1,8 +1,9 @@
 import datetime
 from msvcrt import getch
+from sre_parse import parse_template
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from .forms import LoginForm, SignUpForm, ParticipantProfileForm, MentorProfileForm, FeedbackForm, ResourceSearchForm, ResourceUploadForm, RatingForm, MentorshipRequestForm, SessionForm, ChatMessageForm, JobApplicationForm, MentorshipResponseForm, ThreadForm, ChangeEmailForm, PasswordChangeForm, DeleteAccountForm
+from .forms import LoginForm, SignUpForm, ParticipantProfileForm, MentorProfileForm, JobUploadForm, FeedbackForm, ResourceSearchForm, ResourceUploadForm, RatingForm, MentorshipRequestForm, SessionForm, ChatMessageForm, JobApplicationForm, MentorshipResponseForm, ThreadForm, ChangeEmailForm, PasswordChangeForm, DeleteAccountForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import User, MenteeActivity, Question, Message, ParticipantProfile, MentorProfile, Feedback, Progress, Resource, MentorshipRequest, ChatMessage, Session, JobListing, SavedJob, JobApplication, Notification, Thread, Comment, Vote
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -14,7 +15,8 @@ from django.urls import reverse
 from django.http import HttpResponseForbidden
 from django.contrib.auth import update_session_auth_hash, logout
 from django.contrib import messages
-
+from django.core.mail import send_mail
+from django.conf import settings
 
 def homepage(request):
     return render(request, 'capstone/homepage.html')
@@ -61,6 +63,16 @@ def signup_view(request):
             user.set_password(form.cleaned_data['password'])
             user.username = form.cleaned_data['username']
             user.save()
+
+            # Send Welcome Email
+            send_mail(
+                'Welcome to Hustle Platform!',
+                f'Hi {user.full_name},\n\nWelcome to Hustle Platform! 🚀\n\nExplore mentorship, learning resources, and job opportunities.\n\nHappy Learning,\nThe Hustle Platform Team',
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+
             return redirect('login')
     else:
         form = SignUpForm()
@@ -75,17 +87,21 @@ def participant_terms(request):
 @login_required
 def participant_dashboard(request):
     mentorship_requests = MentorshipRequest.objects.filter(mentee=request.user)
+
     if request.user.user_type != 'participant':
         return redirect('login')  # Redirect to login if user is not a participant
+
     progress = 75  # Example progress value
     notifications = Notification.objects.filter(user=request.user, is_seen=False).order_by('-created_at')
+
     context = {
-        'mentorship_requests': mentorship_requests,  
+        'mentorship_requests': mentorship_requests,  # Pass mentorship requests
         'user': request.user,
         'progress': progress,
         'notifications': notifications,
     }
     return render(request, 'capstone/participant_dashboard.html', context)
+
 
 @login_required
 def mentor_dashboard(request):
@@ -155,7 +171,9 @@ def submit_feedback(request, mentor_id):
     return render(request, 'capstone/submit_feedback.html', {'form': form, 'mentor': mentor})
 
 def learning_resources(request):
+    base_template = "mentor-base.html" if request.user.is_authenticated and request.user.user_type == "mentor" else "participant-base.html"
     resources = Resource.objects.all().annotate(avg_rating=Avg('ratings__rating')).order_by('id')
+    mentorship_requests = MentorshipRequest.objects.filter(mentee=request.user)
     form = ResourceSearchForm(request.GET)
 
     if form.is_valid():
@@ -185,11 +203,59 @@ def learning_resources(request):
     except EmptyPage:
         resources = paginator.page(paginator.num_pages)
 
+    resources = Resource.objects.all()
+
     context = {
         'resources': resources,
         'form': form,
+        'mentorship_requests': mentorship_requests,
+        "base_template": base_template,
     }
     return render(request, 'capstone/learning_resources.html', context)
+
+def mlearning_resources(request):
+    base_template = "mentor-base.html" if request.user.is_authenticated and request.user.user_type == "mentor" else "participant-base.html"
+    resources = Resource.objects.all().annotate(avg_rating=Avg('ratings__rating')).order_by('id')
+    mentorship_requests = MentorshipRequest.objects.filter(mentee=request.user)
+    form = ResourceSearchForm(request.GET)
+
+    if form.is_valid():
+        keyword = form.cleaned_data.get('keyword')
+        topic = form.cleaned_data.get('topic')
+        format = form.cleaned_data.get('format')
+        difficulty = form.cleaned_data.get('difficulty')
+
+        if keyword:
+            resources = resources.filter(title__icontains=keyword)
+        if topic:
+            resources = resources.filter(topic__icontains=topic)
+        if format:
+            resources = resources.filter(format=format)
+        if difficulty:
+            resources = resources.filter(difficulty=difficulty)
+    
+    # Pagination
+    paginator = Paginator(resources, 5)  # Show 5 resources per page
+    page_number = request.GET.get('page')
+    if not page_number: 
+        page_number = 1
+    try:
+        resources = paginator.page(page_number)
+    except PageNotAnInteger:
+        resources = paginator.page(1)
+    except EmptyPage:
+        resources = paginator.page(paginator.num_pages)
+
+    resources = Resource.objects.all()
+
+    context = {
+        'resources': resources,
+        'form': form,
+        'mentorship_requests': mentorship_requests,
+        "base_template": base_template,
+    }
+    return render(request, 'capstone/mentor-learning_resources.html', context)
+
 
 @login_required
 @user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
@@ -273,21 +339,34 @@ def schedule_session(request, request_id):
         form = SessionForm()
     return render(request, 'capstone/schedule_session.html', {'form': form, 'mentorship_request': mentorship_request})
 
-@login_required
 def chat_with_mentor(request, request_id):
-    mentorship_requests = get_object_or_404(MentorshipRequest, id=request_id, mentee=request.user)
-    chat_messages = ChatMessage.objects.filter(mentorship_request=mentorship_requests).order_by('timestamp')
+    mentorship_request = get_object_or_404(MentorshipRequest, id=request_id, mentee=request.user)
+    chat_messages = ChatMessage.objects.filter(mentorship_request=mentorship_request).order_by('timestamp')
+
     if request.method == 'POST':
         form = ChatMessageForm(request.POST)
         if form.is_valid():
             chat_message = form.save(commit=False)
-            chat_message.mentorship_request = mentorship_requests
+            chat_message.mentorship_request = mentorship_request
             chat_message.sender = request.user
             chat_message.save()
+
+            # Notify the mentor if they are offline
+            if not mentorship_request.mentor.is_active:
+                send_mail(
+                    'New Message from Your Mentee',
+                    f'Hi {mentorship_request.mentor.full_name},\n\nYou have a new message from {request.user.full_name}.\nLog in to check it.\n\nBest,\nHustle Platform Team',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [mentorship_request.mentor.email],
+                    fail_silently=False,
+                )
+
             return redirect('chat_with_mentor', request_id=request_id)
     else:
         form = ChatMessageForm()
-    return render(request, 'capstone/chat_with_mentor.html', {'form': form, 'chat_messages': chat_messages, 'mentorship_requests': mentorship_requests})
+
+    return render(request, 'capstone/chat_with_mentor.html', {'form': form, 'chat_messages': chat_messages, 'mentorship_request': mentorship_request})
+
 
 @login_required
 def manage_mentorship_requests(request):
@@ -330,10 +409,10 @@ def decline_mentorship_request(request, request_id):
         form = MentorshipResponseForm(initial={'status': 'declined'})
     return render(request, 'capstone/mentorship_response.html', {'form': form, 'mentorship_request': mentorship_request})
 
-@login_required
 def chat_with_mentee(request, request_id):
     mentorship_request = get_object_or_404(MentorshipRequest, id=request_id, mentor=request.user)
     chat_messages = ChatMessage.objects.filter(mentorship_request=mentorship_request).order_by('timestamp')
+
     if request.method == 'POST':
         form = ChatMessageForm(request.POST)
         if form.is_valid():
@@ -341,9 +420,21 @@ def chat_with_mentee(request, request_id):
             chat_message.mentorship_request = mentorship_request
             chat_message.sender = request.user
             chat_message.save()
+
+            # Notify the mentee if they are offline
+            if not mentorship_request.mentee.is_active:
+                send_mail(
+                    'New Message from Your Mentor',
+                    f'Hi {mentorship_request.mentee.full_name},\n\nYou have a new message from {request.user.full_name}. Log in to check it.\n\nBest,\nHustle Platform Team',
+                    settings.EMAIL_HOST_USER,
+                    [mentorship_request.mentee.email],
+                    fail_silently=False,
+                )
+
             return redirect('chat_with_mentee', request_id=request_id)
     else:
         form = ChatMessageForm()
+
     return render(request, 'capstone/chat_with_mentee.html', {'form': form, 'chat_messages': chat_messages, 'mentorship_request': mentorship_request})
 
 @login_required
@@ -483,6 +574,19 @@ def create_thread(request):
     return render(request, 'capstone/create_thread.html', {'form': form})
 
 @login_required
+def mcreate_thread(request):
+    if request.method == 'POST':
+        form = ThreadForm(request.POST)
+        if form.is_valid():
+            thread = form.save(commit=False)
+            thread.created_by = request.user  # Set the thread creator to the logged-in user
+            thread.save()
+            return redirect('mentorthread_detail', thread_id=thread.id)  # Redirect to the thread detail page
+    else:
+        form = ThreadForm()  # Display an empty form for GET requests
+    return render(request, 'capstone/mentor-create_thread.html', {'form': form})
+
+@login_required
 def reply_to_thread(request, thread_id):
     thread = Thread.objects.get(id=thread_id)
     if request.method == 'POST':
@@ -542,6 +646,7 @@ def delete_comment(request, comment_id):
 
 
 def list_threads(request):
+    
     threads = Thread.objects.all().order_by('-created_at')  # Fetch all threads, ordered by most recent
     return render(request, 'capstone/list_threads.html', {'threads': threads})
 
@@ -560,6 +665,30 @@ def vote_thread(request, thread_id, action):
     thread.save()
     return redirect('list_threads') 
 
+def mentorlist_threads(request):
+    
+    threads = Thread.objects.all().order_by('-created_at')  # Fetch all threads, ordered by most recent
+    return render(request, 'capstone/mentor-list_threads.html', {'threads': threads})
+
+def thread_detail(request, thread_id):
+    thread = get_object_or_404(Thread, id=thread_id)
+    return render(request, 'capstone/thread_detail.html', {'thread': thread})
+
+def mentorthread_detail(request, thread_id):
+    thread = get_object_or_404(Thread, id=thread_id)
+    return render(request, 'capstone/mentor-thread_detail.html', {'thread': thread})
+
+def vote_thread(request, thread_id, action):
+    thread = get_object_or_404(Thread, id=thread_id)
+    
+    if action == "upvote":
+        thread.upvotes += 1
+    elif action == "downvote":
+        thread.downvotes += 1
+    
+    thread.save()
+    return redirect('mentor-list_threads') 
+
 
 
 @login_required
@@ -576,6 +705,10 @@ def account_settings(request):
     return render(request, 'capstone/account_settings.html')
 
 @login_required
+def maccount_settings(request):
+    return render(request, 'capstone/mentor-account_settings.html')
+
+@login_required
 def change_email(request):
     if request.method == 'POST':
         form = ChangeEmailForm(request.POST)
@@ -588,6 +721,20 @@ def change_email(request):
     else:
         form = ChangeEmailForm()
     return render(request, 'capstone/change_email.html', {'form': form})
+
+@login_required
+def mchange_email(request):
+    if request.method == 'POST':
+        form = ChangeEmailForm(request.POST)
+        if form.is_valid():
+            new_email = form.cleaned_data['new_email']
+            request.user.email = new_email
+            request.user.save()
+            messages.success(request, 'Your email has been updated successfully.')
+            return redirect('mentor-account_settings')
+    else:
+        form = ChangeEmailForm()
+    return render(request, 'capstone/mentor-change_email.html', {'form': form})
 
 @login_required
 def change_password(request):
@@ -605,6 +752,21 @@ def change_password(request):
     return render(request, 'capstone/change_password.html', {'form': form})
 
 @login_required
+def mchange_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()  # Save the new password
+            update_session_auth_hash(request, user)  # Keep the user logged in
+            messages.success(request, 'Your password has been updated successfully.')
+            return redirect('login')  # Redirect to the account settings page
+        else:
+            messages.error(request, 'Please correct the error below.')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'capstone/mentor-change_password.html', {'form': form})
+
+@login_required
 def delete_account(request):
     if request.method == 'POST':
         form = DeleteAccountForm(request.POST)
@@ -616,3 +778,39 @@ def delete_account(request):
     else:
         form = DeleteAccountForm()
     return render(request, 'capstone/delete_account.html', {'form': form})
+
+@login_required
+def mdelete_account(request):
+    if request.method == 'POST':
+        form = DeleteAccountForm(request.POST)
+        if form.is_valid():
+            request.user.delete()  # Delete the user account
+            logout(request)  # Log the user out
+            messages.success(request, 'Your account has been deleted successfully.')
+            return redirect('login')
+    else:
+        form = DeleteAccountForm()
+    return render(request, 'capstone/mentor-delete_account.html', {'form': form})
+
+@login_required
+@user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
+def mentor_job_listings(request):
+    """Mentors can upload and view job listings."""
+    job_listings = JobListing.objects.filter(employer=request.user)
+
+    if request.method == 'POST':
+        form = JobUploadForm(request.POST)
+        if form.is_valid():
+            job = form.save(commit=False)
+            job.employer = request.user  # Assign logged-in mentor as employer
+            job.save()
+            messages.success(request, "Job listing created successfully!")
+            return redirect('mentor_job_listings')
+    else:
+        form = JobUploadForm()
+
+    context = {
+        'job_listings': job_listings,
+        'form': form,
+    }
+    return render(request, 'capstone/mentor-job_listings.html', context)

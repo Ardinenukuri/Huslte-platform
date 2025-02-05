@@ -26,32 +26,23 @@
                         <a class="nav-link" href="{% url 'mentor_profile' %}">My Profile</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'learning_resources' %}">Learning Resources</a>
+                        <a class="nav-link" href="{% url 'mlearning_resources' %}">Learning Resources</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'manage_mentorship_requests' %}">Mentorship Requests</a>
                     </li>
-                    {% if mentorship_requests %}
-                    <li><a href="{% url 'chat_with_mentee' mentorship_requests.0.id %}">Chat With Mentees</a></li>
-                {% else %}
-                    <li><a href="#" onclick="alert('No mentorship requests available.');">Chat With Mentees</a></li>
-                {% endif %}
                 
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'upload_resource' %}">Upload Resources</a>
                         </li>
                         <li class="nav-item">
-                            <a href= "{% url 'list_threads' %}">Discussion Forum</a>
+                            <a href= "{% url 'mentorlist_threads' %}"> Discussion Forum </a>
                         </li>
                     
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'job_listings' %}">Job Opportunities</a>
+                        <a class="nav-link" href="{% url 'mentor_job_listings' %}">Job Opportunities</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'list_threads' %}">Discussion Forum</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'account_settings' %}">Settings</a>
+                        <a class="nav-link" href="{% url 'maccount_settings' %}">Settings</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'login' %}">Logout</a>

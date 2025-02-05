@@ -1,23 +1,34 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Schedule Session</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-</head>
-<body>
-    <h1>Schedule Session</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <input type="text" id="scheduled_time" name="scheduled_time" placeholder="Select Date and Time">
-        <button type="submit">Schedule</button>
-    </form>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
+{% extends 'participant-base.html' %}
+
+{% block title %}Schedule Session - Hustle Platform{% endblock %}
+
+{% block participant_content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Schedule a Mentorship Session</h2>
+    <div class="card shadow p-4">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                {{ form.as_p }}
+            </div>
+            <div class="mb-3">
+                <label for="scheduled_time" class="form-label">Select Date and Time</label>
+                <input type="text" id="scheduled_time" name="scheduled_time" class="form-control" placeholder="YYYY-MM-DD HH:MM">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Schedule</button>
+        </form>
+    </div>
+</div>
+
+<!-- Include Flatpickr -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
         flatpickr("#scheduled_time", {
             enableTime: true,
             dateFormat: "Y-m-d H:i",
         });
-    </script>
-</body>
-</html>
+    });
+</script>
+{% endblock %}
