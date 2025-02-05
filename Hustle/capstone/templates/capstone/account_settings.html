@@ -1,0 +1,18 @@
+{% extends 'participant-base.html' %}
+
+{% block participant_content %}
+<div class="container mt-4">
+    <h1>Account Settings</h1>
+    <ul class="list-group">
+        <li class="list-group-item">
+            <a href="{% url 'change_email' %}" class="btn btn-outline-primary">Change Email</a>
+        </li>
+        <li class="list-group-item">
+            <a href="{% url 'change_password' %}" class="btn btn-outline-warning">Change Password</a>
+        </li>
+        <li class="list-group-item">
+            <a href="{% url 'delete_account' %}" class="btn btn-outline-danger">Delete Account</a>
+        </li>
+    </ul>
+</div>
+{% endblock %}

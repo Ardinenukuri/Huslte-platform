@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Home - Hustle Platform{% endblock %}
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <div class="container">
+        
+        <h1>From Home to Hustle</h1> <p>Women’s Journey to Economic Empowerment in Burundi</p>
+        <div class="cta-buttons">
+            <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+            <a href="{% url 'signup' %}" class="btn btn-success">Sign Up</a>
+            <a href="#learn-more" class="btn btn-outline-light">Learn More</a>
+        </div>
+    </div>
+</div>
+
+<!-- Overview Section -->
+<div class="section">
+    <div class="container">
+        <h2>Overview of the Platform</h2>
+        <p>
+            The Hustle Platform is designed to empower women in Burundi by providing them with the tools, resources, and mentorship they need to succeed in their entrepreneurial journeys. Whether you're looking to start a business, grow your skills, or connect with mentors, our platform is here to support you every step of the way.
+        </p>
+    </div>
+</div>
+
+<!-- Key Features Section -->
+<div class="section bg-light">
+    <div class="container">
+        <h2>Key Features</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <h3>Mentorship</h3>
+                <p>Connect with experienced mentors who can guide you through your entrepreneurial journey.</p>
+            </div>
+            <div class="col-md-4">
+                <h3>Resources</h3>
+                <p>Access a library of resources, including articles, videos, and tools to help you succeed.</p>
+            </div>
+            <div class="col-md-4">
+                <h3>Community</h3>
+                <p>Join a supportive community of like-minded women who are on the same journey as you.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

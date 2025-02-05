@@ -1,83 +1,30 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Mentor Dashboard</title>
-</head>
-<body>
-    <h1>Welcome, {{ user.username }}!</h1>
-    <p>You are logged in as a <strong>Mentor</strong>.</p>
+{% extends 'mentor-base.html' %}
+{% block title %}Mentor Dashboard - Hustle Platform{% endblock %}
+{% block mentor_content %}
+<h1>Welcome, {{ user.username }}!</h1>
+<p>You are logged in as a <strong>Mentor</strong>.</p>
 
-    <!-- Overview Section -->
-    <section>
-        <h2>Overview</h2>
-        <div>
-            <h3>Mentee Activities</h3>
-            <ul>
-                {% for activity in mentee_activities %}
-                <li>{{ activity.activity }} - {{ activity.timestamp }}</li>
-                {% empty %}
-                <li>No recent activities.</li>
-                {% endfor %}
-            </ul>
+<!-- Overview Section -->
+<section>
+    <h2>Overview</h2>
+    
+</section>
 
-            <h3>Recent Questions</h3>
-            <ul>
-                {% for question in questions %}
-                <li>{{ question.question }} - {{ question.timestamp }}</li>
-                {% empty %}
-                <li>No recent questions.</li>
-                {% endfor %}
-            </ul>
-
-            <h3>Messages</h3>
-            <ul>
-                {% for message in messages %}
-                <li>{{ message.message }} - {{ message.timestamp }}</li>
-                {% empty %}
-                <li>No recent messages.</li>
-                {% endfor %}
-            </ul>
-            <ul>
-                {% for request in mentorship_requests %}
-                <li>
-                    <p><strong>New Mentorship Request:</strong> {{ request.mentee.full_name }}</p>
-                    <p><strong>Message:</strong> {{ request.message }}</p>
-                    <a href="{% url 'chat_with_mentee' request.id %}">Chat With Mentee</a> <!-- Pass request.id -->
-                </li>
-                {% empty %}
-                <li>No new mentorship requests.</li>
-                {% endfor %}
-                </ul>
-            <ul>
-            {% for request in mentorship_requests %}
-            <li>
+<!-- Notifications Section -->
+<section>
+    <h2>Messages</h2>
+    <ul class="list-group">
+        {% for request in mentorship_requests %}
+            <li class="list-group-item">
                 <p><strong>New Mentorship Request:</strong> {{ request.mentee.full_name }}</p>
                 <p><strong>Message:</strong> {{ request.message }}</p>
+                    <a href="{% url 'chat_with_mentee' request.id %}">Chat With Mentee</a> <!-- Pass request.id -->
+                
             </li>
-            {% empty %}
-            <li>No new mentorship requests.</li>
-            {% endfor %}
-            </ul>
-        </div>
-    </section>
-
-    <!-- Navigation Links -->
-    <section>
-        <h2>Navigation</h2>
-        <ul>
-            <li><a href="{% url 'mentor_profile' %}">My Profile</a></li>
-            <li><a href="{%url 'manage_mentorship_requests'%}">Mentorship Requests</a></li>
-            {% if mentorship_requests %}
-                <li><a href="{% url 'chat_with_mentee' mentorship_requests.0.id %}">Chat With Mentees</a></li>
-            {% else %}
-                <li><a href="#" onclick="alert('No mentorship requests available.');">Chat With Mentees</a></li>
-            {% endif %}
-            <li><a href="{% url 'upload_resource' %}">Upload Resources</a></li>
-            <li><a href="{% url 'manage_schedule' %}" >Manage schedule</a></li>
-            <li><a href= "{% url 'list_threads' %}">Discussion Forum</a></li>
-            <li><a href="#">Settings</a></li>
-            <li><a href="{% url 'login' %}">Logout</a></li>
-        </ul>
-    </section>
-</body>
-</html>
+        {% empty %}
+        <li>No new mentorship requests.</li>
+        
+        {% endfor %}
+    </ul>
+</section>
+{% endblock %}

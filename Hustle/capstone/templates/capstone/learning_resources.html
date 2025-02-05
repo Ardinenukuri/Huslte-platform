@@ -1,46 +1,46 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Learning Resources</title>
-</head>
-<body>
+{% extends 'participant-base.html' %}
+{% block title %}Learning Resources - Hustle Platform{% endblock %}
+
+{% block participant_content %}
     <h1>Learning Resources</h1>
 
     <!-- Search Form -->
-    <form method="get">
-        {{ form.as_p }}
-        <button type="submit">Search</button>
+    <form method="get" class="mb-4">
+        <div class="mb-3">
+            {{ form.as_p }}
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
     </form>
 
     <!-- Resource List -->
-    <section>
+    <section class="mb-4">
         <h2>Resources</h2>
-        <ul>
+        <ul class="list-group">
             {% for resource in resources %}
-            <li>
+            <li class="list-group-item">
                 <h3>{{ resource.title }}</h3>
                 <p>{{ resource.description }}</p>
                 <p><strong>Topic:</strong> {{ resource.topic }}</p>
                 <p><strong>Format:</strong> {{ resource.format }}</p>
                 <p><strong>Difficulty:</strong> {{ resource.difficulty }}</p>
-                <p><a href="{{ resource.url }}" target="_blank">View Resource</a></p>
+                <p><a href="{{ resource.url }}" target="_blank" class="btn btn-outline-primary">View Resource</a></p>
                 <p><strong>Average Rating:</strong> 
                     {{ resource.avg_rating|default:"No ratings yet" }}
                 </p>                
-                <p><a href="{% url 'rate_resource' resource.id %}">Rate this resource</a></p>
+                <p><a href="{% url 'rate_resource' resource.id %}" class="btn btn-sm btn-outline-secondary">Rate this resource</a></p>
             </li>
             {% empty %}
-            <li>No resources found.</li>
+            <li class="list-group-item">No resources found.</li>
             {% endfor %}
         </ul>
     </section>
 
-     <!-- Pagination -->
-     <div class="pagination">
+    <!-- Pagination -->
+    <div class="pagination">
         <span class="step-links">
             {% if resources.has_previous %}
-                <a href="?page=1">&laquo; first</a>
-                <a href="?page={{ resources.previous_page_number }}">previous</a>
+                <a href="?page=1" class="btn btn-sm btn-outline-secondary">&laquo; first</a>
+                <a href="?page={{ resources.previous_page_number }}" class="btn btn-sm btn-outline-secondary">previous</a>
             {% endif %}
 
             <span class="current">
@@ -48,10 +48,9 @@
             </span>
 
             {% if resources.has_next %}
-                <a href="?page={{ resources.next_page_number }}">next</a>
-                <a href="?page={{ resources.paginator.num_pages }}">last &raquo;</a>
+                <a href="?page={{ resources.next_page_number }}" class="btn btn-sm btn-outline-secondary">next</a>
+                <a href="?page={{ resources.paginator.num_pages }}" class="btn btn-sm btn-outline-secondary">last &raquo;</a>
             {% endif %}
         </span>
     </div>
-</body>
-</html>
+{% endblock %}

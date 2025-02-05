@@ -41,7 +41,17 @@ urlpatterns = [
     path('reply/<int:thread_id>/', views.reply_to_thread, name='reply_to_thread'),
     path('vote/<int:comment_id>/<str:vote_type>/', views.vote_comment, name='vote_comment'),
     path('delete_comment/<int:comment_id>/', views.delete_comment, name='delete_comment'),
-    path('threads/', views.list_threads, name='list_threads')
+    path('threads/', views.list_threads, name='list_threads'),
+    path('thread/<int:thread_id>/vote/<str:action>/', views.vote_thread, name='vote_thread'),
+    path('delete_thread/<int:id>/', views.delete_thread, name='delete_thread'),
+    path('account/settings/', views.account_settings, name='account_settings'),
+    path('account/change_email/', views.change_email, name='change_email'),
+    path('account/change_password/', views.change_password, name='change_password'),
+    path('account/delete_account/', views.delete_account, name='delete_account'),
+    path('', views.homepage, name='homepage'),
+    path('about-us/', views.about_us, name='about_us'),
+    path('features/', views.features, name='features'),
+    path('contact-us/', views.contact_us, name='contact_us'),
 ]
 
 if settings.DEBUG:

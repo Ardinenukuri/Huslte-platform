@@ -1,56 +1,33 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Participant Dashboard</title>
-</head>
-<body>
-    <h1>Welcome, {{ user.username }}!</h1>
-    <p>You are logged in as a <strong>Participant</strong>.</p>
+{% extends 'participant-base.html' %}
+{% block title %}Participant Dashboard - Hustle Platform{% endblock %}
+{% block participant_content %}
+<h1>Welcome, {{ user.username }}!</h1>
+<p>You are logged in as a <strong>Participant</strong>.</p>
 
-    <!-- Overview Section -->
-    <section>
-        <h2>Overview</h2>
-        <div>
-        </ul>
-        <p>Progress: <progress value="{{ progress }}" max="100"></progress> {{ progress }}%</p>
-        <h2>Notifications</h2>
-        <ul>
-            {% for notification in notifications %}
-            <li>
+<!-- Overview Section -->
+<section>
+    <h2>Overview</h2>
+    <p>Progress: <progress value="{{ progress }}" max="100"></progress> {{ progress }}%</p>
+</section>
+
+<!-- Notifications Section -->
+<section>
+    <h2>Notifications</h2>
+    <ul class="list-group">
+        {% for notification in notifications %}
+            <li class="list-group-item">
                 <p>{{ notification.message }}</p>
                 <p><small>{{ notification.created_at }}</small></p>
                 {% if not notification.is_seen %}
-                <form method="post" action="{% url 'mark_notification_seen' notification.id %}">
-                    {% csrf_token %}
-                    <button type="submit">Seen</button>
-                </form>
+                    <form method="post" action="{% url 'mark_notification_seen' notification.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-primary">Mark as Seen</button>
+                    </form>
                 {% endif %}
             </li>
-            {% empty %}
-            <li>No new notifications.</li>
-            {% endfor %}
-        </ul>
-        </div>
-    </section>
-
-    <!-- Navigation Links -->
-    <section>
-        <h2>Navigation</h2>
-        <ul>
-            <li><a href="{% url 'participant_profile' %}">My Profile</a></li>
-            <li><a href="{% url 'learning_resources' %}">Learning Resources</a></li>
-            <li><a href="{% url 'submit_mentorship_request' %}">Mentorship Program</a></li>
-            {% for request in mentorship_requests %}
-    <li><a href="{% url 'chat_with_mentor' request.id %}">Chat With Mentors</a></li>
-    <li><a href="{% url 'schedule_session' request.id %}">Schedule a Session</a></li>
-    <li><a href="{% url 'submit_feedback' request.id %}">Submit Feedback</a></li>
-{% endfor %}
-
-            <li><a href="{% url 'job_listings' %}">Job Opportunities</a></li>
-            <li><a href="{% url 'list_threads' %}">Discussion Forum</a></li>
-            <li><a href="#">Settings</a></li>
-            <li><a href="{% url 'login' %}">Logout</a></li>
-        
-    </section>
-</body>
-</html>
+        {% empty %}
+            <li class="list-group-item">No new notifications.</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endblock %}

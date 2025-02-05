@@ -221,6 +221,8 @@ class Thread(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='threads')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    upvotes = models.IntegerField(default=0)  # <-- Ensure this field is present
+    downvotes = models.IntegerField(default=0)
     tags = models.CharField(max_length=100, blank=True)  # Optional: For categorizing threads
 
     def __str__(self):

@@ -1,6 +1,6 @@
 from django import forms
 from .models import User, ParticipantProfile, MentorProfile, Feedback, Resource, Rating, ChatMessage,  MentorshipRequest, Session, JobListing, JobApplication, Thread
-
+from django.contrib.auth.forms import PasswordChangeForm
 
 class ThreadForm(forms.ModelForm):
     class Meta:
@@ -106,3 +106,22 @@ class MentorshipResponseForm(forms.ModelForm):
     class Meta:
         model = MentorshipRequest
         fields = ['status', 'mentor_response']
+
+class ChangeEmailForm(forms.Form):
+    new_email = forms.EmailField(label="New Email", required=True)
+    confirm_email = forms.EmailField(label="Confirm New Email", required=True)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_email = cleaned_data.get('new_email')
+        confirm_email = cleaned_data.get('confirm_email')
+
+        if new_email and confirm_email and new_email != confirm_email:
+            raise forms.ValidationError("Emails do not match.")
+        return cleaned_data
+    
+class DeleteAccountForm(forms.Form):
+    confirm_delete = forms.BooleanField(
+        label="I understand that this action cannot be undone.",
+        required=True,
+    )

@@ -1,14 +1,13 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Submit Mentorship Request</title>
-</head>
-<body>
+{% extends 'participant-base.html' %}
+{% block title %}Submit Mentorship Request - Hustle Platform{% endblock %}
+
+{% block participant_content %}
     <h1>Submit Mentorship Request</h1>
-    <form method="post">
+    <form method="post" class="mb-4">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Submit</button>
+        <div class="mb-3">
+            {{ form.as_p }}
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
     </form>
-</body>
-</html>
+{% endblock %}

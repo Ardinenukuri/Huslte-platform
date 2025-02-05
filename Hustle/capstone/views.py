@@ -2,7 +2,7 @@ import datetime
 from msvcrt import getch
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from .forms import LoginForm, SignUpForm, ParticipantProfileForm, MentorProfileForm, FeedbackForm, ResourceSearchForm, ResourceUploadForm, RatingForm, MentorshipRequestForm, SessionForm, ChatMessageForm, JobApplicationForm, MentorshipResponseForm, ThreadForm
+from .forms import LoginForm, SignUpForm, ParticipantProfileForm, MentorProfileForm, FeedbackForm, ResourceSearchForm, ResourceUploadForm, RatingForm, MentorshipRequestForm, SessionForm, ChatMessageForm, JobApplicationForm, MentorshipResponseForm, ThreadForm, ChangeEmailForm, PasswordChangeForm, DeleteAccountForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import User, MenteeActivity, Question, Message, ParticipantProfile, MentorProfile, Feedback, Progress, Resource, MentorshipRequest, ChatMessage, Session, JobListing, SavedJob, JobApplication, Notification, Thread, Comment, Vote
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -11,7 +11,22 @@ from django.db.models import Avg
 from .google_calendar import get_google_calendar_service, create_calendar_event
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
+from django.http import HttpResponseForbidden
+from django.contrib.auth import update_session_auth_hash, logout
+from django.contrib import messages
 
+
+def homepage(request):
+    return render(request, 'capstone/homepage.html')
+
+def about_us(request):
+    return render(request, 'capstone/about_us.html')
+
+def features(request):
+    return render(request, 'capstone/features.html')
+
+def contact_us(request):
+    return render(request, 'capstone/contact_us.html')
 
 def login_view(request):
     if request.method == 'POST':
@@ -511,9 +526,19 @@ def vote_comment(request, comment_id, vote_type):
 @login_required
 def delete_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
-    thread_id = comment.thread.id
-    comment.delete()
-    return redirect(reverse('thread_detail', args=[thread_id]))
+    user = request.user  # Get the logged-in user
+
+    # ✅ Check if user is the comment author, a mentor, or an admin
+    is_mentor = hasattr(user, 'mentor')  # If using a Mentor model
+    is_admin = user.is_staff or user.is_superuser
+
+    if user == comment.user or is_mentor or is_admin:
+        thread_id = comment.thread.id
+        comment.delete()
+        return redirect(reverse('thread_detail', args=[thread_id]))
+    
+    # If unauthorized, return a forbidden response
+    return HttpResponseForbidden("You are not allowed to delete this comment.")
 
 
 def list_threads(request):
@@ -523,3 +548,71 @@ def list_threads(request):
 def thread_detail(request, thread_id):
     thread = get_object_or_404(Thread, id=thread_id)
     return render(request, 'capstone/thread_detail.html', {'thread': thread})
+
+def vote_thread(request, thread_id, action):
+    thread = get_object_or_404(Thread, id=thread_id)
+    
+    if action == "upvote":
+        thread.upvotes += 1
+    elif action == "downvote":
+        thread.downvotes += 1
+    
+    thread.save()
+    return redirect('list_threads') 
+
+
+
+@login_required
+def delete_thread(request, id):
+    thread = get_object_or_404(Thread, id=id)
+    
+    if request.user == thread.created_by or request.user.is_staff:
+        thread.delete()
+
+    return redirect('list_threads')
+
+@login_required
+def account_settings(request):
+    return render(request, 'capstone/account_settings.html')
+
+@login_required
+def change_email(request):
+    if request.method == 'POST':
+        form = ChangeEmailForm(request.POST)
+        if form.is_valid():
+            new_email = form.cleaned_data['new_email']
+            request.user.email = new_email
+            request.user.save()
+            messages.success(request, 'Your email has been updated successfully.')
+            return redirect('account_settings')
+    else:
+        form = ChangeEmailForm()
+    return render(request, 'capstone/change_email.html', {'form': form})
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()  # Save the new password
+            update_session_auth_hash(request, user)  # Keep the user logged in
+            messages.success(request, 'Your password has been updated successfully.')
+            return redirect('login')  # Redirect to the account settings page
+        else:
+            messages.error(request, 'Please correct the error below.')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'capstone/change_password.html', {'form': form})
+
+@login_required
+def delete_account(request):
+    if request.method == 'POST':
+        form = DeleteAccountForm(request.POST)
+        if form.is_valid():
+            request.user.delete()  # Delete the user account
+            logout(request)  # Log the user out
+            messages.success(request, 'Your account has been deleted successfully.')
+            return redirect('login')
+    else:
+        form = DeleteAccountForm()
+    return render(request, 'capstone/delete_account.html', {'form': form})
