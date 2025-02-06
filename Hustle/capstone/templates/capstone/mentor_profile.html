@@ -12,14 +12,17 @@
 
 <!-- List of Mentees -->
 <section>
-    <h2>Mentees</h2>
-    <ul>
+    <h2>Your Mentees</h2>
+    <ul class="list-group">
         {% for mentee in mentees %}
-        <li>{{ mentee.user.full_name }} - {{ mentee.user.email }}</li>
+        <li class="list-group-item">
+            <a href="{% url 'participant_profile' %}">{{ user.full_name }}</a>
+        </li>
         {% empty %}
-        <li>No mentees assigned.</li>
+        <li class="list-group-item">You have no mentees yet.</li>
         {% endfor %}
     </ul>
+    
 </section>
 
 <!-- Feedback and Ratings -->

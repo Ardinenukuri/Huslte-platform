@@ -16,11 +16,11 @@
                     
                     <!-- Voting Actions for Threads -->
                     <div class="comment-actions mt-2">
-                        <a href="{% url 'vote_thread' thread.id 'upvote' %}" class="btn btn-sm btn-success">Like</a>
-                        <a href="{% url 'vote_thread' thread.id 'downvote' %}" class="btn btn-sm btn-danger">Unlike</a>
+                        <a href="{% url 'mvote_thread' thread.id 'upvote' %}" class="btn btn-sm btn-success">Like</a>
+                        <a href="{% url 'mvote_thread' thread.id 'downvote' %}" class="btn btn-sm btn-danger">Unlike</a>
                         
                         {% if request.user == thread.created_by or request.user.is_staff or request.user.is_superuser %}
-                            <a href="{% url 'delete_thread' thread.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                            <a href="{% url 'mdelete_thread' thread.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
                         {% endif %}
                     </div>
                 </li>

@@ -18,9 +18,9 @@
                     Downvotes: {{ comment.downvotes }}
                 </p>
                 <div class="comment-actions">
-                    <a href="{% url 'delete_comment' comment.id %}" class="btn btn-danger btn-sm">Delete</a>
-                    <a href="{% url 'vote_comment' comment.id 'upvote' %}" class="btn btn-success btn-sm">Like</a>
-                    <a href="{% url 'vote_comment' comment.id 'downvote' %}" class="btn btn-danger btn-sm">UnLike</a>
+                    <a href="{% url 'mdelete_comment' comment.id %}" class="btn btn-danger btn-sm">Delete</a>
+                    <a href="{% url 'mvote_comment' comment.id 'upvote' %}" class="btn btn-success btn-sm">Like</a>
+                    <a href="{% url 'mvote_comment' comment.id 'downvote' %}" class="btn btn-danger btn-sm">UnLike</a>
                 </div>
             </li>
         {% empty %}

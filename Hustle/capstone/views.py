@@ -628,6 +628,39 @@ def vote_comment(request, comment_id, vote_type):
     return redirect('thread_detail', thread_id=comment.thread.id)
 
 @login_required
+def mvote_comment(request, comment_id, vote_type):
+    comment = get_object_or_404(Comment, id=comment_id)  # Fetch the comment or return 404 if not found
+
+    # Check if the user has already voted on this comment
+    existing_vote = Vote.objects.filter(user=request.user, comment=comment).first()
+    if existing_vote:
+        # If the user has already voted, update the existing vote
+        if existing_vote.vote_type != vote_type:
+            # If the vote type is different, update the vote and adjust the comment's vote count
+            if vote_type == 'upvote':
+                comment.upvotes += 1
+                comment.downvotes -= 1
+            else:
+                comment.upvotes -= 1
+                comment.downvotes += 1
+            existing_vote.vote_type = vote_type
+            existing_vote.save()
+    else:
+        # If the user hasn't voted yet, create a new vote
+        if vote_type == 'upvote':
+            comment.upvotes += 1
+        else:
+            comment.downvotes += 1
+        Vote.objects.create(user=request.user, comment=comment, vote_type=vote_type)
+
+    # Save the updated vote counts
+    comment.save()
+
+    # Redirect back to the thread detail page
+    return redirect('mentorthread_detail', thread_id=comment.thread.id)
+
+
+@login_required
 def delete_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
     user = request.user  # Get the logged-in user
@@ -640,6 +673,23 @@ def delete_comment(request, comment_id):
         thread_id = comment.thread.id
         comment.delete()
         return redirect(reverse('thread_detail', args=[thread_id]))
+    
+    # If unauthorized, return a forbidden response
+    return HttpResponseForbidden("You are not allowed to delete this comment.")
+
+@login_required
+def mdelete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+    user = request.user  # Get the logged-in user
+
+    # ✅ Check if user is the comment author, a mentor, or an admin
+    is_mentor = hasattr(user, 'mentor')  # If using a Mentor model
+    is_admin = user.is_staff or user.is_superuser
+
+    if user == comment.user or is_mentor or is_admin:
+        thread_id = comment.thread.id
+        comment.delete()
+        return redirect(reverse('mentorthread_detail', args=[thread_id]))
     
     # If unauthorized, return a forbidden response
     return HttpResponseForbidden("You are not allowed to delete this comment.")
@@ -687,9 +737,18 @@ def vote_thread(request, thread_id, action):
         thread.downvotes += 1
     
     thread.save()
-    return redirect('mentor-list_threads') 
+    return redirect('list_threads') 
 
-
+def mvote_thread(request, thread_id, action):
+    thread = get_object_or_404(Thread, id=thread_id)
+    
+    if action == "upvote":
+        thread.upvotes += 1
+    elif action == "downvote":
+        thread.downvotes += 1
+    
+    thread.save()
+    return redirect('mentorlist_threads') 
 
 @login_required
 def delete_thread(request, id):
@@ -699,6 +758,15 @@ def delete_thread(request, id):
         thread.delete()
 
     return redirect('list_threads')
+
+@login_required
+def mdelete_thread(request, id):
+    thread = get_object_or_404(Thread, id=id)
+    
+    if request.user == thread.created_by or request.user.is_staff:
+        thread.delete()
+
+    return redirect('mentorlist_threads')
 
 @login_required
 def account_settings(request):
