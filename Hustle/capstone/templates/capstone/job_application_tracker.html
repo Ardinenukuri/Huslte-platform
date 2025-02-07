@@ -2,31 +2,38 @@
 {% block title %}Job Application Tracker - Hustle Platform{% endblock %}
 
 {% block participant_content %}
-<div class="container mt-4">
-    <h1 class="mb-4 text-center">Job Application Tracker</h1>
-
+<div class="container mt-5">
+    <h1 class="text-center">Job Application Tracker</h1>
+    
     {% if job_applications %}
-    <div class="row">
-        {% for application in job_applications %}
-        <div class="col-md-6">
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <h4 class="card-title">{{ application.job_listing.title }}</h4>
-                    <p class="text-muted"><strong>Status:</strong> 
-                        <span class="badge {% if application.status == 'pending' %}bg-warning{% elif application.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
-                            {{ application.get_status_display }}
-                        </span>
-                    </p>
-                    <p><strong>Applied At:</strong> {{ application.applied_at }}</p>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
+        <ul class="list-group">
+            {% for application in job_applications %}
+            <li class="list-group-item">
+                <h5>{{ application.job_listing.title }}</h5>
+                <p><strong>Status:</strong> 
+                    {% if application.status == 'accepted' %}
+                        <span class="badge bg-success">Accepted ✅</span>
+                        {% if application.accepted_by_mentor_email %}
+                        <p><strong>Accepted By:</strong> 
+                            <a href="mailto:{{ application.accepted_by_mentor_email }}" class="text-decoration-none">
+                                {{ application.accepted_by_mentor_email }}
+                            </a>
+                        </p>
+                        {% endif %}
+                    {% elif application.status == 'rejected' %}
+                        <span class="badge bg-danger">Rejected ❌</span>
+                    {% else %}
+                        <span class="badge bg-warning">Under Review ⏳</span>
+                    {% endif %}
+                </p>
+                </a>
+                <p><strong>Applied At:</strong> {{ application.applied_at }}</p>
+
+            </li>
+            {% endfor %}
+        </ul>
     {% else %}
-    <div class="alert alert-info text-center">
-        No applications submitted yet.
-    </div>
+        <p class="text-center text-muted">No applications submitted.</p>
     {% endif %}
 </div>
 {% endblock %}

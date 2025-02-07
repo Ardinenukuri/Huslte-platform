@@ -24,6 +24,13 @@
         <button type="submit" class="btn btn-primary mt-3">Search</button>
     </form>
 
+    <!-- Job Application Tracker Link -->
+    <div class="text-end mb-3">
+        <a href="{% url 'job_application_tracker' %}" class="btn btn-outline-primary">
+            View My Job Applications
+        </a>
+    </div>
+
     <!-- Job Listings -->
     <ul class="list-group">
         {% for job in job_listings %}
@@ -40,4 +47,6 @@
         <li class="list-group-item">No job listings found.</li>
         {% endfor %}
     </ul>
+
+    
 {% endblock %}

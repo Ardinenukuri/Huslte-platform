@@ -482,8 +482,14 @@ def job_listings(request):
     if job_type:
         job_listings = job_listings.filter(job_type=job_type)
 
+        
+    job_applications = JobApplication.objects.filter(user=request.user)
+
+
+
     context = {
         'job_listings': job_listings,
+        'job_applications': job_applications, 
     }
     return render(request, 'capstone/job_listings.html', context)
 
@@ -547,7 +553,7 @@ def job_application_tracker(request):
 @login_required
 def manage_applicants(request, job_id):
     job_listing = get_object_or_404(JobListing, id=job_id, employer=request.user)
-    job_applications = JobApplication.objects.filter(job_listing=job_listing)
+    job_applications = JobApplication.objects.filter(job_listing=job_listing, status='submitted')
     context = {
         'job_listing': job_listing,
         'job_applications': job_applications,
@@ -835,9 +841,9 @@ def change_password(request):
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
             user = form.save()  
-            update_session_auth_hash(request, user)  # Keep the user logged in
+            update_session_auth_hash(request, user)  
             messages.success(request, 'Your password has been updated successfully.')
-            return redirect('login')  # Redirect to the account settings page
+            return redirect('login')  
         else:
             messages.error(request, 'Please correct the error below.')
     else:
@@ -849,10 +855,10 @@ def mchange_password(request):
     if request.method == 'POST':
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
-            user = form.save()  # Save the new password
-            update_session_auth_hash(request, user)  # Keep the user logged in
+            user = form.save()  
+            update_session_auth_hash(request, user)  
             messages.success(request, 'Your password has been updated successfully.')
-            return redirect('login')  # Redirect to the account settings page
+            return redirect('login')  
         else:
             messages.error(request, 'Please correct the error below.')
     else:
@@ -864,8 +870,8 @@ def delete_account(request):
     if request.method == 'POST':
         form = DeleteAccountForm(request.POST)
         if form.is_valid():
-            request.user.delete()  # Delete the user account
-            logout(request)  # Log the user out
+            request.user.delete()  
+            logout(request)  
             messages.success(request, 'Your account has been deleted successfully.')
             return redirect('login')
     else:
@@ -877,8 +883,8 @@ def mdelete_account(request):
     if request.method == 'POST':
         form = DeleteAccountForm(request.POST)
         if form.is_valid():
-            request.user.delete()  # Delete the user account
-            logout(request)  # Log the user out
+            request.user.delete()  
+            logout(request)  
             messages.success(request, 'Your account has been deleted successfully.')
             return redirect('login')
     else:
@@ -895,10 +901,10 @@ def mentor_job_listings(request):
         form = JobUploadForm(request.POST)
         if form.is_valid():
             job = form.save(commit=False)
-            job.employer = request.user  # Assign logged-in mentor as employer
+            job.employer = request.user 
             job.save()
 
-             # ✅ Create notifications for all participants
+             
             participants = User.objects.filter(user_type='participant')
             for participant in participants:
                 Notification.objects.create(
@@ -926,7 +932,7 @@ def rate_mentor(request, mentor_id):
         if form.is_valid():
             feedback = form.save(commit=False)
             feedback.mentor = mentor
-            feedback.mentee = request.user  # The participant submitting the feedback
+            feedback.mentee = request.user  
             feedback.save()
             messages.success(request, "Your feedback has been submitted successfully!")
             return redirect('participant_dashboard')
@@ -944,3 +950,28 @@ def notification_seen(request, notification_id, job_id):
     notification.save()
 
     return redirect('manage_applicants', job_id=job_id)
+
+
+
+@login_required
+def update_application_status(request, application_id, status):
+    job_application = get_object_or_404(JobApplication, id=application_id, job_listing__employer=request.user)
+
+    # ✅ Update application status
+    # ✅ If the mentor accepts the application, store their email
+    if status == "accepted":
+        job_application.accepted_by_mentor_email = request.user.email  # Mentor's email
+    else:
+        job_application.accepted_by_mentor_email = None
+    job_application.status = status
+    job_application.save()
+
+    # ✅ Notify the participant
+    Notification.objects.create(
+        user=job_application.user,  # Notify the applicant
+        message=f"Your application for '{job_application.job_listing.title}' has been {status.replace('_', ' ')}.",
+    )
+
+    # ✅ Remove application from Manage Applicants Page (Redirect back)
+    messages.success(request, f"Application {status.replace('_', ' ')} successfully!")
+    return redirect('manage_applicants', job_id=job_application.job_listing.id)

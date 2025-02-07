@@ -189,6 +189,7 @@ class JobApplication(models.Model):
     job_listing = models.ForeignKey(JobListing, on_delete=models.CASCADE, related_name='applications')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
     applied_at = models.DateTimeField(auto_now_add=True)
+    accepted_by_mentor_email = models.EmailField(blank=True, null=True)
     resume = models.FileField(upload_to='resumes/', blank=False, null=False)  # ✅ Resume file upload
     cover_letter = models.TextField()
 

@@ -37,5 +37,18 @@
             <li class="list-group-item">No new notifications.</li>
         {% endfor %}
     </ul>
+    <!-- Job Application Notifications -->
+<h2>📩 Job Application Updates</h2>
+<ul class="list-group">
+    {% for notification in notifications %}
+        <li class="list-group-item">
+            {{ notification.message }}
+            <small class="text-muted">{{ notification.created_at }}</small>
+        </li>
+    {% empty %}
+        <li class="list-group-item">No new job updates.</li>
+    {% endfor %}
+</ul>
+
 </section>
 {% endblock %}
