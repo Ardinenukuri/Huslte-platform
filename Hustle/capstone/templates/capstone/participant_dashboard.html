@@ -7,7 +7,6 @@
 <!-- Overview Section -->
 <section>
     <h2>Overview</h2>
-    <p>Progress: <progress value="{{ progress }}" max="100"></progress> {{ progress }}%</p>
     {% if mentor %}
     <div class="alert alert-info">
         <strong>Your Mentor:</strong> <a href="{% url 'mentor_profile' mentor.id %}">{{ mentor.full_name }}</a>
