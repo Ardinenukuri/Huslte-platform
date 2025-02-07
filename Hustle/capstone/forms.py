@@ -138,3 +138,41 @@ class JobUploadForm(forms.ModelForm):
             'industry': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter industry'}),
             'job_type': forms.Select(attrs={'class': 'form-select'}),
         }
+
+class MentorRatingForm(forms.ModelForm):
+    rating = forms.ChoiceField(
+        choices=[(str(i), str(i)) for i in range(1, 6)], 
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label="Rating (1-5)"
+    )
+    feedback = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        label="Feedback"
+    )
+
+    class Meta:
+        model = Feedback
+        fields = ['rating', 'feedback']
+
+class JobSubmitForm(forms.ModelForm):
+    class Meta:
+        model = JobApplication
+        fields = ['resume', 'cover_letter']
+
+    resume = forms.FileField(
+        required=True,
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': '.pdf'}),
+        label="Upload Resume (PDF)"
+    )
+
+    cover_letter = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        required=True
+    )
+
+    # Customizing the Cover Letter field
+    cover_letter = forms.CharField(
+        required=True,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Write your cover letter...'}),
+        label="Cover Letter"
+    )

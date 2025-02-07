@@ -10,8 +10,8 @@ urlpatterns = [
     path('terms/participant/', views.participant_terms, name='participant_terms'),
     path('participant/dashboard/', views.participant_dashboard, name='participant_dashboard'),
     path('mentor/dashboard/', views.mentor_dashboard, name='mentor_dashboard'),
-    path('participant/profile/', views.participant_profile, name='participant_profile'),
-    path('mentor/profile/', views.mentor_profile, name='mentor_profile'),
+    path('participant/profile/<int:participant_id>/', views.participant_profile, name='participant_profile'),
+    path('mentor/profile/<int:mentor_id>', views.mentor_profile, name='mentor_profile'),
     path('submit-feedback/<int:mentor_id>/', views.submit_feedback, name='submit_feedback'),
     path('learning-resources/', views.learning_resources, name='learning_resources'),
     path('mlearning-resources/', views.mlearning_resources, name='mlearning_resources'),
@@ -33,7 +33,6 @@ urlpatterns = [
     path('manage-applicants/<int:job_id>/', views.manage_applicants, name='manage_applicants'),
     path('update-application-status/<int:application_id>/<str:status>/', views.update_application_status, name='update_application_status'),
     path('mark-notification-seen/<int:notification_id>/', views.mark_notification_seen, name='mark_notification_seen'),
-    path('add-to-google-calendar/<int:session_id>/', views.add_to_google_calendar, name='add_to_google_calendar'),
     path('upvote-message/<int:message_id>/', views.upvote_message, name='upvote_message'),
     path('downvote-message/<int:message_id>/', views.downvote_message, name='downvote_message'),
     path('google/callback/', views.google_callback, name='google_callback'),
@@ -65,7 +64,12 @@ urlpatterns = [
     path('features/', views.features, name='features'),
     path('mentor/job-listings/', views.mentor_job_listings, name='mentor_job_listings'),
     path('contact-us/', views.contact_us, name='contact_us'),
+    path('mentor/rate/<int:mentor_id>/', views.rate_mentor, name='rate_mentor'),
+    path('notification-seen/<int:notification_id>/<int:job_id>/', views.notification_seen, name='notification_seen'),
+
+
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

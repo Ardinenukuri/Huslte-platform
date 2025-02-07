@@ -7,13 +7,29 @@
 
 <!-- Overview Section -->
 <section>
-    <h2>Overview</h2>
+    
+    
+        <section>
+            <h2>My Mentees</h2>
+            <ul class="list-group">
+                {% for mentee in mentees %}
+                    <li class="list-group-item">
+                        <a href="{% url 'participant_profile' mentee.id %}" class="text-decoration-none">
+                            {{ mentee.full_name }}
+                        </a>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item">No mentees yet.</li>
+                {% endfor %}
+            </ul>
+        </section>
+        
     
 </section>
 
 <!-- Notifications Section -->
 <section>
-    <h2>Messages</h2>
+    <h2>Mentorship Requests</h2>
     <ul class="list-group">
         {% for request in mentorship_requests %}
             <li class="list-group-item">
@@ -27,5 +43,21 @@
         
         {% endfor %}
     </ul>
+    <h3>Job Application Notifications</h3>
+        <ul class="list-group">
+            {% for notification in notifications %}
+    <li class="list-group-item">
+        {{ notification.message }}
+
+        {% if notification.job_application and notification.job_application.job_listing %}
+            <a href="{% url 'notification_seen' notification.id notification.job_application.job_listing.id %}" 
+               class="btn btn-sm btn-primary">View</a>
+        {% endif %}
+    </li>
+{% empty %}
+    <li class="list-group-item">No new notifications.</li>
+{% endfor %}
+
+        </ul>
 </section>
 {% endblock %}

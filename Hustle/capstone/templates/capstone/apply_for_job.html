@@ -1,4 +1,5 @@
 {% extends 'participant-base.html' %}
+
 {% block title %}Apply for {{ job_listing.title }} - Hustle Platform{% endblock %}
 
 {% block participant_content %}
@@ -7,11 +8,15 @@
         <div class="col-md-8">
             <div class="card shadow">
                 <div class="card-body">
-                    <h1 class="card-title text-center mb-4">Apply for <span class="text-primary">{{ job_listing.title }}</span></h1>
+                    <h1 class="card-title text-center mb-4">
+                        Apply for <span class="text-primary">{{ job_listing.title }}</span>
+                    </h1>
                     
-                    <p class="text-muted text-center"><strong>Location:</strong> {{ job_listing.location }} | <strong>Industry:</strong> {{ job_listing.industry }}</p>
-
-                    <form method="post">
+                    <p class="text-muted text-center">
+                        <strong>Location:</strong> {{ job_listing.location }} | 
+                        <strong>Industry:</strong> {{ job_listing.industry }}
+                    </p>
+                    <form method="post" enctype="multipart/form-data">  <!-- ✅ Important for file uploads -->
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="id_resume" class="form-label">Upload Resume (PDF)</label>
@@ -25,6 +30,7 @@
                             <button type="submit" class="btn btn-primary btn-lg">Submit Application</button>
                         </div>
                     </form>
+                    
 
                     <div class="text-center mt-3">
                         <a href="{% url 'job_listings' %}" class="btn btn-outline-secondary">Back to Job Listings</a>

@@ -3,7 +3,7 @@ from msvcrt import getch
 from sre_parse import parse_template
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from .forms import LoginForm, SignUpForm, ParticipantProfileForm, MentorProfileForm, JobUploadForm, FeedbackForm, ResourceSearchForm, ResourceUploadForm, RatingForm, MentorshipRequestForm, SessionForm, ChatMessageForm, JobApplicationForm, MentorshipResponseForm, ThreadForm, ChangeEmailForm, PasswordChangeForm, DeleteAccountForm
+from .forms import LoginForm, SignUpForm, ParticipantProfileForm, JobSubmitForm, MentorProfileForm, MentorRatingForm, JobUploadForm, FeedbackForm, ResourceSearchForm, ResourceUploadForm, RatingForm, MentorshipRequestForm, SessionForm, ChatMessageForm, JobApplicationForm, MentorshipResponseForm, ThreadForm, ChangeEmailForm, PasswordChangeForm, DeleteAccountForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import User, MenteeActivity, Question, Message, ParticipantProfile, MentorProfile, Feedback, Progress, Resource, MentorshipRequest, ChatMessage, Session, JobListing, SavedJob, JobApplication, Notification, Thread, Comment, Vote
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -38,7 +38,7 @@ def login_view(request):
             password = form.cleaned_data['password']
             user_type = form.cleaned_data['user_type']
             
-            # Authenticate using the email as username
+            
             user = authenticate(request, username=username, password=password)
             
             if user is not None and user.user_type == user_type:
@@ -64,7 +64,7 @@ def signup_view(request):
             user.username = form.cleaned_data['username']
             user.save()
 
-            # Send Welcome Email
+            
             send_mail(
                 'Welcome to Hustle Platform!',
                 f'Hi {user.full_name},\n\nWelcome to Hustle Platform! 🚀\n\nExplore mentorship, learning resources, and job opportunities.\n\nHappy Learning,\nThe Hustle Platform Team',
@@ -85,19 +85,23 @@ def participant_terms(request):
     return render(request, 'capstone/participant_terms.html')
 
 @login_required
-def participant_dashboard(request):
-    mentorship_requests = MentorshipRequest.objects.filter(mentee=request.user)
+def participant_dashboard(request, participant_id=None):
+    if participant_id:
+        participant = get_object_or_404(User, id=participant_id, user_type='participant')
+    else:
+        participant = request.user  
 
-    if request.user.user_type != 'participant':
-        return redirect('login')  # Redirect to login if user is not a participant
+    mentorship_request = MentorshipRequest.objects.filter(
+        mentee=participant, status='approved'
+    ).first()  
 
-    progress = 75  # Example progress value
-    notifications = Notification.objects.filter(user=request.user, is_seen=False).order_by('-created_at')
+    mentor = mentorship_request.mentor if mentorship_request else None
+
+    notifications = Notification.objects.filter(user=participant, is_seen=False).order_by('-created_at')
 
     context = {
-        'mentorship_requests': mentorship_requests,  # Pass mentorship requests
-        'user': request.user,
-        'progress': progress,
+        'user': participant,
+        'mentor': mentor,  
         'notifications': notifications,
     }
     return render(request, 'capstone/participant_dashboard.html', context)
@@ -105,27 +109,28 @@ def participant_dashboard(request):
 
 @login_required
 def mentor_dashboard(request):
-    if request.user.user_type != 'mentor'and not request.user.is_superuser:
-        return redirect('login')  # Redirect to login if user is not a mentor
-    #Fetch data for the mentor
+    if request.user.user_type != 'mentor' and not request.user.is_superuser:
+        return redirect('login')   
+    notifications = Notification.objects.filter(user=request.user, is_seen=False).order_by('-created_at')
+    mentees = User.objects.filter(
+        id__in=MentorshipRequest.objects.filter(mentor=request.user, status='approved').values_list('mentee_id', flat=True)
+    )
     mentorship_requests = MentorshipRequest.objects.filter(mentor=request.user, status='pending')
-    mentee_activities = MenteeActivity.objects.filter(mentor=request.user).order_by('-timestamp')[:5]  # Last 5 activities
-    questions = Question.objects.filter(mentor=request.user).order_by('-timestamp')[:5]  # Last 5 questions
-    messages = Message.objects.filter(mentor=request.user).order_by('-timestamp')[:5]  # Last 5 messages
-
+    messages = Message.objects.filter(mentor=request.user).order_by('-timestamp')[:5]
     context = {
         'user': request.user,
-        'mentee_activities': mentee_activities,
-        'questions': questions,
+        'notifications': notifications,
+        'mentees': mentees,
         'messages': messages,
         'mentorship_requests': mentorship_requests,
     }
-    
+
     return render(request, 'capstone/mentor_dashboard.html', context)
 
 @login_required
-def participant_profile(request):
-    profile, created = ParticipantProfile.objects.get_or_create(user=request.user)
+def participant_profile(request, participant_id):
+    participant = get_object_or_404(User, id=participant_id, user_type='participant')
+    profile, created = ParticipantProfile.objects.get_or_create(user=participant)
     progress = Progress.objects.filter(participant=request.user)
     total_tasks = progress.count()
     completed_tasks = progress.filter(completed=True).count()
@@ -138,22 +143,32 @@ def participant_profile(request):
             return redirect('participant_profile')
     else:
         form = ParticipantProfileForm(instance=profile)
-    return render(request, 'capstone/participant_profile.html', {'form': form, 'progress_percentage': progress_percentage,})
+    return render(request, 'capstone/participant_profile.html', {'form': form, 'progress_percentage': progress_percentage, 'participant': participant})
 
 @login_required
-def mentor_profile(request):
-    profile, created = MentorProfile.objects.get_or_create(user=request.user)
-    mentees = ParticipantProfile.objects.filter(mentor=request.user)
-    feedbacks = Feedback.objects.filter(mentor=request.user)
+def mentor_profile(request, mentor_id):
+    mentor = get_object_or_404(User, id=mentor_id, user_type='mentor')
+    profile, created = MentorProfile.objects.get_or_create(user=mentor)
+    mentees = User.objects.filter(
+        id__in=MentorshipRequest.objects.filter(mentor=mentor, status='approved').values_list('mentee_id', flat=True)
+    )
+    feedbacks = Feedback.objects.filter(mentor=mentor)
 
     if request.method == 'POST':
         form = MentorProfileForm(request.POST, instance=profile)
         if form.is_valid():
             form.save()
-            return redirect('mentor_profile')
+            return redirect('mentor_profile', mentor_id=mentor.id)
     else:
         form = MentorProfileForm(instance=profile)
-    return render(request, 'capstone/mentor_profile.html', {'form': form, 'mentees': mentees, 'feedbacks': feedbacks})
+
+    return render(request, 'capstone/mentor_profile.html', {
+        'profile': profile,
+        'form': form,
+        'mentor': mentor,
+        'mentees': mentees,
+        'feedbacks': feedbacks,
+    })
 
 @login_required
 def submit_feedback(request, mentor_id):
@@ -190,9 +205,8 @@ def learning_resources(request):
             resources = resources.filter(format=format)
         if difficulty:
             resources = resources.filter(difficulty=difficulty)
-    
-    # Pagination
-    paginator = Paginator(resources, 5)  # Show 5 resources per page
+
+    paginator = Paginator(resources, 5)  
     page_number = request.GET.get('page')
     if not page_number: 
         page_number = 1
@@ -234,8 +248,8 @@ def mlearning_resources(request):
         if difficulty:
             resources = resources.filter(difficulty=difficulty)
     
-    # Pagination
-    paginator = Paginator(resources, 5)  # Show 5 resources per page
+    
+    paginator = Paginator(resources, 5)  
     page_number = request.GET.get('page')
     if not page_number: 
         page_number = 1
@@ -264,12 +278,11 @@ def upload_resource(request):
         form = ResourceUploadForm(request.POST)
         if form.is_valid():
             form.save()
-            # Create notifications for all participants
             participants = User.objects.filter(user_type='participant')
             for participant in participants:
                 Notification.objects.create(
                     user=participant,
-                    message=f"A new resource has been uploaded: {Resource.title}"
+                    message=f"A new resource has been uploaded"
                 )
             return redirect('mentor_dashboard')
     else:
@@ -293,6 +306,8 @@ def rate_resource(request, resource_id):
 
 @login_required
 def submit_mentorship_request(request):
+    mentors = User.objects.filter(user_type='mentor')  
+
     if request.method == 'POST':
         form = MentorshipRequestForm(request.POST)
         if form.is_valid():
@@ -302,7 +317,11 @@ def submit_mentorship_request(request):
             return redirect('participant_dashboard')
     else:
         form = MentorshipRequestForm()
-    return render(request, 'capstone/submit_mentorship_request.html', {'form': form})
+
+    return render(request, 'capstone/submit_mentorship_request.html', {
+        'form': form,
+        'mentors': mentors,  
+    })
 
 @login_required
 def schedule_session(request, request_id):
@@ -314,7 +333,7 @@ def schedule_session(request, request_id):
             session.mentorship_request = mentorship_request
             session.save()
 
-            # Create a Google Calendar event
+            
             event_link = create_calendar_event(
                 summary=f"Session with {mentorship_request.mentor.full_name}",
                 description=session.notes,
@@ -324,7 +343,7 @@ def schedule_session(request, request_id):
                 attendees=[{'email': mentorship_request.mentor.email}]
             )
 
-            # Notify the mentor and mentee
+            
             Notification.objects.create(
                 user=mentorship_request.mentor,
                 message=f"A session has been scheduled with {request.user.full_name} on {session.scheduled_time}. Event link: {event_link}"
@@ -351,7 +370,7 @@ def chat_with_mentor(request, request_id):
             chat_message.sender = request.user
             chat_message.save()
 
-            # Notify the mentor if they are offline
+            
             if not mentorship_request.mentor.is_active:
                 send_mail(
                     'New Message from Your Mentee',
@@ -379,13 +398,21 @@ def approve_mentorship_request(request, request_id):
     if request.method == 'POST':
         form = MentorshipResponseForm(request.POST, instance=mentorship_request)
         if form.is_valid():
-            mentorship_request.status = 'approved'  # Explicitly set status
+            mentorship_request.status = 'approved'  
             form.save()
-            # Create a notification for the mentee
+
+        
+            mentee_profile, created = ParticipantProfile.objects.get_or_create(user=mentorship_request.mentee)
+            mentee_profile.mentor = request.user  
+            mentee_profile.save()
+
+            
             Notification.objects.create(
                 user=mentorship_request.mentee,
                 message=f"Your mentorship request has been approved by {request.user.full_name}. Response: {mentorship_request.mentor_response}"
             )
+
+            messages.success(request, f"You are now mentoring {mentorship_request.mentee.full_name}.")
             return redirect('manage_mentorship_requests')
     else:
         form = MentorshipResponseForm(initial={'status': 'approved'})
@@ -397,9 +424,9 @@ def decline_mentorship_request(request, request_id):
     if request.method == 'POST':
         form = MentorshipResponseForm(request.POST, instance=mentorship_request)
         if form.is_valid():
-            mentorship_request.status = 'declined'  # Explicitly set status
+            mentorship_request.status = 'declined'  
             form.save()
-            # Create a notification for the mentee
+            
             Notification.objects.create(
                 user=mentorship_request.mentee,
                 message=f"Your mentorship request has been declined by {request.user.full_name}. Response: {mentorship_request.mentor_response}"
@@ -421,7 +448,7 @@ def chat_with_mentee(request, request_id):
             chat_message.sender = request.user
             chat_message.save()
 
-            # Notify the mentee if they are offline
+    
             if not mentorship_request.mentee.is_active:
                 send_mail(
                     'New Message from Your Mentor',
@@ -466,20 +493,46 @@ def save_job(request, job_id):
     SavedJob.objects.get_or_create(user=request.user, job_listing=job_listing)
     return redirect('job_listings')
 
+
 @login_required
 def apply_for_job(request, job_id):
     job_listing = get_object_or_404(JobListing, id=job_id)
+    mentor = job_listing.employer  
+
     if request.method == 'POST':
-        form = JobApplicationForm(request.POST)
+        print("POST request received!")  
+        print("POST Data:", request.POST)  
+        print("FILES Data:", request.FILES) 
+
+        form = JobSubmitForm(request.POST, request.FILES) 
         if form.is_valid():
+            print("Form is valid!")  
             job_application = form.save(commit=False)
             job_application.user = request.user
             job_application.job_listing = job_listing
             job_application.save()
-            return redirect('job_application_tracker')
+            print("Job application saved!")  
+
+            
+            Notification.objects.create(
+                user=mentor,  
+                message=f"{request.user.full_name} has applied for your job listing: {job_listing.title}.",
+                job_application=job_application,
+            )
+
+            return redirect('job_application_tracker')  
+        else:
+            print("Form Errors:", form.errors)  
+
     else:
-        form = JobApplicationForm(initial={'job_listing': job_listing})
-    return render(request, 'capstone/apply_for_job.html', {'form': form, 'job_listing': job_listing})
+        form = JobSubmitForm(initial={'job_listing': job_listing})
+
+    return render(request, 'capstone/apply_for_job.html', {
+        'form': form,
+        'job_listing': job_listing,
+    })
+
+
 
 @login_required
 def job_application_tracker(request):
@@ -489,15 +542,7 @@ def job_application_tracker(request):
     }
     return render(request, 'capstone/job_application_tracker.html', context)
 
-@login_required
-def employer_dashboard(request):
-    if request.user.user_type != 'mentor' and not request.user.is_superuser:
-        return redirect('login')  # Only mentors and admins can access
-    job_listings = JobListing.objects.filter(employer=request.user)
-    context = {
-        'job_listings': job_listings,
-    }
-    return render(request, 'capstone/employer_dashboard.html', context)
+
 
 @login_required
 def manage_applicants(request, job_id):
@@ -535,28 +580,11 @@ def downvote_message(request, message_id):
     message.save()
     return redirect('chat_with_mentor', request_id=message.mentorship_request.id)
 
-@login_required
-def add_to_google_calendar(request, session_id):
-    session = get_object_or_404(Session, id=session_id, mentorship_request__mentor=request.user)
-    event_link = create_calendar_event(
-        summary=f"Session with {session.mentorship_request.mentee.full_name}",
-        description=session.notes,
-        start_time=session.scheduled_time.isoformat(),
-        end_time=(session.scheduled_time + datetime.timedelta(hours=1)).isoformat(),
-        timezone='UTC',
-        attendees=[{'email': session.mentorship_request.mentee.email}]
-    )
-    # Notify the mentee
-    Notification.objects.create(
-        user=session.mentorship_request.mentee,
-        message=f"A session has been scheduled with {request.user.full_name} on {session.scheduled_time}. Event link: {event_link}"
-    )
-    return redirect('manage_schedule')
 
 
 @login_required
 def google_callback(request):
-    # Handle the Google OAuth 2.0 callback
+    
     get_google_calendar_service()
     return redirect('participant_dashboard')
 
@@ -566,11 +594,11 @@ def create_thread(request):
         form = ThreadForm(request.POST)
         if form.is_valid():
             thread = form.save(commit=False)
-            thread.created_by = request.user  # Set the thread creator to the logged-in user
+            thread.created_by = request.user  
             thread.save()
-            return redirect('thread_detail', thread_id=thread.id)  # Redirect to the thread detail page
+            return redirect('thread_detail', thread_id=thread.id)  
     else:
-        form = ThreadForm()  # Display an empty form for GET requests
+        form = ThreadForm()  
     return render(request, 'capstone/create_thread.html', {'form': form})
 
 @login_required
@@ -579,11 +607,11 @@ def mcreate_thread(request):
         form = ThreadForm(request.POST)
         if form.is_valid():
             thread = form.save(commit=False)
-            thread.created_by = request.user  # Set the thread creator to the logged-in user
+            thread.created_by = request.user  
             thread.save()
-            return redirect('mentorthread_detail', thread_id=thread.id)  # Redirect to the thread detail page
+            return redirect('mentorthread_detail', thread_id=thread.id)  
     else:
-        form = ThreadForm()  # Display an empty form for GET requests
+        form = ThreadForm()  
     return render(request, 'capstone/mentor-create_thread.html', {'form': form})
 
 @login_required
@@ -597,14 +625,12 @@ def reply_to_thread(request, thread_id):
 
 @login_required
 def vote_comment(request, comment_id, vote_type):
-    comment = get_object_or_404(Comment, id=comment_id)  # Fetch the comment or return 404 if not found
+    comment = get_object_or_404(Comment, id=comment_id)  
 
-    # Check if the user has already voted on this comment
+    
     existing_vote = Vote.objects.filter(user=request.user, comment=comment).first()
     if existing_vote:
-        # If the user has already voted, update the existing vote
         if existing_vote.vote_type != vote_type:
-            # If the vote type is different, update the vote and adjust the comment's vote count
             if vote_type == 'upvote':
                 comment.upvotes += 1
                 comment.downvotes -= 1
@@ -614,29 +640,28 @@ def vote_comment(request, comment_id, vote_type):
             existing_vote.vote_type = vote_type
             existing_vote.save()
     else:
-        # If the user hasn't voted yet, create a new vote
         if vote_type == 'upvote':
             comment.upvotes += 1
         else:
             comment.downvotes += 1
         Vote.objects.create(user=request.user, comment=comment, vote_type=vote_type)
 
-    # Save the updated vote counts
+    
     comment.save()
 
-    # Redirect back to the thread detail page
+    
     return redirect('thread_detail', thread_id=comment.thread.id)
 
 @login_required
 def mvote_comment(request, comment_id, vote_type):
-    comment = get_object_or_404(Comment, id=comment_id)  # Fetch the comment or return 404 if not found
+    comment = get_object_or_404(Comment, id=comment_id)  
 
-    # Check if the user has already voted on this comment
+    
     existing_vote = Vote.objects.filter(user=request.user, comment=comment).first()
     if existing_vote:
-        # If the user has already voted, update the existing vote
+        
         if existing_vote.vote_type != vote_type:
-            # If the vote type is different, update the vote and adjust the comment's vote count
+            
             if vote_type == 'upvote':
                 comment.upvotes += 1
                 comment.downvotes -= 1
@@ -646,27 +671,27 @@ def mvote_comment(request, comment_id, vote_type):
             existing_vote.vote_type = vote_type
             existing_vote.save()
     else:
-        # If the user hasn't voted yet, create a new vote
+        
         if vote_type == 'upvote':
             comment.upvotes += 1
         else:
             comment.downvotes += 1
         Vote.objects.create(user=request.user, comment=comment, vote_type=vote_type)
 
-    # Save the updated vote counts
+    
     comment.save()
 
-    # Redirect back to the thread detail page
+    
     return redirect('mentorthread_detail', thread_id=comment.thread.id)
 
 
 @login_required
 def delete_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
-    user = request.user  # Get the logged-in user
+    user = request.user  
 
-    # ✅ Check if user is the comment author, a mentor, or an admin
-    is_mentor = hasattr(user, 'mentor')  # If using a Mentor model
+  
+    is_mentor = hasattr(user, 'mentor')  
     is_admin = user.is_staff or user.is_superuser
 
     if user == comment.user or is_mentor or is_admin:
@@ -674,16 +699,16 @@ def delete_comment(request, comment_id):
         comment.delete()
         return redirect(reverse('thread_detail', args=[thread_id]))
     
-    # If unauthorized, return a forbidden response
+    
     return HttpResponseForbidden("You are not allowed to delete this comment.")
 
 @login_required
 def mdelete_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
-    user = request.user  # Get the logged-in user
+    user = request.user  
 
-    # ✅ Check if user is the comment author, a mentor, or an admin
-    is_mentor = hasattr(user, 'mentor')  # If using a Mentor model
+    
+    is_mentor = hasattr(user, 'mentor')  
     is_admin = user.is_staff or user.is_superuser
 
     if user == comment.user or is_mentor or is_admin:
@@ -691,13 +716,13 @@ def mdelete_comment(request, comment_id):
         comment.delete()
         return redirect(reverse('mentorthread_detail', args=[thread_id]))
     
-    # If unauthorized, return a forbidden response
+    
     return HttpResponseForbidden("You are not allowed to delete this comment.")
 
 
 def list_threads(request):
     
-    threads = Thread.objects.all().order_by('-created_at')  # Fetch all threads, ordered by most recent
+    threads = Thread.objects.all().order_by('-created_at')  
     return render(request, 'capstone/list_threads.html', {'threads': threads})
 
 def thread_detail(request, thread_id):
@@ -717,7 +742,7 @@ def vote_thread(request, thread_id, action):
 
 def mentorlist_threads(request):
     
-    threads = Thread.objects.all().order_by('-created_at')  # Fetch all threads, ordered by most recent
+    threads = Thread.objects.all().order_by('-created_at')  
     return render(request, 'capstone/mentor-list_threads.html', {'threads': threads})
 
 def thread_detail(request, thread_id):
@@ -809,7 +834,7 @@ def change_password(request):
     if request.method == 'POST':
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
-            user = form.save()  # Save the new password
+            user = form.save()  
             update_session_auth_hash(request, user)  # Keep the user logged in
             messages.success(request, 'Your password has been updated successfully.')
             return redirect('login')  # Redirect to the account settings page
@@ -872,6 +897,15 @@ def mentor_job_listings(request):
             job = form.save(commit=False)
             job.employer = request.user  # Assign logged-in mentor as employer
             job.save()
+
+             # ✅ Create notifications for all participants
+            participants = User.objects.filter(user_type='participant')
+            for participant in participants:
+                Notification.objects.create(
+                    user=participant,
+                    message=f"A new job has been posted: {job.title}."
+                )
+
             messages.success(request, "Job listing created successfully!")
             return redirect('mentor_job_listings')
     else:
@@ -882,3 +916,31 @@ def mentor_job_listings(request):
         'form': form,
     }
     return render(request, 'capstone/mentor-job_listings.html', context)
+
+@login_required
+def rate_mentor(request, mentor_id):
+    mentor = get_object_or_404(User, id=mentor_id, user_type='mentor')
+
+    if request.method == 'POST':
+        form = MentorRatingForm(request.POST)
+        if form.is_valid():
+            feedback = form.save(commit=False)
+            feedback.mentor = mentor
+            feedback.mentee = request.user  # The participant submitting the feedback
+            feedback.save()
+            messages.success(request, "Your feedback has been submitted successfully!")
+            return redirect('participant_dashboard')
+
+    else:
+        form = MentorRatingForm()
+
+    return render(request, 'capstone/rate_mentor.html', {'form': form, 'mentor': mentor})
+
+@login_required
+def notification_seen(request, notification_id, job_id):
+    """ Marks a notification as seen and redirects the mentor to manage applicants. """
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notification.is_seen = True
+    notification.save()
+
+    return redirect('manage_applicants', job_id=job_id)

@@ -23,7 +23,7 @@
                         <a class="nav-link" href="{% url 'mentor_dashboard' %}">Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'mentor_profile' %}">My Profile</a>
+                        <a class="nav-link" href="{% url 'mentor_profile' request.user.id %}">My Profile</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'mlearning_resources' %}">Learning Resources</a>
@@ -35,8 +35,9 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'upload_resource' %}">Upload Resources</a>
                         </li>
+                        
                         <li class="nav-item">
-                            <a href= "{% url 'mentorlist_threads' %}"> Discussion Forum </a>
+                            <a class="nav-link" href="{% url 'mentorlist_threads' %}">Discussion Forum</a>
                         </li>
                     
                     <li class="nav-item">

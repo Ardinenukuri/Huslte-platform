@@ -189,6 +189,8 @@ class JobApplication(models.Model):
     job_listing = models.ForeignKey(JobListing, on_delete=models.CASCADE, related_name='applications')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
     applied_at = models.DateTimeField(auto_now_add=True)
+    resume = models.FileField(upload_to='resumes/', blank=False, null=False)  # ✅ Resume file upload
+    cover_letter = models.TextField()
 
     def __str__(self):
         return f"{self.user.full_name} applied for {self.job_listing.title}"
@@ -199,6 +201,7 @@ class Notification(models.Model):
     is_read = models.BooleanField(default=False)
     is_seen = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    job_application = models.ForeignKey(JobApplication, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f"Notification for {self.user.username}"

@@ -12,31 +12,36 @@
 
 <!-- List of Mentees -->
 <section>
-    <h2>Your Mentees</h2>
-    <ul class="list-group">
-        {% for mentee in mentees %}
+    <h3>Mentees</h3>
+<ul class="list-group">
+    {% for mentee in mentees %}
         <li class="list-group-item">
-            <a href="{% url 'participant_profile' %}">{{ user.full_name }}</a>
+            <a href="{% url 'participant_profile' mentee.id %}" class="text-decoration-none">
+                {{ mentee.full_name }}
+            </a>
         </li>
-        {% empty %}
-        <li class="list-group-item">You have no mentees yet.</li>
-        {% endfor %}
-    </ul>
+    {% empty %}
+        <li class="list-group-item">No mentees yet.</li>
+    {% endfor %}
+</ul>
+
     
 </section>
 
 <!-- Feedback and Ratings -->
 <section>
-    <h2>Feedback and Ratings</h2>
-    <ul>
-        {% for feedback in feedbacks %}
-        <li>
-            <strong>{{ feedback.mentee.full_name }}</strong> - {{ feedback.rating }}/5.0
-            <p>{{ feedback.feedback }}</p>
+    <h3>Feedback & Ratings</h3>
+<ul class="list-group">
+    {% for feedback in feedbacks %}
+        <li class="list-group-item">
+            <strong>From:</strong> {{ feedback.mentee.full_name }} <br>
+            <strong>Rating:</strong> ⭐{{ feedback.rating }}/5 <br>
+            <strong>Feedback:</strong> {{ feedback.feedback }}
         </li>
-        {% empty %}
-        <li>No feedback yet.</li>
-        {% endfor %}
-    </ul>
+    {% empty %}
+        <li class="list-group-item">No feedback yet.</li>
+    {% endfor %}
+</ul>
+
 </section>
 {% endblock %}
