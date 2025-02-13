@@ -1,7 +1,7 @@
-# E-Learning Platform
+# Hustle Platform
 
 ## 📌 Overview
-This E-Learning Platform provides a structured online learning experience with mentorship, job opportunities, and a community forum. The platform allows users to register as mentors, mentees, or participants, enroll in courses, complete quizzes, track progress, and earn certificates.
+This Hustle Platform provides a structured online learning experience with mentorship, job opportunities, and a community forum. The platform allows users to register as mentors, mentees, or participants, enroll in courses, complete quizzes, track progress, and earn certificates.
 
 ## 🚀 Features
 - **User Authentication** (Mentors, Mentees, Participants, Admins)
