@@ -170,7 +170,7 @@ class JobSubmitForm(forms.ModelForm):
         required=True
     )
 
-    # Customizing the Cover Letter field
+    
     cover_letter = forms.CharField(
         required=True,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Write your cover letter...'}),
