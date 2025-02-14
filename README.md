@@ -61,62 +61,109 @@ python manage.py runserver
 Access the platform at: **http://127.0.0.1:8000/**
 
 ---
-## 🌍 Deployment Plan
+# Deployment Plan
 
-### 🏗️ **Infrastructure Setup**
-- **Frontend Deployment**: HTML, CSS, JavaScript served via **Azure Static Web Apps**
-- **Backend Deployment**: Django running on **Azure App Service**
-- **Database**: **Azure MySQL** for data storage
-- **Cache**: **Redis** for caching sessions and user progress
-- **File Storage**: **AWS S3** for storing course materials
-- **Task Queue**: **Celery with Redis** for handling background tasks
-- **CI/CD Pipeline**: **GitHub Actions** → Docker → **Azure Web App for Containers**
-- **Monitoring & Logging**: **Prometheus + Grafana**, ELK Stack (**Elasticsearch, Logstash, Kibana**)
-- **Security**: **SSL/TLS (Let's Encrypt), IAM Roles, Firewall Rules**
+## 🏗️ Infrastructure Setup
 
-### 🚀 **Deployment Steps**
-#### 1️⃣ **Backend Deployment (Django + MySQL)**
-```sh
-# SSH into the Azure VM
-ssh azureuser@your-server-ip
+- **Frontend Deployment:**  
+  - HTML, CSS, and JavaScript hosted via Render's Static Sites.
 
-# Clone latest updates from GitHub
-cd /var/www/hustle-platform
-git pull origin main
+- **Backend Deployment:**  
+  - Django application deployed as a Web Service on Render.
 
-# Activate Virtual Environment
-source myenv/bin/activate
+- **Database:**  
+  - MySQL
 
-# Install Dependencies
-pip install -r requirements.txt
 
-# Apply Migrations
-python manage.py migrate
 
-# Restart Gunicorn & Nginx
-sudo systemctl restart gunicorn
-sudo systemctl restart nginx
-```
+- **CI/CD Pipeline:**  
+  - GitHub repository integrated with Render for automatic builds and deployments (optionally, using GitHub Actions for pre-deployment testing).
 
-#### 2️⃣ **Frontend Deployment**
-```sh
-# Deploy to Azure Static Web Apps
-az staticwebapp create -n hustle-platform -g resource-group --source . --location centralus
-```
 
-#### 3️⃣ **CI/CD Pipeline (GitHub Actions)**
-- **Push to `main` branch → GitHub Actions triggers build → Docker image pushed to Azure → Auto-deployed**
-
-#### 4️⃣ **Monitoring & Maintenance**
-```sh
-# Check Application Logs
-journalctl -u gunicorn -f
-
-# Monitor Performance (Prometheus)
-curl http://localhost:9090/metrics
-```
+- **Security:**  
+  - Render auto-provisions SSL/TLS certificates (via Let's Encrypt). Manage environment-specific security settings like IAM roles and firewall rules as needed.
 
 ---
+
+## 🚀 Deployment Steps
+
+### 1️⃣ Backend Deployment (Django + MySQL)
+
+1. **Configure Render Web Service:**
+   - Log in to your Render dashboard.
+   - Create a new **Web Service** and connect your GitHub repository.
+   - Set your build command:
+     ```bash
+     pip install -r requirements.txt
+     ```
+   - Set your start command:
+     ```bash
+     gunicorn yourproject.wsgi:application
+     ```
+   - Configure necessary environment variables (e.g., `DATABASE_URL`, `REDIS_URL`, `SECRET_KEY`, etc.).
+
+2. **Run Migrations:**
+   - After deployment, use Render’s one-off command feature to apply migrations:
+     ```bash
+     python manage.py migrate
+     ```
+
+---
+
+### 2️⃣ Frontend Deployment
+
+1. **Configure Render Static Site:**
+   - Log in to your Render dashboard.
+   - Create a new **Static Site**.
+   - Connect your GitHub repository containing your static site (HTML, CSS, JavaScript).
+   - Specify a build command if needed (or leave blank if you’re directly deploying static files).
+   - Set the publish directory (e.g., `build/` if using a build step or the directory containing your static files).
+
+---
+
+### 3️⃣ CI/CD Pipeline
+
+- **Automated Deployments:**
+  - On every push to the main branch, Render automatically triggers a build and deployment for both your backend and frontend.
+  - Optionally, integrate GitHub Actions to run tests or build Docker images before code reaches Render.
+
+---
+
+### 4️⃣ Monitoring & Maintenance
+
+- **Check Application Logs:**
+  - Access logs directly in the Render dashboard for real-time insights.
+
+- **Monitor Performance:**
+  - Utilize Render's integrated metrics.
+  - For deeper monitoring, set up external tools like Prometheus and Grafana, or the ELK Stack.
+
+- **Scaling & Updates:**
+  - Adjust service settings, environment variables, and scaling options directly from the Render dashboard as your project grows.
+---
+
+## 🚀 Github Link
+- **Link**: https://github.com/Ardinenukuri/Huslte-platform 
+
+---
+
+
+## 🚀 Schemas
+- **Link**: https://drive.google.com/file/d/1k_WE9_2RY-QUunSFpTm-XDA9FpMIgj_M/view?usp=sharing
+
+---
+
+## 🚀 Figma Link
+- **Link**: https://www.figma.com/design/yWNk3qBfrRcBgWTraBCbpo/Hustle-Platform?node-id=11-161&t=lLQtFwR3sOn4T14o-1
+
+---
+
+
+## 🚀 Video Link
+- **Link**: https://youtu.be/cijsDEU4_FE
+
+---
+
 ## 🤝 Contribution Guidelines
 1. Fork the repository
 2. Create a new branch (`feature-branch-name`)
@@ -125,6 +172,4 @@ curl http://localhost:9090/metrics
 5. Create a pull request
 
 ---
-## 📄 License
-This project is licensed under the **MIT License**.
 
