@@ -135,3 +135,11 @@
         margin: 20px;
     }
 }
+
+.progress {
+    height: 25px; /* ✅ Make sure the value exists */
+}
+
+.some-class {
+    background-color: #f8f9fa;
+}

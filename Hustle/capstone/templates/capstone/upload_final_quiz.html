@@ -1,0 +1,52 @@
+{% extends 'mentor-base.html' %}
+{% block title %}Upload Final Quiz - Hustle Platform{% endblock %}
+
+{% block mentor_content %}
+<div class="container mt-4">
+    <h2>Upload Final Quiz</h2>
+    
+    <!-- Display Messages -->
+    {% if messages %}
+    <div class="alert alert-info">
+        {% for message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+
+        <!-- Select Course -->
+        <div class="mb-3">
+            <label for="resource" class="form-label">Select Course:</label>
+            <select name="resource" class="form-select" required>
+                {% for resource in resources %}
+                <option value="{{ resource.id }}">{{ resource.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Final Quiz Questions -->
+        <div class="card p-4 mb-3">
+            <h4>Final Quiz (10 Questions Required)</h4>
+            {% for i in "1234567890" %}
+            <div class="border p-3 mb-3">
+                <h5>Question {{ i }}</h5>
+                <label>Question:</label>
+                <input type="text" name="quiz_question_{{ i }}" class="form-control" required>
+
+                <label>Options (comma-separated):</label>
+                <input type="text" name="quiz_options_{{ i }}" class="form-control" required>
+
+                <label>Correct Answer:</label>
+                <input type="text" name="quiz_correct_answer_{{ i }}" class="form-control" required>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary">Upload Final Quiz</button>
+    </form>
+</div>
+{% endblock %}

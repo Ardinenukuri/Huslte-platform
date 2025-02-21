@@ -1,0 +1,35 @@
+{% extends 'participant-base.html' %}
+{% block title %}Progress - Hustle Platform{% endblock %}
+
+{% block participant_content %}
+<div class="container mt-4">
+    <h1 class="mb-4 text-center">Progress for {{ resource.title }}</h1>
+    <div class="progress">
+        <div class="progress-bar bg-info progress-bar-striped progress-bar-animated"
+             role="progressbar"
+             style="width: {{ progress }}%;"
+             aria-valuenow="{{ progress }}"
+             aria-valuemin="0" 
+             aria-valuemax="100">
+            {{ progress }}% Complete
+        </div>
+    </div>
+
+    {% if certificate_available %}
+<div class="card mt-4 shadow-lg border-success">
+    <div class="card-body text-center">
+        <h3 class="card-title text-success">🎉 Course Completed!</h3>
+        <p class="card-text">You've successfully completed this course. Download your certificate below.</p>
+        <a href="{% url 'download_certificate' resource.id %}" class="btn btn-success">
+            🎓 Download Certificate
+        </a>
+    </div>
+</div>
+{% else %}
+<p class="text-warning">⚠️ No certificate available yet. Complete all quizzes and chapters.</p>
+{% endif %}
+
+
+ 
+</div>
+{% endblock %}

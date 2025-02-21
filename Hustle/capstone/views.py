@@ -1,15 +1,17 @@
-import datetime
+from datetime import datetime
 from msvcrt import getch
 from sre_parse import parse_template
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
-from .forms import LoginForm, SignUpForm, ParticipantProfileForm, JobSubmitForm, MentorProfileForm, MentorRatingForm, JobUploadForm, FeedbackForm, ResourceSearchForm, ResourceUploadForm, RatingForm, MentorshipRequestForm, SessionForm, ChatMessageForm, JobApplicationForm, MentorshipResponseForm, ThreadForm, ChangeEmailForm, PasswordChangeForm, DeleteAccountForm
+from .forms import LoginForm, SignUpForm, ParticipantProfileForm, ScheduleSessionForm, ScheduledSessionForm,MentorAvailabilityForm,ChapterQuizForm, FinalQuizForm,JobSubmitForm, MentorProfileForm, MentorRatingForm, JobUploadForm, FeedbackForm, ResourceSearchForm, ResourceUploadForm, RatingForm, MentorshipRequestForm, SessionForm, ChatMessageForm, JobApplicationForm, MentorshipResponseForm, ThreadForm, ChangeEmailForm, PasswordChangeForm, DeleteAccountForm
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import User, MenteeActivity, Question, Message, ParticipantProfile, MentorProfile, Feedback, Progress, Resource, MentorshipRequest, ChatMessage, Session, JobListing, SavedJob, JobApplication, Notification, Thread, Comment, Vote
+from .models import User, MenteeActivity, Question, Message, ParticipantProfile, ScheduledSession, MentorAvailability, Rating, UserProgress, Chapter, Quiz, Certificate, MentorProfile, Feedback, Progress, Resource, MentorshipRequest, ChatMessage, Session, JobListing, SavedJob, JobApplication, Notification, Thread, Comment, Vote
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse
 from django.db.models import Avg
 from .google_calendar import get_google_calendar_service, create_calendar_event
+from datetime import timedelta
+from django.utils.timezone import now
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.http import HttpResponseForbidden
@@ -17,6 +19,25 @@ from django.contrib.auth import update_session_auth_hash, logout
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from capstone.utils import generate_certificate
+import os
+from reportlab.lib import colors
+from reportlab.lib.utils import simpleSplit
+from reportlab.lib.colors import black, blue
+from django.forms import inlineformset_factory
+import logging
+from io import BytesIO
+from django.core.files import File
+from django.http import FileResponse
+from django.core.files.base import ContentFile
+from reportlab.pdfbase.ttfonts import TTFont
+import re
+from reportlab.pdfbase import pdfmetrics
+
+logger = logging.getLogger(__name__)
 
 def homepage(request):
     return render(request, 'capstone/homepage.html')
@@ -111,7 +132,7 @@ def participant_dashboard(request, participant_id=None):
 def mentor_dashboard(request):
     if request.user.user_type != 'mentor' and not request.user.is_superuser:
         return redirect('login')   
-    notifications = Notification.objects.filter(user=request.user, is_seen=False).order_by('-created_at')
+    notifications = Notification.objects.filter(user=request.user, is_seen= False).order_by('-created_at')
     mentees = User.objects.filter(
         id__in=MentorshipRequest.objects.filter(mentor=request.user, status='approved').values_list('mentee_id', flat=True)
     )
@@ -131,24 +152,34 @@ def mentor_dashboard(request):
 def participant_profile(request, participant_id):
     participant = get_object_or_404(User, id=participant_id, user_type='participant')
     profile, created = ParticipantProfile.objects.get_or_create(user=participant)
-    progress = Progress.objects.filter(participant=request.user)
-    total_tasks = progress.count()
-    completed_tasks = progress.filter(completed=True).count()
-    progress_percentage = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
     
+    # Fetch completed certificates
+    certificates = Certificate.objects.filter(user=participant)
+
     if request.method == 'POST':
         form = ParticipantProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
-            return redirect('participant_profile')
+            return redirect('participant_profile', participant_id=participant_id)
     else:
         form = ParticipantProfileForm(instance=profile)
-    return render(request, 'capstone/participant_profile.html', {'form': form, 'progress_percentage': progress_percentage, 'participant': participant})
+
+    return render(request, 'capstone/participant_profile.html', {
+        'form': form,
+        'participant': participant,
+        'certificates': certificates
+    })
 
 @login_required
 def mentor_profile(request, mentor_id):
     mentor = get_object_or_404(User, id=mentor_id, user_type='mentor')
     profile, created = MentorProfile.objects.get_or_create(user=mentor)
+    
+    # ✅ Fetch Mentor Availability
+    availability_slots = MentorAvailability.objects.filter(mentor=mentor).order_by("date", "start_time")
+    
+    print(f"✅ Fetched Availability: {availability_slots}")  # Debugging
+
     mentees = User.objects.filter(
         id__in=MentorshipRequest.objects.filter(mentor=mentor, status='approved').values_list('mentee_id', flat=True)
     )
@@ -168,6 +199,7 @@ def mentor_profile(request, mentor_id):
         'mentor': mentor,
         'mentees': mentees,
         'feedbacks': feedbacks,
+        'availability_slots': availability_slots,  # ✅ Pass availability to template
     })
 
 @login_required
@@ -185,53 +217,23 @@ def submit_feedback(request, mentor_id):
         form = FeedbackForm()
     return render(request, 'capstone/submit_feedback.html', {'form': form, 'mentor': mentor})
 
+@login_required
 def learning_resources(request):
-    base_template = "mentor-base.html" if request.user.is_authenticated and request.user.user_type == "mentor" else "participant-base.html"
-    resources = Resource.objects.all().annotate(avg_rating=Avg('ratings__rating')).order_by('id')
-    mentorship_requests = MentorshipRequest.objects.filter(mentee=request.user)
-    form = ResourceSearchForm(request.GET)
-
-    if form.is_valid():
-        keyword = form.cleaned_data.get('keyword')
-        topic = form.cleaned_data.get('topic')
-        format = form.cleaned_data.get('format')
-        difficulty = form.cleaned_data.get('difficulty')
-
-        if keyword:
-            resources = resources.filter(title__icontains=keyword)
-        if topic:
-            resources = resources.filter(topic__icontains=topic)
-        if format:
-            resources = resources.filter(format=format)
-        if difficulty:
-            resources = resources.filter(difficulty=difficulty)
-
-    paginator = Paginator(resources, 5)  
-    page_number = request.GET.get('page')
-    if not page_number: 
-        page_number = 1
-    try:
-        resources = paginator.page(page_number)
-    except PageNotAnInteger:
-        resources = paginator.page(1)
-    except EmptyPage:
-        resources = paginator.page(paginator.num_pages)
-
     resources = Resource.objects.all()
-
-    context = {
-        'resources': resources,
-        'form': form,
-        'mentorship_requests': mentorship_requests,
-        "base_template": base_template,
-    }
-    return render(request, 'capstone/learning_resources.html', context)
+    user_progress = UserProgress.objects.filter(user=request.user)
+    
+    return render(request, "capstone/learning_resources.html", {
+        "resources": resources,
+        "user_progress": user_progress
+    })   
 
 def mlearning_resources(request):
     base_template = "mentor-base.html" if request.user.is_authenticated and request.user.user_type == "mentor" else "participant-base.html"
     resources = Resource.objects.all().annotate(avg_rating=Avg('ratings__rating')).order_by('id')
     mentorship_requests = MentorshipRequest.objects.filter(mentee=request.user)
     form = ResourceSearchForm(request.GET)
+
+    
 
     if form.is_valid():
         keyword = form.cleaned_data.get('keyword')
@@ -272,37 +274,34 @@ def mlearning_resources(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
-def upload_resource(request):
-    if request.method == 'POST':
-        form = ResourceUploadForm(request.POST)
-        if form.is_valid():
-            form.save()
-            participants = User.objects.filter(user_type='participant')
-            for participant in participants:
-                Notification.objects.create(
-                    user=participant,
-                    message=f"A new resource has been uploaded"
-                )
-            return redirect('mentor_dashboard')
-    else:
-        form = ResourceUploadForm()
-    return render(request, 'capstone/upload_resource.html', {'form': form})
-
-@login_required
 def rate_resource(request, resource_id):
     resource = get_object_or_404(Resource, id=resource_id)
+    
+    # Check if user has already rated
+    user_rating = Rating.objects.filter(resource=resource, user=request.user).first()
+
     if request.method == 'POST':
-        form = RatingForm(request.POST)
+        form = RatingForm(request.POST, instance=user_rating)  # Pre-fill if rating exists
         if form.is_valid():
             rating = form.save(commit=False)
             rating.resource = resource
             rating.user = request.user
             rating.save()
+
+            print(f"⭐ Rating saved: {rating.rating}/5 by {request.user.full_name} for {resource.title}")
             return redirect('learning_resources')
+
+        else:
+            print("Form errors:", form.errors)  # Debugging
     else:
-        form = RatingForm()
-    return render(request, 'capstone/rate_resource.html', {'form': form, 'resource': resource})
+        form = RatingForm(instance=user_rating)
+
+    return render(request, 'capstone/rate_resource.html', {
+        'form': form,
+        'resource': resource,
+        'user_rating': user_rating
+    })
+
 
 @login_required
 def submit_mentorship_request(request):
@@ -951,7 +950,19 @@ def notification_seen(request, notification_id, job_id):
 
     return redirect('manage_applicants', job_id=job_id)
 
+@login_required
+def mark_notification_seen(request, notification_id):
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notification.is_seen = True
+    notification.save()
+    return redirect('mentor_dashboard')
 
+@login_required
+def pmark_notification_seen(request, notification_id):
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notification.is_seen = True
+    notification.save()
+    return redirect('participant_dashboard')
 
 @login_required
 def update_application_status(request, application_id, status):
@@ -975,3 +986,659 @@ def update_application_status(request, application_id, status):
     # ✅ Remove application from Manage Applicants Page (Redirect back)
     messages.success(request, f"Application {status.replace('_', ' ')} successfully!")
     return redirect('manage_applicants', job_id=job_application.job_listing.id)
+
+
+@login_required
+def delete_job_listing(request, job_id):
+    job_listing = get_object_or_404(JobListing, id=job_id, employer=request.user)
+
+    if request.method == "POST":
+        job_listing.delete()
+        messages.success(request, "Job listing deleted successfully.")
+        return redirect('mentor_job_listings')  # ✅ Redirect back to the job listings page
+
+    return render(request, 'capstone/delete_job_listing.html', {'job_listing': job_listing})
+
+@login_required
+def delete_learning_resource(request, resource_id):
+    resource = get_object_or_404(Resource, id=resource_id)
+
+    if request.method == "POST":
+        resource.delete()
+        messages.success(request, "Resource deleted successfully.")
+        return redirect('mlearning_resources')  # ✅ Redirect back to mentor's resource page
+
+    return render(request, 'capstone/delete_learning_resource.html', {'resource': resource})
+
+@login_required
+def delete_certificate(request, certificate_id):
+    certificate = get_object_or_404(Certificate, id=certificate_id, user=request.user)
+    
+    if certificate.certificate_file:
+        certificate.certificate_file.delete()  # Delete file from storage
+
+    certificate.delete()
+    messages.success(request, "📜 Certificate deleted successfully.")
+    return redirect('participant_profile', participant_id=request.user.id)
+
+
+@login_required
+def issue_certificate(request, resource_id):
+    resource = get_object_or_404(Resource, id=resource_id)
+    progress = UserProgress.objects.get(user=request.user, resource=resource)
+
+    if progress.progress_percentage() < 100 or not progress.final_score:
+        messages.error(request, "You must complete all chapters and pass the final quiz before getting a certificate.")
+        return redirect("course_detail", resource_id=resource.id)
+    
+    certificate = generate_certificate(resource, progress.final_score)
+
+    messages.success(request, "Certificate generated successfully!")
+    return redirect("participant_profile", participant_id=request.user.id)
+
+
+@login_required
+def enroll_course(request, resource_id):
+    resource = get_object_or_404(Resource, id=resource_id)
+    progress, created = UserProgress.objects.get_or_create(user=request.user, resource=resource)
+    return redirect("course_detail", resource_id=resource.id)
+
+@login_required
+def course_detail(request, resource_id):
+    """Displays course details with chapters, quizzes, progress, and final quiz eligibility."""
+    resource = get_object_or_404(Resource, id=resource_id)
+    progress, created = UserProgress.objects.get_or_create(user=request.user, resource=resource)
+
+    # Check if the final quiz exists
+    final_quiz = Quiz.objects.filter(resource=resource, is_final_quiz=True).first()
+    final_quiz_exists = final_quiz is not None  # Boolean flag for template
+
+    return render(request, "capstone/course_detail.html", {
+        "resource": resource,
+        "progress": progress,
+        "final_quiz_exists": final_quiz_exists,
+        "final_quiz": final_quiz  # Pass the final quiz object
+    })
+
+
+@login_required
+def mark_chapter_done(request, chapter_id):
+    chapter = get_object_or_404(Chapter, id=chapter_id)
+    progress = UserProgress.objects.get(user=request.user, resource=chapter.resource)
+
+    if chapter not in progress.completed_chapters.all():
+        progress.completed_chapters.add(chapter)
+        progress.save()
+    
+    return redirect("course_detail", resource_id=chapter.resource.id)
+
+
+@login_required
+@user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
+def upload_resource(request):
+    """
+    Allows mentors to upload a course along with 5 chapters.
+    """
+    ChapterFormSet = inlineformset_factory(
+        Resource, Chapter, fields=('title', 'content'),
+        extra=5, min_num=5, max_num=5, can_delete=False
+    )
+
+    if request.method == 'POST':
+        form = ResourceUploadForm(request.POST, request.FILES)  # Handle File Upload
+        formset = ChapterFormSet(request.POST)
+
+        if form.is_valid() and formset.is_valid():
+            resource = form.save(commit=False)
+            resource.created_by = request.user
+            resource.save()
+
+            chapters = formset.save(commit=False)
+            for i, chapter in enumerate(chapters, start=1):
+                chapter.resource = resource
+                chapter.chapter_number = i 
+                chapter.save()
+
+            # ✅ Notify All Participants
+            participants = User.objects.filter(user_type='participant')
+            for participant in participants:
+                Notification.objects.create(
+                    user=participant,
+                    message=f"A new course '{resource.title}' has been uploaded!",
+                    is_seen=False
+                )
+
+            messages.success(request, "Course uploaded with 5 chapters successfully!")
+            return redirect('mentor_dashboard')
+
+        else:
+            messages.error(request, "Error uploading resource. Please check the form.")
+
+    else:
+        form = ResourceUploadForm()
+        formset = ChapterFormSet()
+
+    return render(request, 'capstone/upload_resource.html', {'form': form, 'formset': formset})
+
+
+@login_required
+def take_quiz(request, quiz_id):
+    """Handles quiz attempt, ensuring all five questions per quiz are displayed and scored correctly."""
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    progress, created = UserProgress.objects.get_or_create(user=request.user, resource=quiz.chapter.resource)
+
+    previous_attempt = progress.quiz_attempts.get(str(quiz_id), None) 
+
+    if request.method == 'POST':
+        user_answers = {}
+        correct_answers = 0
+
+        for i, question in enumerate(quiz.questions, start=1):
+            question_text = question.get("question")  # Extract question text
+            selected_answer = request.POST.get(f'answer_{i}')  # Get user answer
+
+            if selected_answer == question.get("correct_answer"):
+                correct_answers += 1
+
+            user_answers[question_text] = selected_answer
+
+            score_percentage = (correct_answers / len(quiz.questions)) * 100  # Calculate score
+
+        # Store user attempt
+        progress.quiz_attempts[str(quiz_id)] = {
+            "answers": user_answers,
+            "score": score_percentage
+        }
+        progress.save()
+
+        # Passing criteria: At least 4 correct answers out of 5
+        required_score = 4  
+
+        if correct_answers >= required_score:
+            progress.completed_quizzes.add(quiz)
+            progress.save()
+            messages.success(request, "🎉 Quiz passed successfully!")
+        else:
+            progress.retry_after = now() + timedelta(days=2)
+            progress.save()
+            messages.error(request, "❌ Quiz failed! Try again in 48 hours.")
+
+        return redirect('course_detail', resource_id=quiz.chapter.resource.id)
+
+    return render(request, 'capstone/take_quiz.html', {'quiz': quiz, 'previous_attempt': previous_attempt})
+
+
+@login_required
+def take_final_quiz(request, quiz_id):
+    """Handles the final quiz attempt."""
+    quiz = get_object_or_404(Quiz, id=quiz_id, is_final_quiz=True)
+    progress, created = UserProgress.objects.get_or_create(user=request.user, resource=quiz.resource)
+
+    previous_attempt = progress.quiz_attempts.get(str(quiz_id), None)
+
+    if request.method == 'POST':
+        user_answers = {}
+        correct_answers = 0
+
+        for i, question in enumerate(quiz.questions, start=1):
+            question_text = question.get("question")
+            selected_answer = request.POST.get(f'answer_{i}')
+
+            if selected_answer == question.get("correct_answer"):
+                correct_answers += 1
+
+            user_answers[question_text] = selected_answer
+
+        score_percentage = (correct_answers / len(quiz.questions)) * 100  
+
+        # Store attempt
+        progress.quiz_attempts[str(quiz_id)] = {
+            "answers": user_answers,
+            "score": score_percentage
+        }
+        progress.save()
+
+        required_score = 8  # Final quiz requires 8 correct answers
+
+        if correct_answers >= required_score:
+            progress.completed_quizzes.add(quiz)
+            progress.save()
+            messages.success(request, "🎉 Final Quiz passed successfully!")
+        else:
+            progress.retry_after = now() + timedelta(days=2)
+            progress.save()
+            messages.error(request, "❌ Final Quiz failed! Try again in 48 hours.")
+
+        return redirect('course_detail', resource_id=quiz.resource.id)
+
+    return render(request, 'capstone/take_final_quiz.html', {'quiz': quiz, 'previous_attempt': previous_attempt})
+
+
+@login_required
+def check_progress(request, resource_id):
+    resource = get_object_or_404(Resource, id=resource_id)
+    progress, created = UserProgress.objects.get_or_create(user=request.user, resource=resource)
+
+    total_chapters = resource.chapters.count()
+    completed_chapters = progress.completed_chapters.count()
+    total_quizzes = Quiz.objects.filter(resource=resource).count()
+    completed_quizzes = progress.completed_quizzes.count()
+
+    chapter_percentage = (completed_chapters / total_chapters) * 50 if total_chapters else 0
+    quiz_percentage = (completed_quizzes / total_quizzes) * 50 if total_quizzes else 0
+    total_progress = chapter_percentage + quiz_percentage
+
+    if total_progress >= 100:
+        certificate, created = Certificate.objects.get_or_create(
+            user=request.user, resource=resource,
+            defaults={"issued_at": now()}
+        )
+
+        if created or not certificate.certificate_file:
+            buffer = BytesIO()
+            pdf = canvas.Canvas(buffer, pagesize=landscape(letter))  # **Set to Landscape**
+            width, height = landscape(letter)  # Get width & height for centering
+
+            pdf.setTitle("Certificate of Completion")
+
+            # **Certificate Design (Now Adjusted for Landscape)**
+            pdf.setFont("Helvetica-Bold", 30)
+            pdf.drawCentredString(width / 2, height - 100, "Certificate of Completion")
+
+            pdf.setFont("Helvetica", 16)
+            pdf.drawCentredString(width / 2, height - 140, "This is proudly presented to")
+
+            pdf.setFont("Helvetica-Bold", 24)
+            pdf.setFillColor("blue")
+            pdf.drawCentredString(width / 2, height - 180, f"{request.user.get_full_name()}")
+            pdf.setFillColor("black")
+
+            pdf.setFont("Helvetica", 14)
+            pdf.drawCentredString(width / 2, height - 220, "for successfully completing the course:")
+
+            pdf.setFont("Helvetica-Bold", 18)
+            pdf.drawCentredString(width / 2, height - 250, f"{resource.title}")
+
+            pdf.setFont("Helvetica", 12)
+            pdf.drawCentredString(width / 2, height - 300, "Issued by: Hustle Platform")
+
+            pdf.setFont("Helvetica", 12)
+            pdf.drawCentredString(width / 2, height - 320, f"Date: {now().strftime('%Y-%m-%d')}")
+
+            pdf.showPage()
+            pdf.save()
+
+            buffer.seek(0)
+            certificate_filename = f"certificates/{request.user.username}_{resource.id}_certificate.pdf"
+            certificate.certificate_file.save(certificate_filename, ContentFile(buffer.read()))
+            certificate.save()
+
+    return render(request, 'capstone/progress.html', {
+        "resource": resource,
+        "progress": total_progress,
+        "certificate_available": Certificate.objects.filter(user=request.user, resource=resource).exists()
+    })
+
+@login_required
+@user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
+def upload_chapter_quiz(request):
+    """
+    Allows mentors to add quizzes to specific chapters of a course.
+    """
+    resources = Resource.objects.all()
+    chapters = Chapter.objects.all()
+
+    if request.method == 'POST':
+        resource_id = request.POST.get("resource")
+        chapter_id = request.POST.get("chapter")
+
+        resource = get_object_or_404(Resource, id=resource_id)
+        chapter = get_object_or_404(Chapter, id=chapter_id)
+
+        quiz_questions = []
+        for i in range(1, 6):
+            question_text = request.POST.get(f'quiz_question_{i}')
+            options = request.POST.get(f'quiz_options_{i}', "").split(',')
+            correct_answer = request.POST.get(f'quiz_correct_answer_{i}')
+
+            if question_text and options and correct_answer:
+                quiz_questions.append({
+                    "question": question_text.strip(),
+                    "options": [opt.strip() for opt in options if opt.strip()],
+                    "correct_answer": correct_answer.strip()
+                })
+
+        if quiz_questions:
+            Quiz.objects.create(resource=resource, chapter=chapter, questions=quiz_questions)
+
+        messages.success(request, "Quiz uploaded successfully!")
+        return redirect('mentor_dashboard')
+
+    return render(request, 'capstone/upload_chapter_quiz.html', {'resources': resources, 'chapters': chapters})
+
+@login_required
+@user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
+def upload_final_quiz(request):
+    """Allows mentors to upload a final quiz for a selected course"""
+    resources = Resource.objects.all()  # Get all courses for dropdown
+
+    if request.method == 'POST':
+        resource_id = request.POST.get('resource')
+        resource = get_object_or_404(Resource, id=resource_id)
+
+        quiz_questions = []
+        for i in range(1, 11):  # Ensure 10 questions are collected
+            question_text = request.POST.get(f'quiz_question_{i}')
+            options = request.POST.get(f'quiz_options_{i}', "").split(',')
+            correct_answer = request.POST.get(f'quiz_correct_answer_{i}')
+
+            if question_text and options and correct_answer:
+                quiz_questions.append({
+                    "question": question_text.strip(),
+                    "options": [opt.strip() for opt in options if opt.strip()],
+                    "correct_answer": correct_answer.strip()
+                })
+
+        if quiz_questions:
+            # Ensure only ONE final quiz per resource
+            final_quiz, created = Quiz.objects.get_or_create(
+                resource=resource, 
+                is_final_quiz=True, 
+                defaults={"questions": quiz_questions}
+            )
+            if not created:
+                final_quiz.questions = quiz_questions
+                final_quiz.save()
+
+            messages.success(request, "Final Quiz uploaded successfully!")
+            return redirect('mentor_dashboard')
+
+    return render(request, 'capstone/upload_final_quiz.html', {"resources": resources})
+
+
+@login_required
+def reset_quiz(request, quiz_id):
+    """Clears previous quiz attempt and redirects back to take the quiz again."""
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    progress, created = UserProgress.objects.get_or_create(user=request.user, resource=quiz.chapter.resource)
+
+    # Remove the stored attempt
+    if str(quiz_id) in progress.quiz_attempts:
+        del progress.quiz_attempts[str(quiz_id)]
+        progress.save()
+
+    messages.info(request, "🔄 Your previous attempt has been reset. You can take the quiz again.")
+
+    return redirect('take_quiz', quiz_id=quiz_id)
+
+@login_required
+def reset_final_quiz(request, quiz_id):
+    """Clears previous attempt for the final quiz and allows retry."""
+    quiz = get_object_or_404(Quiz, id=quiz_id, is_final_quiz=True)
+    progress, created = UserProgress.objects.get_or_create(user=request.user, resource=quiz.resource)
+
+    # Remove previous attempt for this quiz
+    if str(quiz_id) in progress.quiz_attempts:
+        del progress.quiz_attempts[str(quiz_id)]
+        progress.save()
+
+    messages.info(request, "🔄 Your previous final quiz attempt has been reset. You can take the quiz again.")
+
+    return redirect('take_final_quiz', quiz_id=quiz_id)
+
+
+@login_required
+def download_certificate(request, resource_id):
+    certificate = get_object_or_404(Certificate, user=request.user, resource_id=resource_id)
+    if certificate.certificate_file:
+        return redirect(certificate.certificate_file.url)
+    else:
+        messages.error(request, "Certificate not found.")
+        return redirect('participant_profile', participant_id=request.user.id)
+
+
+@login_required
+def generate_certificate(request, resource_id):
+    if request.method == "POST":
+        full_name = request.POST.get("full_name")
+        course_title = request.POST.get("course_title")
+
+        if not full_name or not course_title:
+            messages.error(request, "Please enter your name and select a course.")
+            return redirect("course_detail", resource_id=resource_id)
+
+        resource = get_object_or_404(Resource, id=resource_id)
+
+        # Check if the user already has a certificate
+        certificate, created = Certificate.objects.get_or_create(
+            user=request.user, resource=resource,
+            defaults={"issued_at": now()}
+        )
+
+        # ✅ Dynamically locate Pacifico font
+        pacifico_path = os.path.join(settings.STATICFILES_DIRS[0], "fonts", "Pacifico.ttf")
+
+        # Check if the font file exists before registering it
+        if not os.path.exists(pacifico_path):
+            messages.error(request, "Pacifico font file is missing! Please upload the font to static/fonts.")
+            return redirect("course_detail", resource_id=resource_id)
+
+        pdfmetrics.registerFont(TTFont("Pacifico", pacifico_path))
+
+        # ✅ Create directory if it doesn't exist
+        certificates_dir = os.path.join(settings.MEDIA_ROOT, "certificates")
+        os.makedirs(certificates_dir, exist_ok=True)
+
+        # File Path
+        pdf_filename = f"certificate_{request.user.username}_{resource.id}.pdf"
+        pdf_path = os.path.join(certificates_dir, pdf_filename)
+
+        # ✅ Create and style the certificate
+        c = canvas.Canvas(pdf_path, pagesize=letter)
+        width, height = letter
+
+        # Add border
+        c.setStrokeColor(colors.black)
+        c.setLineWidth(4)
+        c.rect(20, 20, width - 40, height - 40)
+
+        # Title
+        c.setFont("Helvetica-Bold", 30)
+        c.drawCentredString(width / 2, height - 100, "Certificate of Completion")
+
+        # Subtitle
+        c.setFont("Helvetica", 16)
+        c.drawCentredString(width / 2, height - 140, "This is proudly presented to")
+
+        # Participant's Name
+        c.setFont("Helvetica-Bold", 24)
+        c.setFillColor(colors.darkblue)
+        c.drawCentredString(width / 2, height - 180, full_name)
+        c.setFillColor(colors.black)
+
+        # Course Completion Text
+        c.setFont("Helvetica", 14)
+        c.drawCentredString(width / 2, height - 220, "for successfully completing the course:")
+
+        # ✅ Bold Course Title
+        c.setFont("Helvetica-Bold", 16)
+        c.drawCentredString(width / 2, height - 250, course_title)
+
+        # Issuer Info
+        c.setFont("Helvetica", 12)
+        c.drawCentredString(width / 2, height - 290, f"Issued by: Hustle Platform")
+        c.drawCentredString(width / 2, height - 310, f"Date: {now().strftime('%Y-%m-%d')}")
+
+        # Signature Line
+        c.line(width / 2 - 100, height - 370, width / 2 + 100, height - 370)
+
+        # ✅ Styled Mentor's Signature in Pacifico Font (Size 50)
+        c.setFont("Pacifico", 50)
+        c.setFillColor(colors.blue)
+        c.drawCentredString(width / 2, height - 410, "HP")
+        c.setFillColor(colors.black)
+
+        # Save Certificate
+        c.save()
+
+        # Save path to model
+        certificate.certificate_file.save(f"certificates/{pdf_filename}", ContentFile(open(pdf_path, "rb").read()))
+        certificate.save()
+
+        messages.success(request, "🎓 Certificate generated successfully! You can now download it from your profile.")
+
+        # Offer direct download
+        return FileResponse(open(pdf_path, "rb"), as_attachment=True, filename=f"{full_name}_certificate.pdf")
+
+    return redirect("course_detail", resource_id=resource_id)
+
+@login_required
+@user_passes_test(lambda u: u.user_type == "mentor")
+def mentor_add_availability(request):
+    if request.method == "POST":
+        form = MentorAvailabilityForm(request.POST)
+        if form.is_valid():
+            availability = form.save(commit=False)
+            availability.mentor = request.user
+            availability.save()
+            
+            # ✅ Debugging Statement
+            print(f"✅ Availability Saved: {availability.date} {availability.start_time}-{availability.end_time} for {availability.mentor.full_name}")
+            
+            messages.success(request, "Availability added successfully!")
+            return redirect("mentor_dashboard")
+        else:
+            print("❌ Form errors:", form.errors)  # ✅ Debugging
+    else:
+        form = MentorAvailabilityForm()
+
+    return render(request, "capstone/mentor_add_availability.html", {"form": form})
+
+
+def remove_emojis(text):
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F600-\U0001F64F"  # Emoticons
+        "\U0001F300-\U0001F5FF"  # Symbols & pictographs
+        "\U0001F680-\U0001F6FF"  # Transport & map symbols
+        "\U0001F1E0-\U0001F1FF"  # Flags (iOS)
+        "]+",
+        flags=re.UNICODE,
+    )
+    return emoji_pattern.sub(r"", text)  # Remove emojis
+
+@login_required
+def schedule_session(request, mentor_id, session_id):
+    mentor = get_object_or_404(User, id=mentor_id, user_type='mentor')
+    available_session = get_object_or_404(MentorAvailability, id=session_id, mentor=mentor)
+
+    if available_session.date < now().date():
+        messages.error(request, "You cannot schedule a session in the past.")
+        return redirect('mentor_profile', mentor_id=mentor.id)
+
+    if available_session.is_booked:
+        messages.error(request, "This session slot has already been booked.")
+        return redirect('mentor_profile', mentor_id=mentor.id)
+
+    if request.method == 'POST':
+        form = ScheduleSessionForm(request.POST)
+        if form.is_valid():
+            session = form.save(commit=False)
+            session.participant = request.user
+            session.mentor = mentor
+            session.date = available_session.date
+            session.time = available_session.start_time
+            session.notes = remove_emojis(form.cleaned_data['notes'])
+            session.is_confirmed = False
+            session.save()
+
+            # Mark the slot as booked
+            available_session.is_booked = True
+            available_session.save()
+
+            notification_message = remove_emojis(
+                f"📅 New session request from {request.user.full_name} on {session.date} at {session.time}. Notes: {session.notes}"
+            )
+
+            Notification.objects.create(
+                user=mentor,  # ✅ Ensures the mentor receives it
+                message=notification_message
+            )
+
+
+            messages.success(request, "✅ Session scheduled successfully! The mentor has been notified.")
+            return redirect('participant_dashboard')
+    else:
+        form = ScheduleSessionForm()
+
+    return render(request, 'capstone/schedule_session.html', {
+        'form': form,
+        'mentor': mentor,
+        'available_session': available_session,
+    })
+
+@login_required
+def mentor_sessions(request):
+    if request.user.user_type != 'mentor':
+        return redirect('mentor_dashboard')
+
+    sessions = ScheduledSession.objects.filter(
+        mentor=request.user
+    ).select_related('participant').order_by('date', 'start_time')
+
+    print(f"✅ Sessions Fetched for {request.user.full_name}: {sessions}")  # Debugging
+
+    return render(request, 'capstone/mentor_sessions.html', {'sessions': sessions})
+
+
+
+@login_required
+@user_passes_test(lambda u: u.user_type == "mentor")
+def confirm_session(request, session_id):
+    session = get_object_or_404(ScheduledSession, id=session_id, mentor=request.user)
+
+    if request.method == "POST":
+        session.is_confirmed = True
+        session.save()
+
+         
+
+        # Notify the participant
+        Notification.objects.create(
+            user=session.participant,
+            message=f"Your session with {session.mentor.full_name} on {session.date} at {session.start_time} has been confirmed!"
+        )
+
+        messages.success(request, "Session confirmed successfully!")
+        return redirect("mentor_dashboard")
+
+    return render(request, "capstone/confirm_session.html", {"session": session})
+
+@login_required
+def view_mentor_availability(request, mentor_id):
+    mentor = get_object_or_404(User, id=mentor_id, user_type='mentor')
+    available_slots = MentorAvailability.objects.filter(mentor=mentor)
+
+    return render(request, 'capstone/mentor_availability.html', {
+        'mentor': mentor,
+        'available_slots': available_slots
+    })
+
+
+@login_required
+def schedule_availability(request):
+    if request.user.user_type != 'mentor':
+        return redirect('mentor_dashboard')
+
+    if request.method == 'POST':
+        form = ScheduledSessionForm(request.POST)
+        if form.is_valid():
+            availability = form.save(commit=False)
+            availability.mentor = request.user
+            availability.save()
+            messages.success(request, "✅ Availability added successfully!")
+            return redirect('mentor_dashboard')
+    else:
+        form = ScheduledSessionForm()
+
+    return render(request, 'capstone/schedule_availability.html', {'form': form})

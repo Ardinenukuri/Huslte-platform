@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Avg
 
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
@@ -75,36 +76,29 @@ class Feedback(models.Model):
         return f"Feedback for {self.mentor.full_name} from {self.mentee.full_name}"
     
 class Progress(models.Model):
-    participant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='progress')
+    participant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='progress_records')
     task = models.CharField(max_length=255)
     completed = models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Progress for {self.participant.full_name} - {self.task}"
-    
+ 
 class Resource(models.Model):
-    FORMAT_CHOICES = [
-        ('article', 'Article'),
-        ('video', 'Video'),
-        ('ebook', 'E-Book'),
-    ]
-    DIFFICULTY_CHOICES = [
-        ('beginner', 'Beginner'),
-        ('intermediate', 'Intermediate'),
-        ('advanced', 'Advanced'),
-    ]
-
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, unique=True)
     description = models.TextField()
-    topic = models.CharField(max_length=100)
-    format = models.CharField(max_length=20, choices=FORMAT_CHOICES)
-    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES)
-    url = models.URLField()
+    created_by = models.ForeignKey('User', on_delete=models.CASCADE, related_name="uploaded_courses")
     created_at = models.DateTimeField(auto_now_add=True)
+    final_quiz = models.OneToOneField('Quiz', on_delete=models.SET_NULL, null=True, blank=True, related_name="final_quiz")
+    cover_image = models.ImageField(upload_to='resumes/', null=True, blank=True)
+
+    def average_rating(self):
+        avg_rating = self.ratings.aggregate(avg=models.Avg('rating'))['avg']
+        return round(avg_rating, 1) if avg_rating else 0 
 
     def __str__(self):
         return self.title
+
     
 class Rating(models.Model):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='ratings')
@@ -134,10 +128,13 @@ class MentorshipRequest(models.Model):
         return f"Mentorship Request from {self.mentee.full_name} to {self.mentor.full_name}"
 
 class Session(models.Model):
-    mentorship_request = models.ForeignKey(MentorshipRequest, on_delete=models.CASCADE, related_name='sessions')
+    mentorship_request = models.ForeignKey(
+        MentorshipRequest, on_delete=models.CASCADE, related_name='sessions'
+    )
     mentor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='scheduled_sessions')
     scheduled_time = models.DateTimeField()
     notes = models.TextField(blank=True, null=True)
+    is_confirmed = models.BooleanField(default=False)  # ✅ Add field for confirmation
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -257,3 +254,82 @@ class Vote(models.Model):
 
     def __str__(self):
         return f"{self.vote_type} by {self.user.username} on {self.comment.text[:50]}"
+
+class Certificate(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    certificate_file = models.FileField(upload_to='certificates/', null=True, blank=True)
+    issued_at = models.DateTimeField(auto_now_add=True)
+
+
+    def __str__(self):
+        return f"Certificate: {self.user.username} - {self.resource.title}"
+    
+class Chapter(models.Model):
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name="chapters")
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    chapter_number = models.PositiveIntegerField()
+    is_completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.resource.title} - Chapter {self.chapter_number}: {self.title}"
+    
+class Quiz(models.Model):
+    chapter = models.OneToOneField(Chapter, on_delete=models.CASCADE, related_name="quiz", null=True, blank=True)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name="quizzes", null=True, blank=True)
+    questions = models.JSONField()  # Store questions as JSON (Multiple Choice)
+    is_final_quiz = models.BooleanField(default=False)
+
+    def __str__(self):
+        if self.is_final_quiz:
+            return f"Final Quiz - {self.resource.title}"
+        return f"Quiz for {self.chapter.title}"
+
+class UserProgress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_progress')
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name="progress")
+    completed_chapters = models.ManyToManyField(Chapter, blank=True)
+    completed_quizzes = models.ManyToManyField(Quiz, blank=True)
+    final_score = models.FloatField(null=True, blank=True)
+    quiz_attempts = models.JSONField(default=dict)
+
+
+    def progress_percentage(self):
+        total_chapters = self.resource.chapters.count()
+        completed_chapters = self.completed_chapters.count()
+        total_quizzes = Quiz.objects.filter(chapter__resource=self.resource).count() + 1  # +1 for final quiz
+        completed_quizzes = self.completed_quizzes.count()
+
+        chapter_progress = (completed_chapters / total_chapters * 50) if total_chapters > 0 else 0
+        quiz_progress = (completed_quizzes / total_quizzes * 50) if total_quizzes > 0 else 0
+    
+        return chapter_progress + quiz_progress
+
+
+    def __str__(self):
+        return f"{self.user.username} - {self.resource.title} Progress"
+
+
+class MentorAvailability(models.Model):
+    mentor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="availability")
+    date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    is_booked = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.mentor.full_name} available on {self.date} from {self.start_time} to {self.end_time}"
+
+class ScheduledSession(models.Model):
+    mentor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="mentor_scheduled_sessions")
+    participant = models.ForeignKey(User, on_delete=models.CASCADE, related_name="participant_scheduled_sessions", null=True, blank=True)  # ✅ Add this field
+    date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    notes = models.TextField(blank=True, null=True)  
+    is_confirmed = models.BooleanField(default=False)  
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.mentor.full_name} - {self.date} ({self.start_time} to {self.end_time})"

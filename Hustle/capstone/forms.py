@@ -1,6 +1,7 @@
 from django import forms
-from .models import User, ParticipantProfile, MentorProfile, Feedback, Resource, Rating, ChatMessage,  MentorshipRequest, Session, JobListing, JobApplication, Thread
+from .models import User, ParticipantProfile, MentorProfile,Certificate, MentorAvailability, ScheduledSession, Quiz,  Chapter, Feedback, Resource, Rating, ChatMessage,  MentorshipRequest, Session, JobListing, JobApplication, Thread
 from django.contrib.auth.forms import PasswordChangeForm
+from django.forms import inlineformset_factory
 
 class ThreadForm(forms.ModelForm):
     class Meta:
@@ -60,13 +61,7 @@ class FeedbackForm(forms.ModelForm):
 class ResourceSearchForm(forms.Form):
     keyword = forms.CharField(required=False)
     topic = forms.CharField(required=False)
-    format = forms.ChoiceField(choices=Resource.FORMAT_CHOICES, required=False)
-    difficulty = forms.ChoiceField(choices=Resource.DIFFICULTY_CHOICES, required=False)
 
-class ResourceUploadForm(forms.ModelForm):
-    class Meta:
-        model = Resource
-        fields = ['title', 'description', 'topic', 'format', 'difficulty', 'url']
 
 class RatingForm(forms.ModelForm):
     class Meta:
@@ -176,3 +171,91 @@ class JobSubmitForm(forms.ModelForm):
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Write your cover letter...'}),
         label="Cover Letter"
     )
+
+
+class ResourceUploadForm(forms.ModelForm):
+    class Meta:
+        model = Resource
+        fields = ['title', 'description', 'cover_image']  # Added cover_image
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'cover_image': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cover_image'].widget.attrs.update({'class': 'form-control'})
+
+class ChapterForm(forms.ModelForm):
+    """
+    Form for uploading individual chapters of a course.
+    """
+    class Meta:
+        model = Chapter
+        fields = ['title', 'content']
+
+
+# ✅ Formset for ensuring at least 10 chapters are uploaded
+ChapterFormSet = inlineformset_factory(Resource, Chapter, form=ChapterForm, extra=10, min_num=10, validate_min=True)
+
+class ChapterQuizForm(forms.ModelForm):
+    class Meta:
+        model = Quiz
+        fields = ['resource', 'chapter', 'questions']
+
+    def __init__(self, *args, **kwargs):
+        super(ChapterQuizForm, self).__init__(*args, **kwargs)
+        self.fields['resource'].queryset = Resource.objects.all()
+        self.fields['chapter'].queryset = Chapter.objects.all()
+
+    questions = forms.JSONField(widget=forms.Textarea(attrs={'rows': 5}))
+
+class FinalQuizForm(forms.ModelForm):
+    class Meta:
+        model = Quiz
+        fields = ['resource', 'questions']
+
+    def __init__(self, *args, **kwargs):
+        super(FinalQuizForm, self).__init__(*args, **kwargs)
+        self.fields['resource'].queryset = Resource.objects.all()
+
+    questions = forms.JSONField(widget=forms.Textarea(attrs={'rows': 5}))
+
+class MentorAvailabilityForm(forms.ModelForm):
+    class Meta:
+        model = MentorAvailability
+        fields = ['date', 'start_time', 'end_time']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'start_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'end_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        }
+
+class ScheduleSessionForm(forms.ModelForm):
+    class Meta:
+        model = ScheduledSession
+        fields = ['date', 'start_time', 'end_time', 'notes']
+
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'start_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'end_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter additional details...'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        date = cleaned_data.get('date')
+        start_time = cleaned_data.get('start_time')
+        end_time = cleaned_data.get('end_time')
+
+        if start_time and end_time and start_time >= end_time:
+            raise forms.ValidationError("End time must be later than start time.")
+
+        return cleaned_data
+
+class ScheduledSessionForm(forms.ModelForm):
+    class Meta:
+        model = ScheduledSession
+        fields = ['date', 'start_time', 'end_time']

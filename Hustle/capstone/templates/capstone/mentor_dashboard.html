@@ -28,6 +28,27 @@
 </section>
 
 <!-- Notifications Section -->
+<!-- Notifications Section -->
+<h2>📢 Notifications</h2>
+<ul class="list-group">
+    {% for notification in notifications %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <p>{{ notification.message }}</p>
+                <p><small class="text-muted">{{ notification.created_at|date:"M d, Y H:i" }}</small></p>
+            </div>
+            {% if not notification.is_seen %}
+                <form method="post" action="{% url 'mark_notification_seen' notification.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Mark as Seen</button>
+                </form>
+            {% endif %}
+        </li>
+    {% empty %}
+        <li class="list-group-item text-muted text-center">No new notifications.</li>
+    {% endfor %}
+</ul>
+
 <section>
     <h2>Mentorship Requests</h2>
     <ul class="list-group">
@@ -43,21 +64,6 @@
         
         {% endfor %}
     </ul>
-    <h3>Job Application Notifications</h3>
-        <ul class="list-group">
-            {% for notification in notifications %}
-    <li class="list-group-item">
-        {{ notification.message }}
-
-        {% if notification.job_application and notification.job_application.job_listing %}
-            <a href="{% url 'notification_seen' notification.id notification.job_application.job_listing.id %}" 
-               class="btn btn-sm btn-primary">View</a>
-        {% endif %}
-    </li>
-{% empty %}
-    <li class="list-group-item">No new notifications.</li>
-{% endfor %}
-
-        </ul>
+    
 </section>
 {% endblock %}

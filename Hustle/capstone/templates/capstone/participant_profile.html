@@ -11,19 +11,27 @@
         <button type="submit" class="btn btn-primary">Save</button>
     </form>
 
-    <!-- Progress Tracker -->
-    <section class="mb-4">
-        <h2>Progress Tracker</h2>
-        <p>Progress: <progress value="{{ progress_percentage }}" max="100"></progress> {{ progress_percentage }}%</p>
-    </section>
+    <!-- Certifications Section -->
+<section>
+    <h2>Certifications</h2>
+<ul class="list-group">
+    {% for certificate in certificates %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>{{ certificate.resource.title }} - {{ certificate.issued_at|date:"M d, Y" }}</span>
 
-    <!-- Uploaded Certifications -->
-    <section>
-        <h2>Certifications</h2>
-        {% if form.instance.certifications %}
-            <p>Current Certification: <a href="{{ form.instance.certifications.url }}" class="btn btn-outline-primary">Download</a></p>
-        {% else %}
-            <p>No certifications uploaded.</p>
-        {% endif %}
-    </section>
+            {% if certificate.certificate_file %}
+                <a href="{{ certificate.certificate_file.url }}" download class="btn btn-sm btn-success">
+                    Download Certificate
+                </a>
+                    <form action="{% url 'delete_certificate' certificate.id %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                {% endif %}
+            </li>
+        {% empty %}
+            <li class="list-group-item">No certifications issued yet.</li>
+        {% endfor %}
+    </ul>
+
 {% endblock %}

@@ -51,3 +51,11 @@
         margin-left: 0;
     }
 }
+
+.progress {
+    height: 25px; /* ✅ Make sure the value exists */
+}
+
+.some-class {
+    background-color: #f8f9fa;
+}

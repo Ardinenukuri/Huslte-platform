@@ -1,0 +1,51 @@
+{% extends 'participant-base.html' %}
+{% load custom_filters %}
+{% block title %}Take Quiz - Hustle Platform{% endblock %}
+
+{% block participant_content %}
+<div class="container mt-4">
+    <h2 class="text-center">📝 Take Quiz</h2>
+
+    {% if previous_attempt %}
+<div class="alert alert-info text-center mt-4">
+    <h5>📊 Your Last Score: {{ previous_attempt.score }}%</h5>
+
+    {% if previous_attempt.score < 80 %}
+        <p>Want to improve your score? You can try the quiz again!</p>
+        <a href="{% url 'reset_quiz' quiz.id %}" class="btn btn-warning">🔄 Try Again</a>
+    {% else %}
+        <p>🎉 Congratulations! You passed this quiz!</p>
+    {% endif %}
+</div>
+{% endif %}
+
+
+    <form method="POST">
+        {% csrf_token %}
+
+        {% for question in quiz.questions %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">{{ question.question }}</h5>
+
+                {% for option in question.options %}
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" 
+                           name="answer_{{ forloop.parentloop.counter }}" 
+                           value="{{ option }}"
+                           {% if previous_attempt and previous_attempt.answers|get_item:question.question == option %}checked{% endif %}
+                           required>
+                    <label class="form-check-label">{{ option }}</label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary btn-block">Submit Quiz</button>
+    </form>
+
+    
+
+</div>
+{% endblock %}

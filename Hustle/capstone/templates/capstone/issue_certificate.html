@@ -1,0 +1,22 @@
+{% extends 'mentor-base.html' %}
+{% block title %}Issue Certificate - Hustle Platform{% endblock %}
+
+{% block mentor_content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Issue Certificate</h1>
+
+    <form method="post" class="card p-4 shadow">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label">Select Participant</label>
+            {{ form.participant }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Select Completed Resource</label>
+            {{ form.resource }}
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Generate Certificate</button>
+    </form>
+</div>
+{% endblock %}
