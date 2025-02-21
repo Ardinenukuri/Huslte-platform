@@ -165,12 +165,13 @@ class JobSubmitForm(forms.ModelForm):
         required=True
     )
 
-    # Customizing the Cover Letter field
+    
     cover_letter = forms.CharField(
         required=True,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Write your cover letter...'}),
         label="Cover Letter"
     )
+<<<<<<< HEAD
 
 
 class ResourceUploadForm(forms.ModelForm):
@@ -259,3 +260,5 @@ class ScheduledSessionForm(forms.ModelForm):
     class Meta:
         model = ScheduledSession
         fields = ['date', 'start_time', 'end_time']
+=======
+>>>>>>> 713f6a5628a791bc5df9044ccb476a7f1d877f22
