@@ -1,0 +1,46 @@
+{% extends 'mentor-base.html' %}
+
+{% block title %}Upload Chapter Quiz - Hustle Platform{% endblock %}
+
+{% block mentor_content %}
+<div class="container mt-4">
+    <h2>Upload Quiz for Chapter</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="resource">Select Course:</label>
+            <select name="resource" id="resource" class="form-control">
+                {% for resource in resources %}
+                <option value="{{ resource.id }}">{{ resource.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="chapter">Select Chapter:</label>
+            <select name="chapter" id="chapter" class="form-control">
+                {% for chapter in chapters %}
+                <option value="{{ chapter.id }}">{{ chapter.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <h4>Enter Quiz Questions (5 Required)</h4>
+        {% for i in "12345" %}
+        <div class="border p-3 mb-3">
+            <label>Question {{ i }}:</label>
+            <input type="text" name="quiz_question_{{ i }}" class="form-control" required>
+
+            <label>Options (comma-separated):</label>
+            <input type="text" name="quiz_options_{{ i }}" class="form-control" required>
+
+            <label>Correct Answer:</label>
+            <input type="text" name="quiz_correct_answer_{{ i }}" class="form-control" required>
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary">Upload Quiz</button>
+    </form>
+</div>
+{% endblock %}

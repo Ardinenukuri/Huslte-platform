@@ -1,0 +1,59 @@
+{% extends "admin-base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h3><i class="fas fa-briefcase"></i> Job Details</h3>
+        </div>
+        <div class="card-body">
+            <h4 class="fw-bold">{{ job.title }}</h4>
+            <p class="mb-2"><strong><i class="fas fa-map-marker-alt"></i> Location:</strong> {{ job.location }}</p>
+            <p class="mb-2"><strong><i class="fas fa-industry"></i> Industry:</strong> {{ job.industry }}</p>
+            <p><strong><i class="fas fa-info-circle"></i> Description:</strong></p>
+            <p class="text-muted">{{ job.description }}</p>
+        </div>
+    </div>
+
+    <!-- Job Applications Section -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-success text-white">
+            <h3><i class="fas fa-user-check"></i> Job Applications</h3>
+        </div>
+        <div class="card-body">
+            {% if applications %}
+                <ul class="list-group">
+                    {% for application in applications %}
+                    <li class="list-group-item">
+                        <p class="fw-bold mb-1">
+                            <i class="fas fa-user"></i> {{ application.user.full_name }} 
+                            <span class="badge 
+                                {% if application.status == 'Accepted' %}bg-success{% elif application.status == 'Pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                {{ application.status }}
+                            </span>
+                        </p>
+                        <p class="mb-1">
+                            <strong>📄 Resume:</strong>
+                            <a href="{{ application.resume.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                                View Resume (PDF)
+                            </a>
+                        </p>
+                        <p class="mb-0"><strong>📝 Cover Letter:</strong></p>
+                        <blockquote class="blockquote text-muted p-2 border-start border-4 border-primary">
+                            {{ application.cover_letter }}
+                        </blockquote>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-center text-muted">No applications for this job.</p>
+            {% endif %}
+        </div>
+        <div class="card-footer text-center">
+            <a href="{% url 'admin_jobs' %}" class="btn btn-outline-secondary">
+                ← Back to Job Listings
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'mentor-base.html' %}
+
+{% block title %}Manage Mentorship Requests - Hustle Platform{% endblock %}
+
+{% block mentor_content %}
+<h1>Manage Mentorship Requests</h1>
+<ul class="list-group">
+    {% for request in mentorship_requests %}
+    <li class="list-group-item">
+        <p><strong>From:</strong> {{ request.mentee.full_name }}</p>
+        <p><strong>Message:</strong> {{ request.message }}</p>
+        {% if request.mentor_response %}
+        <p><strong>Your Response:</strong> {{ request.mentor_response }}</p>
+        {% endif %}
+        <a class="btn btn-success" href="{% url 'approve_mentorship_request' request.id %}">Approve</a>
+        <a class="btn btn-danger" href="{% url 'decline_mentorship_request' request.id %}">Decline</a>
+    </li>
+    {% empty %}
+    <li class="list-group-item">No pending requests.</li>
+    {% endfor %}
+</ul>
+{% endblock %}
