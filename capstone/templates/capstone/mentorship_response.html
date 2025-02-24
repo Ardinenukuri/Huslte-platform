@@ -1,0 +1,14 @@
+{% extends 'mentor-base.html' %}
+
+{% block title %}Respond to Mentorship Request - Hustle Platform{% endblock %}
+
+{% block mentor_content %}
+    <h1>Respond to Mentorship Request</h1>
+    <p><strong>From:</strong> {{ mentorship_request.mentee.full_name }}</p>
+    <p><strong>Message:</strong> {{ mentorship_request.message }}</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+{% endblock %}
