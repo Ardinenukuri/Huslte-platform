@@ -1595,13 +1595,10 @@ def schedule_session(request, mentor_id, session_id):
     mentor = get_object_or_404(User, id=mentor_id, user_type='mentor')
     available_session = get_object_or_404(MentorAvailability, id=session_id, mentor=mentor)
 
-    if available_session.date < now().date():
-        messages.error(request, "You cannot schedule a session in the past.")
-        return redirect('mentor_profile', mentor_id=mentor.id)
+    # Debugging logs to verify correct data
+    print(f"🔍 Mentor: {mentor.full_name}, Session ID: {session_id}")
+    print(f"📅 Date: {available_session.date}, Time: {available_session.start_time}, Booked: {available_session.is_booked}")
 
-    if available_session.is_booked:
-        messages.error(request, "This session slot has already been booked.")
-        return redirect('mentor_profile', mentor_id=mentor.id)
 
     if request.method == 'POST':
         form = ScheduleSessionForm(request.POST)
@@ -1610,24 +1607,20 @@ def schedule_session(request, mentor_id, session_id):
             session.participant = request.user
             session.mentor = mentor
             session.date = available_session.date
-            session.time = available_session.start_time
-            session.notes = remove_emojis(form.cleaned_data['notes'])
+            session.start_time = available_session.start_time
+            session.notes = form.cleaned_data['notes']
             session.is_confirmed = False
             session.save()
 
-            # Mark the slot as booked
+            # Mark session as booked
             available_session.is_booked = True
             available_session.save()
 
-            notification_message = remove_emojis(
-                f"📅 New session request from {request.user.full_name} on {session.date} at {session.time}. Notes: {session.notes}"
-            )
-
+            # ✅ Send notification to mentor
             Notification.objects.create(
-                user=mentor,  # ✅ Ensures the mentor receives it
-                message=notification_message
+                user=mentor,
+                message=f"📅 New session request from {request.user.full_name} on {session.date} at {session.start_time}. Notes: {session.notes}"
             )
-
 
             messages.success(request, "✅ Session scheduled successfully! The mentor has been notified.")
             return redirect('participant_dashboard')
@@ -1639,6 +1632,33 @@ def schedule_session(request, mentor_id, session_id):
         'mentor': mentor,
         'available_session': available_session,
     })
+
+@login_required
+def participant_schedule(request):
+    """Displays available mentor sessions for participants."""
+    available_slots = MentorAvailability.objects.filter(is_booked=False).order_by('date', 'start_time')
+
+    return render(request, 'capstone/participant_schedule.html', {
+        'available_slots': available_slots
+    })
+
+
+
+@login_required
+def available_sessions(request):
+    """Show available mentor sessions for participants."""
+    if request.user.user_type != "participant":
+        messages.error(request, "❌ Only participants can access this page.")
+        return redirect('participant_dashboard')
+
+    # Show only **available** slots
+    available_slots = MentorAvailability.objects.filter(is_booked=False).order_by("date", "start_time")
+
+    return render(request, "capstone/available_sessions.html", {
+        "available_slots": available_slots
+    })
+
+
 
 @login_required
 def mentor_sessions(request):
@@ -1661,20 +1681,50 @@ def confirm_session(request, session_id):
     session = get_object_or_404(ScheduledSession, id=session_id, mentor=request.user)
 
     if request.method == "POST":
+        meeting_link = request.POST.get("meeting_link")  # Mentor enters the meeting link
+
+        if not meeting_link:
+            messages.error(request, "❌ Please provide a valid meeting link.")
+            return redirect("confirm_session", session_id=session.id)
+
         session.is_confirmed = True
+        session.meeting_link = meeting_link  # Save the link to the session
         session.save()
 
-         
+        # 🔔 Notify the participant
+        notification_message = f"""
+        ✅ Your session with {session.mentor.full_name} has been confirmed!
+        📅 Date: {session.date}
+        ⏰ Time: {session.start_time}
 
-        # Notify the participant
+        🔗 Meeting Link: {meeting_link}
+        """
+        
         Notification.objects.create(
             user=session.participant,
-            message=f"Your session with {session.mentor.full_name} on {session.date} at {session.start_time} has been confirmed!"
+            message=notification_message.strip(),
         )
 
-        messages.success(request, "Session confirmed successfully!")
-        return redirect("mentor_dashboard")
+        # 📧 Send an email to the participant
+        send_mail(
+            subject="📅 Session Confirmed with Your Mentor!",
+            message=f"Your session with {session.mentor.full_name} is confirmed!\n\n{notification_message}",
+            from_email= settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[session.participant.email],
+            fail_silently=True,
+        )
 
+
+        # 📧 Send an email to the MENTOR
+        send_mail(
+            subject="📅 Session Confirmed with Your Mentee!",
+            message=f"Your session with {session.participant.full_name} is confirmed!\n\n{notification_message}",
+            from_email= settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[session.mentor.email],
+            fail_silently=True,
+        )
+        messages.success(request, "✅ Session confirmed and participant notified!")
+        return redirect("mentor_dashboard")
     return render(request, "capstone/confirm_session.html", {"session": session})
 
 @login_required

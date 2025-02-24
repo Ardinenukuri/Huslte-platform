@@ -18,7 +18,6 @@ urlpatterns = [
     path('upload-resource/', views.upload_resource, name='upload_resource'),
     path('rate-resource/<int:resource_id>/', views.rate_resource, name='rate_resource'),
     path('submit-mentorship-request/', views.submit_mentorship_request, name='submit_mentorship_request'),
-    path('schedule-session/<int:request_id>/', views.schedule_session, name='schedule_session'),
     path('chat-with-mentor/<int:request_id>/', views.chat_with_mentor, name='chat_with_mentor'),
     path('manage-mentorship-requests/', views.manage_mentorship_requests, name='manage_mentorship_requests'),
     path('approve-mentorship-request/<int:request_id>/', views.approve_mentorship_request, name='approve_mentorship_request'),
@@ -80,13 +79,10 @@ urlpatterns = [
     path('final-quiz/<int:quiz_id>/reset/', views.reset_final_quiz, name='reset_final_quiz'),
     path('generate-certificate/<int:resource_id>/', views.generate_certificate, name='generate_certificate'),
     path('participant/mentors/<int:mentor_id>/availability/', views.view_mentor_availability, name='view_mentor_availability'),
-    path('participant/mentors/<int:mentor_id>/schedule/', views.schedule_session, name='schedule_session'),
     path('participant/notifications/mark-seen/<int:notification_id>/', views.mark_notification_seen, name='mark_notification_seen'),
     path('mentor/availability/', views.mentor_add_availability, name='mentor_add_availability'),
     path('mentor/sessions/', views.mentor_sessions, name='mentor_sessions'),
     path('mentor/sessions/confirm/<int:session_id>/', views.confirm_session, name='confirm_session'),
-    path('mentor/<int:mentor_id>/schedule/<int:session_id>/', views.schedule_session, name='schedule_session'),
-    path('schedule_session/<int:mentor_id>/<int:session_id>/', views.schedule_session, name='schedule_session'),
     path('notification/seen/<int:notification_id>/', views.mark_notification_seen, name='mark_notification_seen'),
     path('pnotification/seen/<int:notification_id>/', views.pmark_notification_seen, name='pmark_notification_seen'),
     path('api/quiz/<int:quiz_id>/', views.get_quiz, name='get_quiz'),
@@ -122,6 +118,9 @@ urlpatterns = [
     path("ad/resource/progress/<int:resource_id>/", views.admin_view_resource_progress, name="admin_view_resource_progress"),
     path('participant/<int:participant_id>/edit/', views.edit_participant_profile, name='edit_participant_profile'),
     path('mentor/<int:mentor_id>/edit/', views.edit_mentor_profile, name='edit_mentor_profile'),
+    path('participant/schedule/', views.available_sessions, name='available_sessions'),
+    path('schedule_session/<int:mentor_id>/<int:session_id>/', views.schedule_session, name='schedule_session'),
+
 
 
 

@@ -4,22 +4,18 @@
 
 {% block mentor_content %}
 <div class="container mt-4">
-    <h1 class="text-primary">Mentor Profile</h1>
+    <h1 class="text-primary">👨‍🏫 Mentor Profile</h1>
 
     <!-- Mentor Profile Details -->
     <section class="mb-4 p-3 border rounded shadow-sm bg-white">
         <h3 class="text-secondary">📝 About Me</h3>
 
-        <div class="d-flex justify-content-between align-items-center">
-            <p><strong>📜 Bio:</strong> {{ profile.bio|default:"Not provided" }}</p>
-        </div>
-        
-        <div class="d-flex justify-content-between align-items-center">
-            <p><strong>🛠️ Expertise:</strong> {{ profile.expertise_areas|default:"Not provided" }}</p>
-        </div>
+        <p><strong>📜 Bio:</strong> {{ profile.bio|default:"Not provided" }}</p>
+        <p><strong>🛠️ Expertise:</strong> {{ profile.expertise_areas|default:"Not provided" }}</p>
 
-
-        <a href="{% url 'edit_mentor_profile' mentor.id %}" class="btn btn-outline-primary mt-2">✏️ Edit Profile</a>
+        {% if request.user == mentor %}
+            <a href="{% url 'edit_mentor_profile' mentor.id %}" class="btn btn-outline-primary mt-2">✏️ Edit Profile</a>
+        {% endif %}
     </section>
 
     <!-- Mentees Section -->
@@ -49,7 +45,9 @@
                             <p><strong>Date:</strong> {{ slot.date }}</p>
                             <p><strong>Time:</strong> {{ slot.start_time }} - {{ slot.end_time }}</p>
                         </div>
-                        <a href="{% url 'schedule_session' mentor.id slot.id %}" class="btn btn-primary btn-sm">📅 Schedule Session</a>
+                        {% if request.user.user_type == "participant" %}
+                            <a href="{% url 'schedule_session' mentor.id slot.id %}" class="btn btn-primary btn-sm">📅 Schedule Session</a>
+                        {% endif %}
                     </li>
                 {% endif %}
             {% empty %}
@@ -57,6 +55,7 @@
             {% endfor %}
         </ul>
     </section>
+    
 
     <!-- Feedback and Ratings -->
     <section class="mb-4 p-3 border rounded shadow-sm bg-white">

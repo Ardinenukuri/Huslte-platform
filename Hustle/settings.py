@@ -85,6 +85,9 @@ DATABASES = {
         'PASSWORD': 'Nukurimartine2004@',
         'HOST': 'localhost',
         'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
     }
 }
 

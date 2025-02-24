@@ -332,6 +332,7 @@ class ScheduledSession(models.Model):
     notes = models.TextField(blank=True, null=True)  
     is_confirmed = models.BooleanField(default=False)  
     created_at = models.DateTimeField(auto_now_add=True)
+    meeting_link = models.URLField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.mentor.full_name} - {self.date} ({self.start_time} to {self.end_time})"
