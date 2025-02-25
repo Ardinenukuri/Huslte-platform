@@ -1,0 +1,60 @@
+{% extends 'participant-base.html' %}
+{% block title %}Rate Resource{% endblock %}
+
+{% block participant_content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Rate {{ resource.title }}</h1>
+
+    <form method="post" class="rating-form">
+        {% csrf_token %}
+        <div class="star-rating">
+            <label>
+                <input type="radio" name="rating" value="1" {% if user_rating and user_rating.rating == 1 %}checked{% endif %}>
+                <i class="fas fa-star"></i>
+            </label>
+            <label>
+                <input type="radio" name="rating" value="2" {% if user_rating and user_rating.rating == 2 %}checked{% endif %}>
+                <i class="fas fa-star"></i>
+            </label>
+            <label>
+                <input type="radio" name="rating" value="3" {% if user_rating and user_rating.rating == 3 %}checked{% endif %}>
+                <i class="fas fa-star"></i>
+            </label>
+            <label>
+                <input type="radio" name="rating" value="4" {% if user_rating and user_rating.rating == 4 %}checked{% endif %}>
+                <i class="fas fa-star"></i>
+            </label>
+            <label>
+                <input type="radio" name="rating" value="5" {% if user_rating and user_rating.rating == 5 %}checked{% endif %}>
+                <i class="fas fa-star"></i>
+            </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Submit Rating</button>
+    </form>
+
+    <a href="{% url 'learning_resources' %}" class="btn btn-secondary mt-3">Back to Resources</a>
+</div>
+
+<!-- Star Rating Styling -->
+<style>
+    .star-rating {
+        display: flex;
+        gap: 5px;
+        font-size: 25px;
+    }
+
+    .star-rating input {
+        display: none;
+    }
+
+    .star-rating label {
+        cursor: pointer;
+        color: lightgray;
+    }
+
+    .star-rating input:checked ~ label {
+        color: gold;
+    }
+</style>
+{% endblock %}

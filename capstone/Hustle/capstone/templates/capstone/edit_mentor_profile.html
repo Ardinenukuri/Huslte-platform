@@ -1,0 +1,44 @@
+{% extends 'mentor-base.html' %}
+
+{% block title %}Edit Mentor Profile{% endblock %}
+
+{% block mentor_content %}
+<div class="container mt-4">
+    <h1 class="text-primary">✏️ Edit Profile</h1>
+
+    <!-- Display Form Errors -->
+    {% if form.errors %}
+        <div class="alert alert-danger">
+            <strong>⚠️ Please correct the errors below:</strong>
+            {{ form.errors }}
+        </div>
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" class="p-3">
+                {% csrf_token %}
+
+                <!-- Scrollable form container -->
+                <div class="overflow-auto" style="max-height: 400px; padding-right: 15px;">
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Buttons (Sticky at bottom) -->
+                <div class="text-center mt-3">
+                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                    <a href="{% url 'mentor_profile' mentor.id %}" class="btn btn-secondary">❌ Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

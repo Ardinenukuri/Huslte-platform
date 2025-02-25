@@ -1,0 +1,87 @@
+{% extends 'mentor-base.html' %}
+
+{% block title %}Upload Final Quiz - Hustle Platform{% endblock %}
+
+{% block mentor_content %}
+<div class="container mt-4">
+    <h2>Upload Final Quiz</h2>
+    
+    <!-- Display Messages -->
+    {% if messages %}
+    <div class="alert alert-info">
+        {% for message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+
+        <!-- Select Course -->
+        <div class="mb-3">
+            <label for="resource" class="form-label">Select Course:</label>
+            <select name="resource" id="resource" class="form-select" required>
+                {% for resource in resources %}
+                <option value="{{ resource.id }}">{{ resource.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- AI-Generated Quiz Questions -->
+        <div class="card p-4 mb-3">
+            <h4>Final Quiz Questions</h4>
+            <p class="text-muted">Click "Generate Final Quiz" to auto-generate 10 questions.</p>
+            <div id="quiz-questions"></div>
+        </div>
+
+        <!-- AI Generation & Submission Buttons -->
+        <button type="button" class="btn btn-info" onclick="generateFinalQuiz()">Generate Final Quiz</button>
+        <button type="submit" class="btn btn-primary">Upload Final Quiz</button>
+    </form>
+</div>
+
+<!-- JavaScript for AI Quiz Generation -->
+<script>
+    function generateFinalQuiz() {
+        let resourceId = document.getElementById("resource").value;
+
+        if (!resourceId) {
+            alert("Please select a course first.");
+            return;
+        }
+
+        document.getElementById("quiz-questions").innerHTML = "<p>Generating quiz... Please wait.</p>";
+
+        fetch(`/ai-generate-final-quiz/${resourceId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let quizHTML = "";
+                    data.questions.forEach((q, index) => {
+                        quizHTML += `
+                            <div class="border p-3 mb-3">
+                                <h5>Question ${index + 1}</h5>
+                                <label>Question:</label>
+                                <input type="text" name="quiz_question_${index + 1}" class="form-control" value="${q.question}" required>
+
+                                <label>Options:</label>
+                                <input type="text" name="quiz_options_${index + 1}" class="form-control" value="${q.options.join(', ')}" required>
+
+                                <label>Correct Answer:</label>
+                                <input type="text" name="quiz_correct_answer_${index + 1}" class="form-control" value="${q.correct_answer}" required>
+                            </div>
+                        `;
+                    });
+                    document.getElementById("quiz-questions").innerHTML = quizHTML;
+                } else {
+                    document.getElementById("quiz-questions").innerHTML = "<p class='text-danger'>Failed to generate quiz. Try again.</p>";
+                }
+            })
+            .catch(error => {
+                console.error("Error generating quiz:", error);
+                document.getElementById("quiz-questions").innerHTML = "<p class='text-danger'>Error generating quiz. Please try again.</p>";
+            });
+    }
+</script>
+{% endblock %}

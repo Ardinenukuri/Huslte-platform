@@ -1,0 +1,93 @@
+{% extends 'participant-base.html' %}
+{% block title %}Participant Profile - Hustle Platform{% endblock %}
+
+{% block participant_content %}
+    <h1>Participant Profile</h1>
+    
+    <section class="mb-4 p-3 border rounded shadow-sm bg-white">
+        <h3 class="text-secondary">📝 About Me</h3>
+    
+        <div class="d-flex justify-content-between align-items-center">
+            <p><strong>📜 Bio:</strong> {{ profile.bio|default:"Not provided" }}</p>
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center">
+            <p><strong>🛠️ Skills:</strong> {{ profile.skills|default:"Not provided" }}</p>
+        </div>
+    
+        <div class="d-flex justify-content-between align-items-center">
+            <p><strong>🎯 Interests:</strong> {{ profile.interests|default:"Not provided" }}</p>
+        </div>
+    
+        <a href="{% url 'edit_participant_profile' participant.id %}" class="btn btn-outline-primary mt-2">✏️ Edit Profile</a>
+    </section>
+    
+    <!-- Progress Section -->
+    <section class="mb-4">
+        <h2>Ongoing Learning Progress</h2>
+        <ul class="list-group">
+            {% for progress in user_progress %}
+                {% if progress.progress_percentage < 100 %}
+                    <li class="list-group-item">
+                        <strong>{{ progress.resource.title }}</strong>
+                        <div class="progress mt-2" style="height: 20px;">
+                            <div class="progress-bar" role="progressbar" style="width: {{ progress.progress_percentage }}%;" aria-valuenow="{{ progress.progress_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ progress.progress_percentage }}%
+                            </div>
+                        </div>
+                    </li>
+                {% endif %}
+            {% empty %}
+                <li class="list-group-item">No ongoing courses.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <!-- Completed Courses & Final Scores -->
+<section class="mb-4">
+    <h2>Completed Courses</h2>
+    <ul class="list-group">
+        {% for progress in user_progress %}
+            {% if progress.progress_percentage == 100 %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><strong>{{ progress.resource.title }}</strong> - Final Score: 
+                        <span class="badge bg-success">
+                            {% if progress.final_score is not None %}
+                                {{ progress.final_score }}%
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </span>
+                    </span>
+                </li>
+            {% endif %}
+        {% empty %}
+            <li class="list-group-item">No completed courses yet.</li>
+        {% endfor %}
+    </ul>
+</section>
+
+
+    <!-- Certifications Section -->
+    <section>
+        <h2>Certifications</h2>
+        <ul class="list-group">
+            {% for certificate in certificates %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ certificate.resource.title }} - {{ certificate.issued_at|date:"M d, Y" }}</span>
+                    {% if certificate.certificate_file %}
+                        <a href="{{ certificate.certificate_file.url }}" download class="btn btn-sm btn-success">
+                            Download Certificate
+                        </a>
+                        <form action="{% url 'delete_certificate' certificate.id %}" method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% empty %}
+                <li class="list-group-item">No certifications issued yet.</li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endblock %}

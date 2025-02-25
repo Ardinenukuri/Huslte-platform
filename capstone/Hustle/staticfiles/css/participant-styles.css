@@ -1,0 +1,61 @@
+/* Custom Styles for Participant Dashboard */
+.bg-light {
+    background-color: #f8f9fa !important;
+    height: 100vh; /* Full height for the sidebar */
+    position: fixed; /* Fixed sidebar */
+    width: 25%; /* Sidebar width */
+}
+
+.nav-link {
+    color: #333;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+.nav-link.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.list-group-item {
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.btn-outline-primary {
+    margin-top: 10px;
+}
+
+/* Main Content Styling */
+.col-md-9 {
+    margin-left: 25%; /* Offset for the fixed sidebar */
+    padding: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .bg-light {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+
+    .col-md-9 {
+        margin-left: 0;
+    }
+}
+
+.progress {
+    height: 25px; /* ✅ Make sure the value exists */
+}
+
+.some-class {
+    background-color: #f8f9fa;
+}

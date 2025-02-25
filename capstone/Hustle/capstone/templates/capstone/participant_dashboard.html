@@ -1,0 +1,43 @@
+{% extends 'participant-base.html' %}
+{% block title %}Participant Dashboard - Hustle Platform{% endblock %}
+{% block participant_content %}
+<h1>Welcome, {{ user.username }}!</h1>
+<p>You are logged in as a <strong>Participant</strong>.</p>
+
+<!-- Overview Section -->
+<section>
+    <h2>Overview</h2>
+    {% if mentor %}
+    <div class="alert alert-info">
+        <strong>Your Mentor:</strong> <a href="{% url 'mentor_profile' mentor.id %}">{{ mentor.full_name }}</a>
+        <a href="{% url 'rate_mentor' mentor.id %}" class="btn btn-outline-primary btn-sm">Rate a Mentor</a>
+    </div>
+{% else %}
+    <p>No mentor assigned yet. Submit a request!</p>
+{% endif %}
+
+</section>
+
+<!-- Notifications Section -->
+<section>
+    <h2>Notifications</h2>
+    <ul class="list-group">
+        {% for notification in notifications %}
+            <li class="list-group-item">
+                <p>{{ notification.message }}</p>
+                <p><small>{{ notification.created_at }}</small></p>
+                {% if not notification.is_seen %}
+                    <form method="post" action="{% url 'pmark_notification_seen' notification.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-primary">Mark as Seen</button>
+                    </form>
+                {% endif %}
+            </li>
+        {% empty %}
+            <li class="list-group-item">No new notifications.</li>
+        {% endfor %}
+    </ul>
+    <!-- Job Application Notifications -->
+
+</section>
+{% endblock %}
