@@ -9,15 +9,5 @@
     <button type="submit" class="btn btn-success">Save Availability</button>
 </form>
 
-<h3>My Available Slots</h3>
-<ul class="list-group">
-    {% for slot in availability_slots %}
-        <li class="list-group-item">
-            <strong>Date:</strong> {{ slot.date }} | 
-            <strong>Time:</strong> {{ slot.start_time }} - {{ slot.end_time }}
-        </li>
-    {% empty %}
-        <li class="list-group-item text-muted">No availability added yet.</li>
-    {% endfor %}
-</ul>
+
 {% endblock %}

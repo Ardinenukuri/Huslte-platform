@@ -45,7 +45,7 @@ from django.core.files.storage import default_storage
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from .models import QuizAttempt
-from .utils import extract_text_from_file 
+from .utils import extract_text_from_file , generate_quiz_questions
 
 
 logger = logging.getLogger(__name__)
@@ -1088,6 +1088,13 @@ def enroll_course(request, resource_id):
     progress, created = UserProgress.objects.get_or_create(user=request.user, resource=resource)
     return redirect("course_detail", resource_id=resource.id)
 
+
+@login_required
+def menroll_course(request, resource_id):
+    resource = get_object_or_404(Resource, id=resource_id)
+    progress, created = UserProgress.objects.get_or_create(user=request.user, resource=resource)
+    return redirect("mcourse_detail", resource_id=resource.id)
+
 @login_required
 def course_detail(request, resource_id):
     """Displays course details with chapters, quizzes, progress, and final quiz eligibility."""
@@ -1099,6 +1106,23 @@ def course_detail(request, resource_id):
     final_quiz_exists = final_quiz is not None  # Boolean flag for template
 
     return render(request, "capstone/course_detail.html", {
+        "resource": resource,
+        "progress": progress,
+        "final_quiz_exists": final_quiz_exists,
+        "final_quiz": final_quiz  # Pass the final quiz object
+    })
+
+@login_required
+def mcourse_detail(request, resource_id):
+    """Displays course details with chapters, quizzes, progress, and final quiz eligibility."""
+    resource = get_object_or_404(Resource, id=resource_id)
+    progress, created = UserProgress.objects.get_or_create(user=request.user, resource=resource)
+
+    # Check if the final quiz exists
+    final_quiz = Quiz.objects.filter(resource=resource, is_final_quiz=True).first()
+    final_quiz_exists = final_quiz is not None  # Boolean flag for template
+
+    return render(request, "capstone/mcourse_detail.html", {
         "resource": resource,
         "progress": progress,
         "final_quiz_exists": final_quiz_exists,
@@ -2190,3 +2214,106 @@ def admin_delete_mentorship_request(request, request_id):
     mentorship_request = get_object_or_404(MentorshipRequest, id=request_id)
     mentorship_request.delete()
     return redirect("admin_mentorship_requests")  # Ensure this name matches your URL pattern
+
+
+@login_required
+@user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
+def upload_ai_chapter_quiz(request):
+    """
+    Allows mentors to add AI-generated quizzes for specific chapters.
+    """
+    resources = Resource.objects.all()
+    chapters = Chapter.objects.all()
+
+    if request.method == 'POST':
+        resource_id = request.POST.get("resource")
+        chapter_id = request.POST.get("chapter")
+
+        resource = get_object_or_404(Resource, id=resource_id)
+        chapter = get_object_or_404(Chapter, id=chapter_id)
+
+        # ✅ Get AI-generated quiz questions
+        quiz_questions = generate_quiz_questions(chapter.title, chapter.content)
+
+        if quiz_questions:
+            Quiz.objects.create(resource=resource, chapter=chapter, questions=quiz_questions)
+            messages.success(request, "✅ AI-Generated Quiz uploaded successfully!")
+        else:
+            messages.error(request, "❌ Failed to generate quiz. Try again.")
+
+        return redirect('mentor_dashboard')
+
+    return render(request, 'capstone/upload_ai_chapter_quiz.html', {'resources': resources, 'chapters': chapters})
+
+
+@login_required
+@user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
+def upload_final_ai_quiz(request):
+    """
+    Allows mentors to generate and upload AI-generated final quizzes.
+    """
+    resources = Resource.objects.all()
+
+    if request.method == 'POST':
+        resource_id = request.POST.get("resource")
+        resource = get_object_or_404(Resource, id=resource_id)
+
+        # ✅ Generate AI quiz questions for the final exam
+        quiz_questions = generate_quiz_questions(resource.title, resource.description, num_questions=10)
+
+        if quiz_questions:
+            final_quiz, created = Quiz.objects.get_or_create(
+                resource=resource, 
+                is_final_quiz=True, 
+                defaults={"questions": quiz_questions}
+            )
+            if not created:
+                final_quiz.questions = quiz_questions
+                final_quiz.save()
+
+            messages.success(request, "✅ AI-Generated Final Quiz uploaded successfully!")
+        else:
+            messages.error(request, "❌ Failed to generate final quiz.")
+
+        return redirect('mentor_dashboard')
+
+    return render(request, 'capstone/upload_ai_final_quiz.html', {"resources": resources})
+
+
+@login_required
+@user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
+def generate_ai_quiz(request, chapter_id):
+    """
+    API endpoint that generates a quiz based on the chapter content.
+    """
+    chapter = get_object_or_404(Chapter, id=chapter_id)
+    questions = generate_quiz_questions(chapter.title, chapter.content)
+
+    if questions:
+        return JsonResponse({"success": True, "questions": questions})
+    else:
+        return JsonResponse({"success": False, "message": "Quiz generation failed."})
+
+@login_required
+@user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
+def ai_generate_final_quiz(request, resource_id):
+    """
+    API view that generates a final quiz for a selected course.
+    """
+    print(f"🔍 Debug: Received request for Resource ID {resource_id}")
+
+    resource = get_object_or_404(Resource, id=resource_id)
+
+    if not resource:
+        print("❌ Resource not found in database!")
+        return JsonResponse({"success": False, "error": "Resource not found."}, status=400)
+
+    print(f"✅ Generating quiz for: {resource.title}")
+    quiz_questions = generate_quiz_questions(resource.title, resource.description, num_questions=10)
+
+    if not quiz_questions:
+        print("❌ AI failed to generate quiz questions.")
+        return JsonResponse({"success": False, "error": "Failed to generate valid quiz questions."}, status=500)
+
+    print("✅ AI Quiz Successfully Generated")
+    return JsonResponse({"success": True, "questions": quiz_questions})

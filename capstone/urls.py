@@ -69,7 +69,9 @@ urlpatterns = [
     path("issue-certificate/", views.issue_certificate, name="issue_certificate"),
     path('delete-certificate/<int:certificate_id>/', views.delete_certificate, name='delete_certificate'),
     path('enroll/<int:resource_id>/', views.enroll_course, name='enroll_course'),
+    path('menroll/<int:resource_id>/', views.menroll_course, name='menroll_course'),
     path('course/<int:resource_id>/', views.course_detail, name='course_detail'),
+    path('mcourse/<int:resource_id>/', views.mcourse_detail, name='mcourse_detail'),
     path('chapter/<int:chapter_id>/done/', views.mark_chapter_done, name='mark_chapter_done'),
     path('quiz/<int:quiz_id>/', views.take_quiz, name='take_quiz'),
     path("final-quiz/<int:quiz_id>/", views.take_final_quiz, name="take_final_quiz"),
@@ -120,6 +122,12 @@ urlpatterns = [
     path('mentor/<int:mentor_id>/edit/', views.edit_mentor_profile, name='edit_mentor_profile'),
     path('participant/schedule/', views.available_sessions, name='available_sessions'),
     path('schedule_session/<int:mentor_id>/<int:session_id>/', views.schedule_session, name='schedule_session'),
+    
+    path("ai-generate-quiz/<int:chapter_id>/", views.generate_ai_quiz, name="generate_ai_quiz"),
+    path('upload-ai-chapter-quiz/', views.upload_ai_chapter_quiz, name='upload_chapter_ai_quiz'),
+    path('upload-ai-final-quiz/', views.upload_final_ai_quiz, name='upload_final_ai_quiz'),
+    path('api/ai-generate-quiz/<int:chapter_id>/', views.generate_ai_quiz, name='generate_ai_quiz'),
+    path('api/ai-generate-final-quiz/<int:resource_id>/', views.ai_generate_final_quiz, name='ai_generate_final_quiz'),
 
 
 

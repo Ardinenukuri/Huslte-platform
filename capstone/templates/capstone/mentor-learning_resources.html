@@ -2,64 +2,48 @@
 {% block title %}Learning Resources - Hustle Platform{% endblock %}
 
 {% block mentor_content %}
-    <h1>Learning Resources</h1>
+    <h1 class="text-center mb-4">📚 Learning Resources</h1>
 
-    <!-- Search Form -->
-    <form method="get" class="mb-4">
-        <div class="row g-3 align-items-center">
-            {% for field in form %}
-            <div class="col-md-4">
-                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                {{ field }}
-            </div>
-            {% endfor %}
-            <div class="col-md-12 text-center">
-                <button type="submit" class="btn btn-primary btn-lg mt-2">
-                    Search
-                </button>
+    <!-- Resource Cards -->
+    <section class="row justify-content-center">
+        {% for resource in resources %}
+        <div class="col-md-6 col-lg-5 mb-5">
+            <div class="card shadow-lg border-0">
+                <!-- Cover Image -->
+                {% if resource.cover_image %}
+                    <img src="{{ resource.cover_image.url }}" class="card-img-top img-fluid" alt="{{ resource.title }}" style="height: 250px; object-fit: cover;">
+                {% else %}
+                    <img src="/static/default_cover.webp" class="card-img-top img-fluid" alt="Default Cover" style="height: 250px; object-fit: cover;">
+                {% endif %}
+
+                <div class="card-body">
+                    <!-- Resource Title -->
+                    <h4 class="card-title font-weight-bold">
+                        {{ resource.title }}
+                    </h4>
+                    
+                    <p class="card-text text-muted">{{ resource.description|truncatewords:30 }}</p>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'menroll_course' resource.id %}" target="_blank" class="btn btn-primary w-50">View Resource</a>
+                        <a href="{% url 'delete_learning_resource' resource.id %}" class="btn btn-danger w-50">🗑 Delete</a>
+                    </div>
+                </div>
             </div>
         </div>
-    </form>
-
-    <!-- Resource List -->
-    <section class="mb-4">
-        <h2>Resources</h2>
-        <ul class="list-group">
-            {% for resource in resources %}
-            <li class="list-group-item">
-                <h3>{{ resource.title }}</h3>
-                <p>{{ resource.description }}</p>
-                <p><strong>Topic:</strong> {{ resource.topic }}</p>
-                <p><strong>Format:</strong> {{ resource.format }}</p>
-                <p><strong>Difficulty:</strong> {{ resource.difficulty }}</p>
-                <p><a href="{{ resource.url }}" target="_blank" class="btn btn-outline-primary">View Resource</a></p>
-                
-                
-    <a href="{% url 'delete_learning_resource' resource.id %}" class="btn btn-sm btn-danger">Delete</a>
-            
-            </li>
-            {% empty %}
-            <li class="list-group-item">No resources found.</li>
-            {% endfor %}
-        </ul>
+        {% empty %}
+        <p class="text-muted text-center w-100">No resources found.</p>
+        {% endfor %}
     </section>
 
     <!-- Pagination -->
-    <div class="pagination">
+    <div class="pagination d-flex justify-content-center mt-4">
         <span class="step-links">
             {% if resources.has_previous %}
-                <a href="?page=1" class="btn btn-sm btn-outline-secondary">&laquo; first</a>
-                <a href="?page={{ resources.previous_page_number }}" class="btn btn-sm btn-outline-secondary">previous</a>
+                <a href="?page=1" class="btn btn-sm btn-outline-secondary">&laquo; First</a>
+                <a href="?page={{ resources.previous_page_number }}" class="btn btn-sm btn-outline-secondary">Previous</a>
             {% endif %}
 
-            <span class="current">
-                Page {{ resources.number }} of {{ resources.paginator.num_pages }}.
-            </span>
-
-            {% if resources.has_next %}
-                <a href="?page={{ resources.next_page_number }}" class="btn btn-sm btn-outline-secondary">next</a>
-                <a href="?page={{ resources.paginator.num_pages }}" class="btn btn-sm btn-outline-secondary">last &raquo;</a>
-            {% endif %}
-        </span>
+            
     </div>
 {% endblock %}
