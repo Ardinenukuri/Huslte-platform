@@ -44,50 +44,40 @@
 <!-- JavaScript for AI Quiz Generation -->
 <script>
     function generateFinalQuiz() {
-    let resourceId = document.getElementById("resource").value;
+        let resourceId = document.getElementById("resource").value;
 
-    if (!resourceId) {
-        alert("Please select a course first.");
-        return;
+        if (!resourceId) {
+            alert("Please select a course first.");
+            return;
+        }
+
+        document.getElementById("quiz-questions").innerHTML = "<p>Generating quiz... Please wait.</p>";
+
+        fetch(`/api/ai-generate-final-quiz/${resourceId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let quizHTML = "";
+                    data.questions.forEach((q, index) => {
+                        quizHTML += `
+                            <div class="border p-3 mb-3">
+                                <h5>Question ${index + 1}</h5>
+                                <input type="text" name="quiz_question_${index + 1}" class="form-control" value="${q.question}" required>
+                                <input type="text" name="quiz_options_${index + 1}" class="form-control" value="${q.options.join(', ')}" required>
+                                <input type="text" name="quiz_correct_answer_${index + 1}" class="form-control" value="${q.correct_answer}" required>
+                            </div>
+                        `;
+                    });
+                    document.getElementById("quiz-questions").innerHTML = quizHTML;
+                } else {
+                    document.getElementById("quiz-questions").innerHTML = "<p class='text-danger'>Failed to generate quiz. Try again.</p>";
+                }
+            })
+            .catch(error => {
+                console.error("Error generating quiz:", error);
+                document.getElementById("quiz-questions").innerHTML = "<p class='text-danger'>Error generating quiz. Please try again.</p>";
+            });
     }
-
-    document.getElementById("quiz-questions").innerHTML = "<p>Generating quiz... Please wait.</p>";
-
-    fetch(`/api/ai-generate-final-quiz/${resourceId}/`)  // ✅ Ensure correct API URL
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                let quizHTML = "";
-                data.questions.forEach((q, index) => {
-                    quizHTML += `
-                        <div class="border p-3 mb-3">
-                            <h5>Question ${index + 1}</h5>
-                            <label>Question:</label>
-                            <input type="text" name="quiz_question_${index + 1}" class="form-control" value="${q.question}" required>
-
-                            <label>Options:</label>
-                            <input type="text" name="quiz_options_${index + 1}" class="form-control" value="${q.options.join(', ')}" required>
-
-                            <label>Correct Answer:</label>
-                            <input type="text" name="quiz_correct_answer_${index + 1}" class="form-control" value="${q.correct_answer}" required>
-                        </div>
-                    `;
-                });
-                document.getElementById("quiz-questions").innerHTML = quizHTML;
-            } else {
-                document.getElementById("quiz-questions").innerHTML = `<p class='text-danger'>${data.error || "Failed to generate quiz. Try again."}</p>`;
-            }
-        })
-        .catch(error => {
-            console.error("Error generating quiz:", error);
-            document.getElementById("quiz-questions").innerHTML = "<p class='text-danger'>Error generating quiz. Please try again.</p>";
-        });
-}
-
 </script>
+
 {% endblock %}

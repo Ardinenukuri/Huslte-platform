@@ -91,7 +91,8 @@ class Resource(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     final_quiz = models.OneToOneField('Quiz', on_delete=models.SET_NULL, null=True, blank=True, related_name="final_quiz")
     cover_image = models.ImageField(upload_to='resumes/', null=True, blank=True)
-
+    resource_file = models.FileField(upload_to='course_files/', blank=True, null=True)
+    
     def average_rating(self):
         avg_rating = self.ratings.aggregate(avg=models.Avg('rating'))['avg']
         return round(avg_rating, 1) if avg_rating else 0 

@@ -45,7 +45,8 @@ from django.core.files.storage import default_storage
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from .models import QuizAttempt
-from .utils import extract_text_from_file , generate_quiz_questions
+from .utils import extract_text_from_file 
+from .ai_utils import generate_quiz_questions
 
 
 logger = logging.getLogger(__name__)
@@ -1142,31 +1143,102 @@ def mark_chapter_done(request, chapter_id):
     return redirect("course_detail", resource_id=chapter.resource.id)
 
 
+def extract_chapters(file):
+    """
+    Extracts text from a PDF or DOCX file while keeping full chapter titles and content.
+    """
+    file_path = default_storage.save(f"temp/{file.name}", ContentFile(file.read()))
+    file_path = default_storage.path(file_path)
+    
+    text = ""
+
+    # Extract text based on file type
+    if file.name.endswith(".pdf"):
+        text = extract_text_from_pdf(file_path)
+    elif file.name.endswith(".docx"):
+        text = extract_text_from_docx(file_path)
+
+    # Extract chapters correctly
+    chapters = split_into_chapters_by_title(text)
+
+    # Clean up temporary file
+    default_storage.delete(file_path)
+
+    return chapters
+
+def extract_text_from_pdf(pdf_path):
+    """Extracts text from a PDF file."""
+    text = ""
+    with open(pdf_path, "rb") as file:
+        reader = PyPDF2.PdfReader(file)
+        for page in reader.pages:
+            text += page.extract_text() or ""
+    return text.strip()
+
+def extract_text_from_docx(docx_path):
+    """Extracts text from a DOCX file."""
+    doc = docx.Document(docx_path)
+    return "\n".join([para.text.strip() for para in doc.paragraphs if para.text.strip()])
+
+def split_into_chapters_by_title(text):
+    """
+    Splits text into chapters based on 'Chapter X: Title' format.
+    Ensures that chapter titles are retained exactly as they are in the document.
+    """
+    # Regular expression pattern to detect "Chapter X: Title"
+    chapter_pattern = re.compile(r"(Chapter\s+\d+:\s+[^\n]+)", re.IGNORECASE)
+
+    # Find all matches for chapter titles
+    matches = list(chapter_pattern.finditer(text))
+
+    chapters = []
+
+    for i in range(len(matches)):
+        start = matches[i].start()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        
+        # Extract the full chapter text (title + content)
+        chapter_text = text[start:end].strip()
+
+        # Ensure the extracted text includes the full title only once
+        if chapter_text:
+            chapters.append(chapter_text)
+
+    return chapters
+
+    
+
 @login_required
 @user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
 def upload_resource(request):
     """
-    Allows mentors to upload a course along with 5 chapters.
+    Allows mentors to upload a course along with a file, automatically extracting 5 chapters.
     """
-    ChapterFormSet = inlineformset_factory(
-        Resource, Chapter, fields=('title', 'content'),
-        extra=5, min_num=5, max_num=5, can_delete=False
-    )
-
     if request.method == 'POST':
-        form = ResourceUploadForm(request.POST, request.FILES)  # Handle File Upload
-        formset = ChapterFormSet(request.POST)
+        form = ResourceUploadForm(request.POST, request.FILES)
 
-        if form.is_valid() and formset.is_valid():
+        if form.is_valid():
             resource = form.save(commit=False)
             resource.created_by = request.user
-            resource.save()
+            
+            uploaded_file = request.FILES.get('resource_file')
+            if uploaded_file:
+                resource.resource_file = uploaded_file
+                resource.save()
 
-            chapters = formset.save(commit=False)
-            for i, chapter in enumerate(chapters, start=1):
-                chapter.resource = resource
-                chapter.chapter_number = i 
-                chapter.save()
+                # Extract chapters
+                chapters_content = extract_chapters(resource.resource_file)
+
+                # Store extracted chapters properly
+                for i, chapter_text in enumerate(chapters_content, start=1):
+                    title, content = chapter_text.split("\n", 1) if "\n" in chapter_text else (chapter_text, "")
+                    
+                    Chapter.objects.create(
+                        resource=resource,
+                        title=title.strip(),  # Store full chapter title
+                        content=content.strip(),  # Store chapter content
+                        chapter_number=i
+                    )
 
             # ✅ Notify All Participants
             participants = User.objects.filter(user_type='participant')
@@ -1185,9 +1257,8 @@ def upload_resource(request):
 
     else:
         form = ResourceUploadForm()
-        formset = ChapterFormSet()
 
-    return render(request, 'capstone/upload_resource.html', {'form': form, 'formset': formset})
+    return render(request, 'capstone/upload_resource.html', {'form': form})
 
 
 @login_required
@@ -2216,11 +2287,12 @@ def admin_delete_mentorship_request(request, request_id):
     return redirect("admin_mentorship_requests")  # Ensure this name matches your URL pattern
 
 
+
 @login_required
 @user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
 def upload_ai_chapter_quiz(request):
     """
-    Allows mentors to add AI-generated quizzes for specific chapters.
+    Allows mentors to generate AI-powered quizzes for specific chapters.
     """
     resources = Resource.objects.all()
     chapters = Chapter.objects.all()
@@ -2232,12 +2304,20 @@ def upload_ai_chapter_quiz(request):
         resource = get_object_or_404(Resource, id=resource_id)
         chapter = get_object_or_404(Chapter, id=chapter_id)
 
-        # ✅ Get AI-generated quiz questions
-        quiz_questions = generate_quiz_questions(chapter.title, chapter.content)
+        # ✅ Generate AI-based chapter quiz questions
+        quiz_questions = generate_quiz_questions(chapter.title, chapter.content, num_questions=5, quiz_type="chapter")
 
         if quiz_questions:
-            Quiz.objects.create(resource=resource, chapter=chapter, questions=quiz_questions)
-            messages.success(request, "✅ AI-Generated Quiz uploaded successfully!")
+            quiz, created = Quiz.objects.get_or_create(
+                resource=resource,
+                chapter=chapter,
+                defaults={"questions": quiz_questions}
+            )
+            if not created:
+                quiz.questions = quiz_questions
+                quiz.save()
+
+            messages.success(request, "✅ AI-Generated Chapter Quiz uploaded successfully!")
         else:
             messages.error(request, "❌ Failed to generate quiz. Try again.")
 
@@ -2245,12 +2325,11 @@ def upload_ai_chapter_quiz(request):
 
     return render(request, 'capstone/upload_ai_chapter_quiz.html', {'resources': resources, 'chapters': chapters})
 
-
 @login_required
 @user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
 def upload_final_ai_quiz(request):
     """
-    Allows mentors to generate and upload AI-generated final quizzes.
+    Allows mentors to generate AI-powered final quizzes for a full course.
     """
     resources = Resource.objects.all()
 
@@ -2258,13 +2337,13 @@ def upload_final_ai_quiz(request):
         resource_id = request.POST.get("resource")
         resource = get_object_or_404(Resource, id=resource_id)
 
-        # ✅ Generate AI quiz questions for the final exam
-        quiz_questions = generate_quiz_questions(resource.title, resource.description, num_questions=10)
+        # ✅ Generate AI quiz questions for final quiz
+        quiz_questions = generate_quiz_questions(resource.title, resource.description, num_questions=10, quiz_type="final")
 
         if quiz_questions:
             final_quiz, created = Quiz.objects.get_or_create(
-                resource=resource, 
-                is_final_quiz=True, 
+                resource=resource,
+                is_final_quiz=True,
                 defaults={"questions": quiz_questions}
             )
             if not created:
@@ -2278,42 +2357,31 @@ def upload_final_ai_quiz(request):
         return redirect('mentor_dashboard')
 
     return render(request, 'capstone/upload_ai_final_quiz.html', {"resources": resources})
-
-
 @login_required
 @user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
-def generate_ai_quiz(request, chapter_id):
+def ai_generate_chapter_quiz(request, chapter_id):
     """
-    API endpoint that generates a quiz based on the chapter content.
+    API endpoint that generates an AI-based quiz for a chapter.
     """
     chapter = get_object_or_404(Chapter, id=chapter_id)
-    questions = generate_quiz_questions(chapter.title, chapter.content)
+    quiz_questions = generate_quiz_questions(chapter.title, chapter.content, num_questions=5, quiz_type="chapter")
 
-    if questions:
-        return JsonResponse({"success": True, "questions": questions})
+    if quiz_questions:
+        return JsonResponse({"success": True, "questions": quiz_questions})
     else:
-        return JsonResponse({"success": False, "message": "Quiz generation failed."})
+        return JsonResponse({"success": False, "error": "Failed to generate quiz."})
+
 
 @login_required
 @user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
 def ai_generate_final_quiz(request, resource_id):
     """
-    API view that generates a final quiz for a selected course.
+    API endpoint that generates an AI-based final quiz for a course.
     """
-    print(f"🔍 Debug: Received request for Resource ID {resource_id}")
-
     resource = get_object_or_404(Resource, id=resource_id)
+    quiz_questions = generate_quiz_questions(resource.title, resource.description, num_questions=10, quiz_type="final")
 
-    if not resource:
-        print("❌ Resource not found in database!")
-        return JsonResponse({"success": False, "error": "Resource not found."}, status=400)
-
-    print(f"✅ Generating quiz for: {resource.title}")
-    quiz_questions = generate_quiz_questions(resource.title, resource.description, num_questions=10)
-
-    if not quiz_questions:
-        print("❌ AI failed to generate quiz questions.")
-        return JsonResponse({"success": False, "error": "Failed to generate valid quiz questions."}, status=500)
-
-    print("✅ AI Quiz Successfully Generated")
-    return JsonResponse({"success": True, "questions": quiz_questions})
+    if quiz_questions:
+        return JsonResponse({"success": True, "questions": quiz_questions})
+    else:
+        return JsonResponse({"success": False, "error": "Failed to generate quiz."})

@@ -15,28 +15,26 @@
     {% endif %}
 
     <!-- Upload Course Form -->
-    <form method="POST" enctype="multipart/form-data">  <!-- ✅ Added enctype for file uploads -->
-        {% csrf_token %}
+ <!-- Upload Course Form -->
+<form method="POST" enctype="multipart/form-data">  <!-- ✅ Added enctype for file uploads -->
+    {% csrf_token %}
 
-        <div class="card p-4 mb-3">
-            <h4>Course Details</h4>
-            {{ form.as_p }}
-        </div>
+    <div class="card p-4 mb-3">
+        <h4>Course Details</h4>
+        {{ form.as_p }}
+    </div>
 
-        <!-- Chapter Formset -->
-        <div class="card p-4 mb-3">
-            <h4>Chapters (Required: 5 Chapters)</h4>
-            {{ formset.management_form }}
-            {% for form in formset %}
-            <div class="border p-3 mb-3">
-                <h5>Chapter {{ forloop.counter }}</h5>
-                {{ form.as_p }}
-            </div>
-            {% endfor %}
-        </div>
 
-        <button type="submit" class="btn btn-primary">Upload Course</button>
-    </form>
+    <!-- 🔹 New: Upload File -->
+    <div class="card p-4 mb-3">
+        <h4>Upload Course File (Optional)</h4>
+        <p>You can upload a PDF or DOCX file containing all 5 chapters.</p>
+        {{ form.resource_file }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Upload Course</button>
+</form>
+
 </div>
 
 <!-- Link to Upload Chapter Quizzes -->
@@ -45,9 +43,9 @@
     <p>After uploading the course, add chapter quizzes and a final quiz.</p>
     <a href="{% url 'upload_chapter_quiz' %}" class="btn btn-warning mb-2">📚 Upload Chapter Quizzes</a>
     <a href="{% url 'upload_final_quiz' %}" class="btn btn-danger mb-2">🎯 Upload Final Quiz</a>
-    
     <a href="{% url 'upload_chapter_ai_quiz' %}" class="btn btn-warning mb-2">📚 Upload AI Chapter Quizzes</a>
     <a href="{% url 'upload_final_ai_quiz' %}" class="btn btn-danger mb-2">🎯 Upload AI Final Quiz</a>
+
 </div>
 
 <!-- 🔹 New Section: Upload Document for AI Quiz Generation -->

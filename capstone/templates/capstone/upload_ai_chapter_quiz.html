@@ -40,16 +40,15 @@
 <script>
     function generateQuiz() {
         let chapterId = document.getElementById("chapter").value;
-        let resourceId = document.getElementById("resource").value;
 
-        if (!chapterId || !resourceId) {
-            alert("Please select a course and a chapter first.");
+        if (!chapterId) {
+            alert("Please select a chapter first.");
             return;
         }
 
         document.getElementById("quiz-questions").innerHTML = "<p>Generating quiz... Please wait.</p>";
 
-        fetch(`/ai-generate-quiz/${chapterId}/`)
+        fetch(`/api/ai-generate-chapter-quiz/${chapterId}/`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -57,13 +56,9 @@
                     data.questions.forEach((q, index) => {
                         quizHTML += `
                             <div class="border p-3 mb-3">
-                                <label>Question ${index + 1}:</label>
+                                <h5>Question ${index + 1}</h5>
                                 <input type="text" name="quiz_question_${index + 1}" class="form-control" value="${q.question}" required>
-
-                                <label>Options:</label>
                                 <input type="text" name="quiz_options_${index + 1}" class="form-control" value="${q.options.join(', ')}" required>
-
-                                <label>Correct Answer:</label>
                                 <input type="text" name="quiz_correct_answer_${index + 1}" class="form-control" value="${q.correct_answer}" required>
                             </div>
                         `;
@@ -73,10 +68,8 @@
                     document.getElementById("quiz-questions").innerHTML = "<p class='text-danger'>Failed to generate quiz. Try again.</p>";
                 }
             })
-            .catch(error => {
-                console.error("Error generating quiz:", error);
-                document.getElementById("quiz-questions").innerHTML = "<p class='text-danger'>Error generating quiz. Please try again.</p>";
-            });
+            .catch(error => console.error("Error generating quiz:", error));
     }
 </script>
+
 {% endblock %}
