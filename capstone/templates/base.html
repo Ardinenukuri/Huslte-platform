@@ -17,8 +17,11 @@
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'homepage' %}">
-                Hustle Platform
+            <a class="navbar-brand  align-items-center" href="{% url 'homepage' %}">
+                <img src="{% static 'logo.webp' %}" alt="Hustle Platform Logo" 
+                     class="img-fluid rounded-circle shadow me-2" 
+                     style="width: 60px; height: 60px; object-fit: cover;">
+                <span class="fw-bold">Hustle Platform</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -31,22 +34,22 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'about_us' %}">
+                        <a class="nav-link active" href="{% url 'about_us' %}">
                             {{ "About Us"|translate:user.language_preference }}
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'features' %}">
+                        <a class="nav-link active" href="{% url 'features' %}">
                             {{ "Features"|translate:user.language_preference }}
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'set_language_preference' %}">
+                    <li class="nav-item ">
+                        <a class="nav-link active" href="{% url 'set_language_preference' %}">
                             {{ "Language"|translate:user.language_preference }}
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'contact_us' %}">
+                        <a class="nav-link active" href="{% url 'contact_us' %}">
                             {{ "Contact Us"|translate:user.language_preference }}
                         </a>
                     </li>
@@ -64,7 +67,7 @@
     <!-- Footer -->
     <footer class="footer bg-light py-4">
         <div class="container text-center">
-            <p>&copy; 2025 {{ "Hustle Platform"|translate:user.language_preference }}. {{ "All rights reserved."|translate:user.language_preference }}</p>
+            <p>&copy; 2025 Hustle Platform. {{ "All rights reserved."|translate:user.language_preference }}</p>
             <p>
                 <a href="{% url 'about_us' %}">{{ "About Us"|translate:user.language_preference }}</a> | 
                 <a href="{% url 'features' %}">{{ "Features"|translate:user.language_preference }}</a> | 

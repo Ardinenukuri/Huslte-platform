@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 from msvcrt import getch
 from sre_parse import parse_template
 from django.shortcuts import render, redirect, get_object_or_404
@@ -47,7 +47,10 @@ from django.utils.decorators import method_decorator
 from .models import QuizAttempt
 from .utils import extract_text_from_file 
 from .utils import translate_text
+from django.core.mail import EmailMessage
 from .ai_utils import generate_quiz_questions
+import urllib.parse
+from django.utils.timezone import localtime, make_aware
 
 
 logger = logging.getLogger(__name__)
@@ -85,8 +88,10 @@ def login_view(request):
                 form.add_error(None, 'Invalid email, password, or user type')
     else:
         form = LoginForm()
+    # Provide a default language if user is not authenticated
+    language_preference = request.user.language_preference 
     
-    return render(request, 'capstone/login.html', {'form': form})
+    return render(request, 'capstone/login.html', {'form': form, 'language_preference': language_preference})
 
 
 def signup_view(request):
@@ -1784,7 +1789,6 @@ def mentor_sessions(request):
     return render(request, 'capstone/mentor_sessions.html', {'sessions': sessions})
 
 
-
 @login_required
 @user_passes_test(lambda u: u.user_type == "mentor")
 def confirm_session(request, session_id):
@@ -1797,44 +1801,111 @@ def confirm_session(request, session_id):
             messages.error(request, "❌ Please provide a valid meeting link.")
             return redirect("confirm_session", session_id=session.id)
 
+        # ✅ Convert `session.start_time` to `datetime.datetime` if it's a `time`
+        if isinstance(session.start_time, time):  
+            start_time = datetime.combine(session.date, session.start_time)  # Merge date & time
+        else:
+            start_time = session.start_time  # It's already a full datetime object
+
+        # ✅ Ensure `start_time` is timezone-aware
+        if start_time.tzinfo is None:
+            start_time = make_aware(start_time)
+        else:
+            start_time = localtime(start_time)
+
+        # ✅ Define `end_time`
+        end_time = start_time + timedelta(hours=1)
+
+        # ✅ Update session in the database
         session.is_confirmed = True
-        session.meeting_link = meeting_link  # Save the link to the session
+        session.meeting_link = meeting_link
         session.save()
 
-        # 🔔 Notify the participant
-        notification_message = f"""
-        ✅ Your session with {session.mentor.full_name} has been confirmed!
-        📅 Date: {session.date}
-        ⏰ Time: {session.start_time}
+        # 🔹 Generate Google Calendar Link
+        google_calendar_url = (
+            "https://www.google.com/calendar/render?"
+            + urllib.parse.urlencode({
+                "action": "TEMPLATE",
+                "text": f"Mentorship Session with {session.mentor.full_name}",
+                "dates": f"{start_time.strftime('%Y%m%dT%H%M%S')}/{end_time.strftime('%Y%m%dT%H%M%S')}",
+                "details": f"Organized by Hustle Platform\n\nMeeting with {session.mentor.full_name}\nMeeting Link: {meeting_link}",
+                "location": meeting_link,
+                "sf": "true",
+                "output": "xml",
+                "add": f"{settings.DEFAULT_FROM_EMAIL}",
+            })
+        )
 
-        🔗 Meeting Link: {meeting_link}
+        # 🔹 Generate Outlook Calendar Link
+        outlook_calendar_url = (
+            "https://outlook.live.com/calendar/0/deeplink/compose?"
+            + urllib.parse.urlencode({
+                "subject": f"Mentorship Session with {session.mentor.full_name}",
+                "startdt": start_time.isoformat(),
+                "enddt": end_time.isoformat(),
+                "body": f"Organized by Hustle Platform\n\nMeeting with {session.mentor.full_name}\nMeeting Link: {meeting_link}",
+                "location": meeting_link,
+                "organizer": f"{settings.DEFAULT_FROM_EMAIL}",  # ✅ Correctly format the organizer
+            })
+        )
+
+        # 🔹 Generate ICS File Content (for Apple & Other Calendar Apps)
+        ics_content = f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Hustle Platform//Mentorship Sessions//EN
+BEGIN:VEVENT
+ORGANIZER;CN=Hustle Platform:MAILTO:{settings.DEFAULT_FROM_EMAIL}  # ✅ Correct organizer email
+SUMMARY:Mentorship Session with {session.mentor.full_name}
+DTSTART:{start_time.strftime('%Y%m%dT%H%M%S')}
+DTEND:{end_time.strftime('%Y%m%dT%H%M%S')}
+DESCRIPTION:Organized by Hustle Platform\\nMeeting with {session.mentor.full_name}\\nMeeting Link: {meeting_link}
+LOCATION:{meeting_link}
+END:VEVENT
+END:VCALENDAR
+"""
+        ics_filename = f"mentorship_session_{session.id}.ics"
+
+        # 📧 Email Content with Shortened Links
+        email_body = f"""
+        <p>✅ Your session with <strong>{session.mentor.full_name}</strong> has been confirmed!</p>
+        <p><strong>📅 Date:</strong> {session.date}</p>
+        <p><strong>⏰ Time:</strong> {start_time.strftime('%H:%M %p')} (CAT)</p>
+        <p><strong>🔗 Meeting Link:</strong> <a href="{meeting_link}">Join Meeting</a></p>
+
+        <h3>📅 Add to Calendar:</h3>
+        <ul>
+            <li><a href="{google_calendar_url}">📅 Add to Google Calendar</a></li>
+            <li><a href="{outlook_calendar_url}">📅 Add to Outlook Calendar</a></li>
+        </ul>
+
+        <p>Alternatively, you can download the attached <strong>ICS file</strong> to manually add it to your calendar.</p>
         """
-        
-        Notification.objects.create(
-            user=session.participant,
-            message=notification_message.strip(),
-        )
 
-        # 📧 Send an email to the participant
-        send_mail(
-            subject="📅 Session Confirmed with Your Mentor!",
-            message=f"Your session with {session.mentor.full_name} is confirmed!\n\n{notification_message}",
-            from_email= settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[session.participant.email],
-            fail_silently=True,
+        # 📧 Send Email to Participant with Calendar Options
+        participant_email = EmailMessage(
+            subject="📅 Session Confirmed - Hustle Platform!",
+            body=email_body.strip(),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[session.participant.email],
         )
+        participant_email.attach(ics_filename, ics_content, "text/calendar")
+        participant_email.content_subtype = "html"  
+        participant_email.send(fail_silently=True)
 
-
-        # 📧 Send an email to the MENTOR
-        send_mail(
-            subject="📅 Session Confirmed with Your Mentee!",
-            message=f"Your session with {session.participant.full_name} is confirmed!\n\n{notification_message}",
-            from_email= settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[session.mentor.email],
-            fail_silently=True,
+        # 📧 Send Email to Mentor with Calendar Options
+        mentor_email = EmailMessage(
+            subject="📅 Your Session is Confirmed - Hustle Platform!",
+            body=email_body.strip(),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[session.mentor.email],
         )
-        messages.success(request, "✅ Session confirmed and participant notified!")
+        mentor_email.attach(ics_filename, ics_content, "text/calendar")
+        mentor_email.content_subtype = "html"  
+        mentor_email.send(fail_silently=True)
+
+        messages.success(request, "✅ Session confirmed! Participants notified with calendar options.")
         return redirect("mentor_dashboard")
+
     return render(request, "capstone/confirm_session.html", {"session": session})
 
 @login_required

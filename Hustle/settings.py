@@ -50,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'capstone.middleware.DefaultLanguageMiddleware',
 ]
 
 ROOT_URLCONF = 'Hustle.urls'
