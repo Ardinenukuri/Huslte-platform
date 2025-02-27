@@ -46,6 +46,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from .models import QuizAttempt
 from .utils import extract_text_from_file 
+from .utils import translate_text
 from .ai_utils import generate_quiz_questions
 
 
@@ -1101,8 +1102,19 @@ def course_detail(request, resource_id):
     """Displays course details with chapters, quizzes, progress, and final quiz eligibility."""
     resource = get_object_or_404(Resource, id=resource_id)
     progress, created = UserProgress.objects.get_or_create(user=request.user, resource=resource)
+    user_lang = request.user.language_preference  # Get user's language
+    translated_title = resource.translated_title.get(user_lang, resource.title) if isinstance(resource.translated_title, dict) else resource.title
+    translated_description = resource.translated_description.get(user_lang, resource.description) if isinstance(resource.translated_description, dict) else resource.description
 
     # Check if the final quiz exists
+    translated_chapters = [
+        {
+            "title": translate_text(chapter.title, user_lang),
+            "content": translate_text(chapter.content, user_lang),
+        }
+        for chapter in resource.chapters.all()
+    ]
+
     final_quiz = Quiz.objects.filter(resource=resource, is_final_quiz=True).first()
     final_quiz_exists = final_quiz is not None  # Boolean flag for template
 
@@ -1110,7 +1122,10 @@ def course_detail(request, resource_id):
         "resource": resource,
         "progress": progress,
         "final_quiz_exists": final_quiz_exists,
-        "final_quiz": final_quiz  # Pass the final quiz object
+        "final_quiz": final_quiz,  # Pass the final quiz object
+        "translated_title": translated_title,
+        "translated_description": translated_description,
+        "translated_chapters": translated_chapters,
     })
 
 @login_required
@@ -2385,3 +2400,48 @@ def ai_generate_final_quiz(request, resource_id):
         return JsonResponse({"success": True, "questions": quiz_questions})
     else:
         return JsonResponse({"success": False, "error": "Failed to generate quiz."})
+
+
+
+@login_required
+def mentor_profile_settings(request):
+    """Allows mentors to update profile settings including language preference."""
+    if request.method == "POST":
+        language = request.POST.get("language_preference")
+        request.user.language_preference = language
+        request.user.save()
+        messages.success(request, "Profile settings updated successfully!")
+        return redirect("mentor_profile_settings")
+
+    return render(request, "capstone/mentor_profile_settings.html")
+
+@login_required
+def participant_profile_settings(request):
+    """Allows participants to update profile settings including language preference."""
+    if request.method == "POST":
+        language = request.POST.get("language_preference")
+        request.user.language_preference = language
+        request.user.save()
+        messages.success(request, "Profile settings updated successfully!")
+        return redirect("participant_profile_settings")
+
+    return render(request, "capstone/participant_profile_settings.html")
+
+def set_language_preference(request):
+    """Allows both registered and unregistered users to set language preference."""
+    if request.method == "POST":
+        language = request.POST.get("language_preference")
+
+        if request.user.is_authenticated:
+            # ✅ Logged-in user: Save preference to their profile
+            request.user.language_preference = language
+            request.user.save()
+            messages.success(request, "Profile settings updated successfully!")
+        else:
+            # ✅ Unregistered user: Store preference in session
+            request.session["language_preference"] = language
+            messages.success(request, "Language preference saved for this session!")
+
+        return redirect("homepage")  # Redirect user to homepage or another page
+
+    return render(request, "capstone/set_language.html")

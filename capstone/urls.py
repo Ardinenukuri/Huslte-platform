@@ -126,6 +126,9 @@ urlpatterns = [
     path('upload-ai-final-quiz/', views.upload_final_ai_quiz, name='upload_final_ai_quiz'),
     path('api/ai-generate-chapter-quiz/<int:chapter_id>/', views.ai_generate_chapter_quiz, name='ai_generate_chapter_quiz'),
     path('api/ai-generate-final-quiz/<int:resource_id>/', views.ai_generate_final_quiz, name='ai_generate_final_quiz'),
+    path('mentor/profile-settings/', views.mentor_profile_settings, name='mentor_profile_settings'),
+    path('participant/profile-settings/', views.participant_profile_settings, name='participant_profile_settings'),
+    path("set-language/", views.set_language_preference, name="set_language_preference"),
 
 
     

@@ -1,26 +1,31 @@
 {% extends 'participant-base.html' %}
-{% block title %}Participant Dashboard - Hustle Platform{% endblock %}
+{% load custom_filters %}
+
+{% block title %}{{ "Participant Dashboard - Hustle Platform"|translate:user.language_preference }}{% endblock %}
+
 {% block participant_content %}
-<h1>Welcome, {{ user.username }}!</h1>
-<p>You are logged in as a <strong>Participant</strong>.</p>
+<h1>{{ "Welcome"|translate:user.language_preference }}, {{ user.username }}!</h1>
+<p>{{ "You are logged in as a"|translate:user.language_preference }} <strong>{{ "Participant"|translate:user.language_preference }}</strong>.</p>
 
 <!-- Overview Section -->
 <section>
-    <h2>Overview</h2>
+    <h2>{{ "Overview"|translate:user.language_preference }}</h2>
     {% if mentor %}
     <div class="alert alert-info">
-        <strong>Your Mentor:</strong> <a href="{% url 'mentor_profile' mentor.id %}">{{ mentor.full_name }}</a>
-        <a href="{% url 'rate_mentor' mentor.id %}" class="btn btn-outline-primary btn-sm">Rate a Mentor</a>
+        <strong>{{ "Your Mentor"|translate:user.language_preference }}:</strong> 
+        <a href="{% url 'mentor_profile' mentor.id %}">{{ mentor.full_name }}</a>
+        <a href="{% url 'rate_mentor' mentor.id %}" class="btn btn-outline-primary btn-sm">
+            {{ "Rate a Mentor"|translate:user.language_preference }}
+        </a>
     </div>
-{% else %}
-    <p>No mentor assigned yet. Submit a request!</p>
-{% endif %}
-
+    {% else %}
+        <p>{{ "No mentor assigned yet. Submit a request!"|translate:user.language_preference }}</p>
+    {% endif %}
 </section>
 
 <!-- Notifications Section -->
 <section>
-    <h2>Notifications</h2>
+    <h2>{{ "Notifications"|translate:user.language_preference }}</h2>
     <ul class="list-group">
         {% for notification in notifications %}
             <li class="list-group-item">
@@ -29,15 +34,15 @@
                 {% if not notification.is_seen %}
                     <form method="post" action="{% url 'pmark_notification_seen' notification.id %}">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-sm btn-outline-primary">Mark as Seen</button>
+                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                            {{ "Mark as Seen"|translate:user.language_preference }}
+                        </button>
                     </form>
                 {% endif %}
             </li>
         {% empty %}
-            <li class="list-group-item">No new notifications.</li>
+            <li class="list-group-item">{{ "No new notifications."|translate:user.language_preference }}</li>
         {% endfor %}
     </ul>
-    <!-- Job Application Notifications -->
-
 </section>
 {% endblock %}

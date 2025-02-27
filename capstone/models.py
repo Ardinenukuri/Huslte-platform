@@ -1,12 +1,21 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import Avg
+from googletrans import Translator
 
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
         ('mentor', 'Mentor'),
         ('participant', 'Participant'),
     )
+    LANGUAGE_CHOICES = [
+        ("en", "English"),
+        ("fr", "French"),
+        ("es", "Spanish"),
+        ("sw", "Swahili"),
+        ("ki", "Kirundi")
+    ]
+    language_preference = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default="fr")
     full_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15)
@@ -92,6 +101,24 @@ class Resource(models.Model):
     final_quiz = models.OneToOneField('Quiz', on_delete=models.SET_NULL, null=True, blank=True, related_name="final_quiz")
     cover_image = models.ImageField(upload_to='resumes/', null=True, blank=True)
     resource_file = models.FileField(upload_to='course_files/', blank=True, null=True)
+    translated_title = models.JSONField(default=dict, blank=True) 
+    translated_description = models.JSONField(default=dict, blank=True, null=True)
+
+    def translate_content(self, target_languages=["fr", "es"]):
+        """Automatically translates the title and description to target languages."""
+        translator = Translator()
+
+        translations = {}
+        for lang in target_languages:
+            translations[lang] = {
+                "title": translator.translate(self.title, dest=lang).text,
+                "description": translator.translate(self.description, dest=lang).text
+            }
+
+        self.translated_title = translations
+        self.translated_description = translations
+        self.save()
+
     
     def average_rating(self):
         avg_rating = self.ratings.aggregate(avg=models.Avg('rating'))['avg']
@@ -282,6 +309,9 @@ class Quiz(models.Model):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name="quizzes", null=True, blank=True)
     questions = models.JSONField(default=list)  # Store questions as JSON (Multiple Choice)
     is_final_quiz = models.BooleanField(default=False)
+    translated_text = models.JSONField(default=dict) 
+    translated_options = models.JSONField(default=dict)
+    correct_answer = models.TextField()
 
     def __str__(self):
         if self.is_final_quiz:

@@ -1,35 +1,32 @@
-
 {% extends 'mentor-base.html' %}
-{% block title %}Mentor Dashboard - Hustle Platform{% endblock %}
+{% load custom_filters %}
+
+{% block title %}{{ "Mentor Dashboard - Hustle Platform"|translate:user.language_preference }}{% endblock %}
+
 {% block mentor_content %}
-<h1>Welcome, {{ user.username }}!</h1>
-<p>You are logged in as a <strong>Mentor</strong>.</p>
+<h1>{{ "Welcome, "|translate:user.language_preference }}{{ user.username }}!</h1>
+<p>{{ "You are logged in as a "|translate:user.language_preference }}<strong>{{ "Mentor"|translate:user.language_preference }}</strong>.</p>
 
 <!-- Overview Section -->
 <section>
-    
-    
-        <section>
-            <h2>My Mentees</h2>
-            <ul class="list-group">
-                {% for mentee in mentees %}
-                    <li class="list-group-item">
-                        <a href="{% url 'participant_profile' mentee.id %}" class="text-decoration-none">
-                            {{ mentee.full_name }}
-                        </a>
-                    </li>
-                {% empty %}
-                    <li class="list-group-item">No mentees yet.</li>
-                {% endfor %}
-            </ul>
-        </section>
-        
-    
+    <section>
+        <h2>{{ "My Mentees"|translate:user.language_preference }}</h2>
+        <ul class="list-group">
+            {% for mentee in mentees %}
+                <li class="list-group-item">
+                    <a href="{% url 'participant_profile' mentee.id %}" class="text-decoration-none">
+                        {{ mentee.full_name }}
+                    </a>
+                </li>
+            {% empty %}
+                <li class="list-group-item">{{ "No mentees yet."|translate:user.language_preference }}</li>
+            {% endfor %}
+        </ul>
+    </section>
 </section>
 
 <!-- Notifications Section -->
-<!-- Notifications Section -->
-<h2>📢 Notifications</h2>
+<h2>📢 {{ "Notifications"|translate:user.language_preference }}</h2>
 <ul class="list-group">
     {% for notification in notifications %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -40,30 +37,30 @@
             {% if not notification.is_seen %}
                 <form method="post" action="{% url 'mark_notification_seen' notification.id %}">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-outline-primary">Mark as Seen</button>
+                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                        {{ "Mark as Seen"|translate:user.language_preference }}
+                    </button>
                 </form>
             {% endif %}
         </li>
     {% empty %}
-        <li class="list-group-item text-muted text-center">No new notifications.</li>
+        <li class="list-group-item text-muted text-center">{{ "No new notifications."|translate:user.language_preference }}</li>
     {% endfor %}
 </ul>
 
+<!-- Mentorship Requests Section -->
 <section>
-    <h2>Mentorship Requests</h2>
+    <h2>{{ "Mentorship Requests"|translate:user.language_preference }}</h2>
     <ul class="list-group">
         {% for request in mentorship_requests %}
             <li class="list-group-item">
-                <p><strong>New Mentorship Request:</strong> {{ request.mentee.full_name }}</p>
-                <p><strong>Message:</strong> {{ request.message }}</p>
-                    <a href="{% url 'manage_mentorship_requests' %}">Respond</a> <!-- Pass request.id -->
-                
+                <p><strong>{{ "New Mentorship Request:"|translate:user.language_preference }}</strong> {{ request.mentee.full_name }}</p>
+                <p><strong>{{ "Message:"|translate:user.language_preference }}</strong> {{ request.message }}</p>
+                <a href="{% url 'manage_mentorship_requests' %}">{{ "Respond"|translate:user.language_preference }}</a>
             </li>
         {% empty %}
-        <li>No new mentorship requests.</li>
-        
+            <li class="list-group-item">{{ "No new mentorship requests."|translate:user.language_preference }}</li>
         {% endfor %}
     </ul>
-    
 </section>
 {% endblock %}

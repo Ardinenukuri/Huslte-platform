@@ -1,8 +1,10 @@
 {% extends 'mentor-base.html' %}
-{% block title %}Learning Resources - Hustle Platform{% endblock %}
+{% load custom_filters %}
+
+{% block title %}{{ "Learning Resources - Hustle Platform"|translate:user.language_preference }}{% endblock %}
 
 {% block mentor_content %}
-    <h1 class="text-center mb-4">📚 Learning Resources</h1>
+    <h1 class="text-center mb-4">📚 {{ "Learning Resources"|translate:user.language_preference }}</h1>
 
     <!-- Resource Cards -->
     <section class="row justify-content-center">
@@ -25,14 +27,18 @@
                     <p class="card-text text-muted">{{ resource.description|truncatewords:30 }}</p>
 
                     <div class="d-flex justify-content-between">
-                        <a href="{% url 'menroll_course' resource.id %}" target="_blank" class="btn btn-primary w-50">View Resource</a>
-                        <a href="{% url 'delete_learning_resource' resource.id %}" class="btn btn-danger w-50">🗑 Delete</a>
+                        <a href="{% url 'menroll_course' resource.id %}" target="_blank" class="btn btn-primary w-50">
+                            {{ "View Resource"|translate:user.language_preference }}
+                        </a>
+                        <a href="{% url 'delete_learning_resource' resource.id %}" class="btn btn-danger w-50">
+                            🗑 {{ "Delete"|translate:user.language_preference }}
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
         {% empty %}
-        <p class="text-muted text-center w-100">No resources found.</p>
+        <p class="text-muted text-center w-100">{{ "No resources found."|translate:user.language_preference }}</p>
         {% endfor %}
     </section>
 
@@ -40,10 +46,14 @@
     <div class="pagination d-flex justify-content-center mt-4">
         <span class="step-links">
             {% if resources.has_previous %}
-                <a href="?page=1" class="btn btn-sm btn-outline-secondary">&laquo; First</a>
-                <a href="?page={{ resources.previous_page_number }}" class="btn btn-sm btn-outline-secondary">Previous</a>
+                <a href="?page=1" class="btn btn-sm btn-outline-secondary">&laquo; {{ "First"|translate:user.language_preference }}</a>
+                <a href="?page={{ resources.previous_page_number }}" class="btn btn-sm btn-outline-secondary">{{ "Previous"|translate:user.language_preference }}</a>
             {% endif %}
-
             
+            {% if resources.has_next %}
+                <a href="?page={{ resources.next_page_number }}" class="btn btn-sm btn-outline-secondary">{{ "Next"|translate:user.language_preference }}</a>
+                <a href="?page={{ resources.paginator.num_pages }}" class="btn btn-sm btn-outline-secondary">{{ "Last"|translate:user.language_preference }} &raquo;</a>
+            {% endif %}
+        </span>
     </div>
 {% endblock %}

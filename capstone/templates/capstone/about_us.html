@@ -1,26 +1,29 @@
 {% extends 'base.html' %}
-{% block title %}About Us - Hustle Platform{% endblock %}
+{% load custom_filters %}
+
+{% block title %}{{ "About Us - Hustle Platform"|translate:user.language_preference }}{% endblock %}
+
 {% block content %}
 <div class="section">
     <div class="container">
-        <h2>About Us</h2>
+        <h2>{{ "About Us"|translate:user.language_preference }}</h2>
         <p>
-            The Hustle Platform is a community-driven initiative aimed at empowering women in Burundi to achieve economic independence through entrepreneurship. Our mission is to provide women with the tools, resources, and mentorship they need to start and grow their businesses.
+            {{ "The Hustle Platform is a community-driven initiative aimed at empowering women in Burundi to achieve economic independence through entrepreneurship. Our mission is to provide women with the tools, resources, and mentorship they need to start and grow their businesses."|translate:user.language_preference }}
         </p>
         <p>
-            Founded in 2024, we believe that every woman has the potential to succeed, and we are committed to creating a supportive environment where they can thrive.
+            {{ "Founded in 2024, we believe that every woman has the potential to succeed, and we are committed to creating a supportive environment where they can thrive."|translate:user.language_preference }}
         </p>
         <div class="row mt-5">
             <div class="col-md-6">
-                <h3>Our Mission</h3>
+                <h3>{{ "Our Mission"|translate:user.language_preference }}</h3>
                 <p>
-                    To empower women in Burundi by providing access to mentorship, resources, and a supportive community.
+                    {{ "To empower women in Burundi by providing access to mentorship, resources, and a supportive community."|translate:user.language_preference }}
                 </p>
             </div>
             <div class="col-md-6">
-                <h3>Our Vision</h3>
+                <h3>{{ "Our Vision"|translate:user.language_preference }}</h3>
                 <p>
-                    A world where every woman has the opportunity to achieve economic independence and success.
+                    {{ "A world where every woman has the opportunity to achieve economic independence and success."|translate:user.language_preference }}
                 </p>
             </div>
         </div>

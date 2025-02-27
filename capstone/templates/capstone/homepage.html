@@ -1,16 +1,22 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Home - Hustle Platform{% endblock %}
+{% load custom_filters %}
+
+{% block title %}{{ "Home - Hustle Platform"|translate:user.language_preference }}{% endblock %}
 
 {% block content %}
 <!-- Welcome Banner -->
 <div class="welcome-banner" style="background-image: url('{% static "okay.webp" %}');">
     <div class="container">
-        <h1 style="color: #0A1F44; font-weight: bold; text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.7);">From Home to Hustle</h1>
-        <h2 style="color: #0A1F44; font-weight: bold; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.5);">Women’s Journey to Economic Empowerment in Burundi</h2>
+        <h1 style="color: #0A1F44; font-weight: bold; text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.7);">
+            {{ "From Home to Hustle"|translate:user.language_preference }}
+        </h1>
+        <h2 style="color: #0A1F44; font-weight: bold; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.5);">
+            {{ "Women’s Journey to Economic Empowerment in Burundi"|translate:user.language_preference }}
+        </h2>
         <div class="cta-buttons">
-            <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
-            <a href="{% url 'signup' %}" class="btn btn-success">Sign Up</a>
+            <a href="{% url 'login' %}" class="btn btn-primary">{{ "Login"|translate:user.language_preference }}</a>
+            <a href="{% url 'signup' %}" class="btn btn-success">{{ "Sign Up"|translate:user.language_preference }}</a>
         </div>
     </div>
 </div>
@@ -18,9 +24,9 @@
 <!-- Overview Section -->
 <div class="section">
     <div class="container">
-        <h2>Overview of the Platform</h2>
+        <h2>{{ "Overview of the Platform"|translate:user.language_preference }}</h2>
         <p>
-            The Hustle Platform is designed to empower women in Burundi by providing them with the tools, resources, and mentorship they need to succeed in their entrepreneurial journeys. Whether you're looking to start a business, grow your skills, or connect with mentors, our platform is here to support you every step of the way.
+            {{ "The Hustle Platform is designed to empower women in Burundi by providing them with the tools, resources, and mentorship they need to succeed in their entrepreneurial journeys. Whether you're looking to start a business, grow your skills, or connect with mentors, our platform is here to support you every step of the way."|translate:user.language_preference }}
         </p>
     </div>
 </div>
@@ -28,19 +34,19 @@
 <!-- Key Features Section -->
 <div class="section bg-light">
     <div class="container">
-        <h2>Key Features</h2>
+        <h2>{{ "Key Features"|translate:user.language_preference }}</h2>
         <div class="row">
             <div class="col-md-4">
-                <h3>Mentorship</h3>
-                <p>Connect with experienced mentors who can guide you through your entrepreneurial journey.</p>
+                <h3>{{ "Mentorship"|translate:user.language_preference }}</h3>
+                <p>{{ "Connect with experienced mentors who can guide you through your entrepreneurial journey."|translate:user.language_preference }}</p>
             </div>
             <div class="col-md-4">
-                <h3>Resources</h3>
-                <p>Access a library of resources, including articles, videos, and tools to help you succeed.</p>
+                <h3>{{ "Resources"|translate:user.language_preference }}</h3>
+                <p>{{ "Access a library of resources, including articles, videos, and tools to help you succeed."|translate:user.language_preference }}</p>
             </div>
             <div class="col-md-4">
-                <h3>Community</h3>
-                <p>Join a supportive community of like-minded women who are on the same journey as you.</p>
+                <h3>{{ "Community"|translate:user.language_preference }}</h3>
+                <p>{{ "Join a supportive community of like-minded women who are on the same journey as you."|translate:user.language_preference }}</p>
             </div>
         </div>
     </div>

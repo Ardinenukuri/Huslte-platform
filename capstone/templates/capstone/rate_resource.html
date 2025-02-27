@@ -1,9 +1,11 @@
 {% extends 'participant-base.html' %}
-{% block title %}Rate Resource{% endblock %}
+{% load custom_filters %}  <!-- ✅ Load translation filter -->
+
+{% block title %}{{ "Rate Resource"|translate:user.language_preference }}{% endblock %}
 
 {% block participant_content %}
 <div class="container mt-4">
-    <h1 class="mb-4">Rate {{ resource.title }}</h1>
+    <h1 class="mb-4">{{ "Rate"|translate:user.language_preference }} {{ resource.title }}</h1>
 
     <form method="post" class="rating-form">
         {% csrf_token %}
@@ -30,10 +32,10 @@
             </label>
         </div>
 
-        <button type="submit" class="btn btn-primary mt-3">Submit Rating</button>
+        <button type="submit" class="btn btn-primary mt-3">{{ "Submit Rating"|translate:user.language_preference }}</button>
     </form>
 
-    <a href="{% url 'learning_resources' %}" class="btn btn-secondary mt-3">Back to Resources</a>
+    <a href="{% url 'learning_resources' %}" class="btn btn-secondary mt-3">{{ "Back to Resources"|translate:user.language_preference }}</a>
 </div>
 
 <!-- Star Rating Styling -->

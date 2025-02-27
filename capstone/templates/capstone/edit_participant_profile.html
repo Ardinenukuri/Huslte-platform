@@ -1,30 +1,36 @@
 {% extends "participant-base.html" %}
-{% block title %}Edit Profile - Hustle Platform{% endblock %}
+{% load custom_filters %}
+
+{% block title %}{{ "Edit Profile - Hustle Platform"|translate:user.language_preference }}{% endblock %}
 
 {% block participant_content %}
 <div class="container mt-4">
-    <h2 class="text-center">✏️ Edit Profile</h2>
+    <h2 class="text-center">{{ "✏️ Edit Profile"|translate:user.language_preference }}</h2>
 
     <form method="post" enctype="multipart/form-data" class="p-4 border rounded shadow-sm bg-white">
         {% csrf_token %}
         
         <div class="mb-3">
-            <label class="form-label"><strong>Bio</strong></label>
+            <label class="form-label"><strong>{{ "Bio"|translate:user.language_preference }}</strong></label>
             {{ form.bio }}
         </div>
 
         <div class="mb-3">
-            <label class="form-label"><strong>Skills</strong></label>
+            <label class="form-label"><strong>{{ "Skills"|translate:user.language_preference }}</strong></label>
             {{ form.skills }}
         </div>
 
         <div class="mb-3">
-            <label class="form-label"><strong>Interests</strong></label>
+            <label class="form-label"><strong>{{ "Interests"|translate:user.language_preference }}</strong></label>
             {{ form.interests }}
         </div>
 
-        <button type="submit" class="btn btn-success">💾 Save Changes</button>
-        <a href="{% url 'participant_profile' participant.id %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-success">
+            {{ "💾 Save Changes"|translate:user.language_preference }}
+        </button>
+        <a href="{% url 'participant_profile' participant.id %}" class="btn btn-secondary">
+            {{ "Cancel"|translate:user.language_preference }}
+        </a>
     </form>
 </div>
 {% endblock %}

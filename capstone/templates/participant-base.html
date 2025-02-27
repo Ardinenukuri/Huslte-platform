@@ -1,10 +1,11 @@
 {% load static %}
+{% load custom_filters %}  <!-- ✅ Load translation filter -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ user.language_preference|default:'en' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Participant Dashboard - Hustle Platform{% endblock %}</title>
+    <title>{% block title %}{{ "Participant Dashboard - Hustle Platform"|translate:user.language_preference }}{% endblock %}</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -59,31 +60,49 @@
 
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'participant_dashboard' %}">Dashboard</a>
+                    <a class="nav-link" href="{% url 'participant_dashboard' %}">
+                        {{ "Dashboard"|translate:user.language_preference }}
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'participant_profile' request.user.id %}">My Profile</a>
+                    <a class="nav-link" href="{% url 'participant_profile' request.user.id %}">
+                        {{ "My Profile"|translate:user.language_preference }}
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'learning_resources' %}">Learning Resources</a>
+                    <a class="nav-link" href="{% url 'learning_resources' %}">
+                        {{ "Learning Resources"|translate:user.language_preference }}
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'submit_mentorship_request' %}">Mentorship Program</a>
+                    <a class="nav-link" href="{% url 'submit_mentorship_request' %}">
+                        {{ "Mentorship Program"|translate:user.language_preference }}
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'available_sessions' %}">Schedule a Session</a>
+                    <a class="nav-link" href="{% url 'available_sessions' %}">
+                        {{ "Schedule a Session"|translate:user.language_preference }}
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'job_listings' %}">Job Opportunities</a>
+                    <a class="nav-link" href="{% url 'job_listings' %}">
+                        {{ "Job Opportunities"|translate:user.language_preference }}
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'list_threads' %}">Discussion Forum</a>
+                    <a class="nav-link" href="{% url 'list_threads' %}">
+                        {{ "Discussion Forum"|translate:user.language_preference }}
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'account_settings' %}">Settings</a>
+                    <a class="nav-link" href="{% url 'account_settings' %}">
+                        {{ "Settings"|translate:user.language_preference }}
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'login' %}">Logout</a>
+                    <a class="nav-link" href="{% url 'login' %}">
+                        {{ "Logout"|translate:user.language_preference }}
+                    </a>
                 </li>
             </ul>
         </div>

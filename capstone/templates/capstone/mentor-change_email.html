@@ -1,18 +1,19 @@
 {% extends 'mentor-base.html' %}
+{% load custom_filters %}
 
-{% block title %}Change Email{% endblock %}
+{% block title %}{{ "Change Email"|translate:user.language_preference }}{% endblock %}
 
 {% block mentor_content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card shadow p-4">
-                <h2 class="text-center mb-4">Change Email</h2>
+                <h2 class="text-center mb-4">{{ "Change Email"|translate:user.language_preference }}</h2>
 
                 <!-- Display form errors -->
                 {% if form.errors %}
                     <div class="alert alert-danger">
-                        <strong>Error:</strong> Please correct the errors below.
+                        <strong>{{ "Error"|translate:user.language_preference }}:</strong> {{ "Please correct the errors below."|translate:user.language_preference }}
                     </div>
                 {% endif %}
 
@@ -22,8 +23,12 @@
                         {{ form.as_p }}
                     </div>
                     <div class="d-flex justify-content-between">
-                        <a href="{% url 'maccount_settings' %}" class="btn btn-outline-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Update Email</button>
+                        <a href="{% url 'maccount_settings' %}" class="btn btn-outline-secondary">
+                            {{ "Cancel"|translate:user.language_preference }}
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            {{ "Update Email"|translate:user.language_preference }}
+                        </button>
                     </div>
                 </form>
             </div>
@@ -31,3 +36,4 @@
     </div>
 </div>
 {% endblock %}
+
