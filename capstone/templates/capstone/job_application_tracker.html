@@ -11,7 +11,7 @@
         <ul class="list-group">
             {% for application in job_applications %}
             <li class="list-group-item">
-                <h5>{{ application.job_listing.title }}</h5>
+                <h5>{{ application.job_listing.title|translate:user.language_preference }}</h5>
                 <p><strong>{{ "Status"|translate:user.language_preference }}:</strong> 
                     {% if application.status == 'accepted' %}
                         <span class="badge bg-success">{{ "Accepted"|translate:user.language_preference }} ✅</span>

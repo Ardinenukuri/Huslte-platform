@@ -9,9 +9,9 @@
     {% for request in mentorship_requests %}
     <li class="list-group-item">
         <p><strong>{{ "From"|translate:user.language_preference }}:</strong> {{ request.mentee.full_name }}</p>
-        <p><strong>{{ "Message"|translate:user.language_preference }}:</strong> {{ request.message }}</p>
+        <p><strong>{{ "Message"|translate:user.language_preference }}:</strong> {{ request.message|translate:user.language_preference }}</p>
         {% if request.mentor_response %}
-        <p><strong>{{ "Your Response"|translate:user.language_preference }}:</strong> {{ request.mentor_response }}</p>
+        <p><strong>{{ "Your Response"|translate:user.language_preference }}:</strong> {{ request.mentor_response|translate:user.language_preference }}</p>
         {% endif %}
         <a class="btn btn-success" href="{% url 'approve_mentorship_request' request.id %}">
             {{ "Approve"|translate:user.language_preference }}

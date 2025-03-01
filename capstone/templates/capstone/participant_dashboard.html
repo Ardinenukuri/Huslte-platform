@@ -29,7 +29,7 @@
     <ul class="list-group">
         {% for notification in notifications %}
             <li class="list-group-item">
-                <p>{{ notification.message }}</p>
+                <p>{{ notification.message|translate:user.language_preference }}</p>
                 <p><small>{{ notification.created_at }}</small></p>
                 {% if not notification.is_seen %}
                     <form method="post" action="{% url 'pmark_notification_seen' notification.id %}">

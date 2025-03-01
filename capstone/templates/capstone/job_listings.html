@@ -37,8 +37,8 @@
     <ul class="list-group">
         {% for job in job_listings %}
         <li class="list-group-item">
-            <h3>{{ job.title }}</h3>
-            <p>{{ job.description }}</p>
+            <h3>{{ job.title|translate:user.language_preference }}</h3>
+            <p>{{ job.description|translate:user.language_preference }}</p>
             <p><strong>{{ "Location"|translate:user.language_preference }}:</strong> {{ job.location }}</p>
             <p><strong>{{ "Industry"|translate:user.language_preference }}:</strong> {{ job.industry }}</p>
             <p><strong>{{ "Type"|translate:user.language_preference }}:</strong> {{ job.get_job_type_display }}</p>

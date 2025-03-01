@@ -242,7 +242,7 @@ class MentorAvailabilityForm(forms.ModelForm):
 class ScheduleSessionForm(forms.ModelForm):
     class Meta:
         model = ScheduledSession
-        fields = ['date', 'start_time', 'end_time', 'notes']
+        fields = ['notes']
 
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),

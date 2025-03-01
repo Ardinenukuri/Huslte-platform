@@ -51,6 +51,7 @@ from django.core.mail import EmailMessage
 from .ai_utils import generate_quiz_questions
 import urllib.parse
 from django.utils.timezone import localtime, make_aware
+from django.utils.html import strip_tags
 
 
 logger = logging.getLogger(__name__)
@@ -365,6 +366,22 @@ def submit_mentorship_request(request):
             mentorship_request = form.save(commit=False)
             mentorship_request.mentee = request.user
             mentorship_request.save()
+
+             # Send email notification to the mentor
+            mentor_email = mentorship_request.mentor.email  # Ensure mentor field exists in MentorshipRequest model
+            subject = "New Mentorship Request"
+            message = f"Hello {mentorship_request.mentor.first_name},\n\n" \
+                      f"You have received a new mentorship request from {request.user.first_name} {request.user.last_name}.\n\n" \
+                      f"Please log in to your dashboard to respond.\n\n" \
+                      f"Best regards,\nYour Mentorship Team"
+
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,  # Ensure this is set in your settings.py
+                [mentor_email],
+                fail_silently=False,
+            )
             return redirect('participant_dashboard')
     else:
         form = MentorshipRequestForm()
@@ -403,6 +420,35 @@ def schedule_session(request, request_id):
                 user=request.user,
                 message=f"A session has been scheduled with {mentorship_request.mentor.full_name} on {session.scheduled_time}. Event link: {event_link}"
             )
+
+            # Send email notifications
+            subject = "New Mentorship Session Scheduled"
+            mentee_message = f"Hello {request.user.first_name},\n\n" \
+                             f"Your mentorship session with {mentorship_request.mentor.full_name} is scheduled on {session.scheduled_time}.\n\n" \
+                             f"You can join using this link: {event_link}\n\n" \
+                             f"Best regards,\nYour Mentorship Team"
+
+            mentor_message = f"Hello {mentorship_request.mentor.first_name},\n\n" \
+                             f"You have a mentorship session scheduled with {request.user.full_name} on {session.scheduled_time}.\n\n" \
+                             f"Join the session here: {event_link}\n\n" \
+                             f"Best regards,\nYour Mentorship Team"
+
+            send_mail(
+                subject,
+                mentor_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [mentorship_request.mentor.email],
+                fail_silently=False,
+            )
+
+            send_mail(
+                subject,
+                mentee_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [request.user.email],
+                fail_silently=False,
+            )
+
 
             return redirect('participant_dashboard')
     else:
@@ -463,6 +509,23 @@ def approve_mentorship_request(request, request_id):
                 message=f"Your mentorship request has been approved by {request.user.full_name}. Response: {mentorship_request.mentor_response}"
             )
 
+            # Send email notification to the mentee
+            subject = "Mentorship Request Approved"
+            message = f"Hello {mentorship_request.mentee.first_name},\n\n" \
+                      f"Your mentorship request has been approved by {request.user.full_name}.\n\n" \
+                      f"Mentor's Response: {mentorship_request.mentor_response}\n\n" \
+                      f"You can now communicate with your mentor and schedule sessions as needed.\n\n" \
+                      f"Best regards,\nYour Mentorship Team"
+
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [mentorship_request.mentee.email],
+                fail_silently=False,
+            )
+
+
             messages.success(request, f"You are now mentoring {mentorship_request.mentee.full_name}.")
             return redirect('manage_mentorship_requests')
     else:
@@ -481,6 +544,22 @@ def decline_mentorship_request(request, request_id):
             Notification.objects.create(
                 user=mentorship_request.mentee,
                 message=f"Your mentorship request has been declined by {request.user.full_name}. Response: {mentorship_request.mentor_response}"
+            )
+
+             # Send email notification to the mentee
+            subject = "Mentorship Request Declined"
+            message = f"Hello {mentorship_request.mentee.first_name},\n\n" \
+                      f"We regret to inform you that your mentorship request has been declined by {request.user.full_name}.\n\n" \
+                      f"Mentor's Response: {mentorship_request.mentor_response}\n\n" \
+                      f"You may consider requesting another mentor or reapplying in the future.\n\n" \
+                      f"Best regards,\nYour Mentorship Team"
+
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [mentorship_request.mentee.email],
+                fail_silently=False,
             )
             return redirect('manage_mentorship_requests')
     else:
@@ -557,29 +636,47 @@ def apply_for_job(request, job_id):
     mentor = job_listing.employer  
 
     if request.method == 'POST':
-        print("POST request received!")  
-        print("POST Data:", request.POST)  
-        print("FILES Data:", request.FILES) 
-
         form = JobSubmitForm(request.POST, request.FILES) 
         if form.is_valid():
-            print("Form is valid!")  
             job_application = form.save(commit=False)
             job_application.user = request.user
             job_application.job_listing = job_listing
             job_application.save()
-            print("Job application saved!")  
 
-            
+            # ✅ Notify Mentor (Job Poster)
             Notification.objects.create(
                 user=mentor,  
-                message=f"{request.user.full_name} has applied for your job listing: {job_listing.title}.",
+                message=f"📄 {request.user.full_name} has applied for your job listing: {job_listing.title}.",
                 job_application=job_application,
             )
 
+            # ✅ Send Email Notification to Mentor
+            subject = f"📢 New Job Application - {job_listing.title}"
+            email_body = f"""
+                <p>Dear {mentor.full_name},</p>
+                <p><strong>{request.user.full_name}</strong> has submitted an application for your job listing: <strong>{job_listing.title}</strong>.</p>
+                <p>💼 Review applications by logging in to your dashboard.</p>
+                <p><a href="https://your-platform.com/mentor-job-listings">🔍 View Applications</a></p>
+                <br>
+                <p>Best regards,<br> Hustle Platform Team</p>
+            """
+
+            email = EmailMessage(
+                subject=subject,
+                body=email_body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[mentor.email],
+            )
+            email.content_subtype = "html"  # Send as HTML email
+            email.send(fail_silently=False)
+
+            logger.info(f"✅ Job application submitted by {request.user.full_name} for {job_listing.title}")
+
+            messages.success(request, "🎉 Job application submitted successfully!")
             return redirect('job_application_tracker')  
         else:
-            print("Form Errors:", form.errors)  
+            logger.error(f"❌ Job application form errors: {form.errors}")
+            messages.error(request, "❌ There was an error submitting your application. Please try again.")
 
     else:
         form = JobSubmitForm(initial={'job_listing': job_listing})
@@ -588,7 +685,6 @@ def apply_for_job(request, job_id):
         'form': form,
         'job_listing': job_listing,
     })
-
 
 
 @login_required
@@ -612,9 +708,48 @@ def manage_applicants(request, job_id):
     return render(request, 'capstone/manage_applicants.html', context)
 
 
+@login_required
 def update_application_status(request, application_id, status):
-    return JsonResponse({"message": "Application status updated!"})
+    job_application = get_object_or_404(JobApplication, id=application_id, job_listing__employer=request.user)
 
+    # ✅ Update application status
+    job_application.status = status
+    job_application.save()
+
+    # ✅ Notify the participant
+    Notification.objects.create(
+        user=job_application.user,
+        message=f"📢 Your application for <strong>{job_application.job_listing.title}</strong> has been <strong>{status.replace('_', ' ')}</strong>.",
+    )
+
+    # ✅ Send Email Notification to Participant
+    subject = f"📢 Job Application Status Update - {job_application.job_listing.title}"
+    email_body = f"""
+        <p>Dear {job_application.user.full_name},</p>
+        <p>Your job application for <strong>{job_application.job_listing.title}</strong> has been updated to: <strong>{status.replace('_', ' ')}</strong>.</p>
+        <p>💼 You can check your application status by logging into your dashboard.</p>
+        <p><a href="https://your-platform.com/job-application-tracker">🔍 View Application Status</a></p>
+        <br>
+        <p>Best regards,<br> Hustle Platform Team</p>
+    """
+
+    email = EmailMessage(
+        subject=subject,
+        body=email_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[job_application.user.email],
+    )
+    email.content_subtype = "html"  # Send as HTML email
+
+    try:
+        email.send(fail_silently=False)
+        logger.info(f"✅ Email sent successfully to {job_application.user.email} for job application update: {status}")
+    except Exception as e:
+        logger.error(f"❌ Email sending failed: {e}")
+        messages.error(request, "Email notification could not be sent. Please check your email configuration.")
+
+    messages.success(request, f"🎉 Application status updated to '{status.replace('_', ' ')}'. The applicant has been notified.")
+    return JsonResponse({"message": f"Application status updated to {status}"})
 
 @login_required
 def mark_notification_seen(request, notification_id):
@@ -653,6 +788,10 @@ def create_thread(request):
             thread = form.save(commit=False)
             thread.created_by = request.user  
             thread.save()
+
+            # ✅ Notify all users
+            notify_users(f"🆕 New discussion thread: {thread.title}", thread.id)
+
             return redirect('thread_detail', thread_id=thread.id)  
     else:
         form = ThreadForm()  
@@ -666,6 +805,10 @@ def mcreate_thread(request):
             thread = form.save(commit=False)
             thread.created_by = request.user  
             thread.save()
+
+            notify_users(f"🚀 A new discussion has started: '{thread.title}'! Join the conversation now! 💬", thread.id)
+
+
             return redirect('mentorthread_detail', thread_id=thread.id)  
     else:
         form = ThreadForm()  
@@ -677,6 +820,11 @@ def reply_to_thread(request, thread_id):
     if request.method == 'POST':
         text = request.POST.get('text')
         Comment.objects.create(thread=thread, user=request.user, text=text)
+
+        # ✅ Notify all users
+        notify_users(f"💬 Someone just joined the discussion in '{thread.title}'! Check it out. 👀", thread.id)
+
+
         return redirect('thread_detail', thread_id=thread.id)
     return render(request, 'capstone/reply_to_thread.html', {'thread': thread})
 
@@ -705,6 +853,10 @@ def vote_comment(request, comment_id, vote_type):
 
     
     comment.save()
+    # ✅ Notify all users
+    
+    notify_users(
+        f"🔥 The comment thread '{comment.thread.title}' received a {vote_type}! 🎉",)
 
     
     return redirect('thread_detail', thread_id=comment.thread.id)
@@ -734,6 +886,11 @@ def mvote_comment(request, comment_id, vote_type):
         else:
             comment.downvotes += 1
         Vote.objects.create(user=request.user, comment=comment, vote_type=vote_type)
+
+        notify_users(
+        f"🔥 The comment thread '{comment.thread.title}' received a {vote_type}! 🎉",
+        comment.id
+    )
 
     
     comment.save()
@@ -794,6 +951,10 @@ def vote_thread(request, thread_id, action):
     elif action == "downvote":
         thread.downvotes += 1
     
+    notify_users(
+        f"🔥The discussion thread '{thread.title}' received a {action}! 🎉",
+        thread.id
+    )
     thread.save()
     return redirect('list_threads') 
 
@@ -819,6 +980,12 @@ def vote_thread(request, thread_id, action):
         thread.downvotes += 1
     
     thread.save()
+    # Notify thread creator about the vote
+    notify_users(
+        f"🔥 The discussion thread '{thread.title}' received a {action}! 🎉",
+        thread.id
+    )
+    
     return redirect('list_threads') 
 
 def mvote_thread(request, thread_id, action):
@@ -830,6 +997,12 @@ def mvote_thread(request, thread_id, action):
         thread.downvotes += 1
     
     thread.save()
+
+    # Notify thread creator about the vote
+    notify_users(
+        f"🔥 The discussion thread '{thread.title}' received a {action}! 🎉",
+        thread.id
+    )
     return redirect('mentorlist_threads') 
 
 @login_required
@@ -942,6 +1115,14 @@ def mdelete_account(request):
         form = DeleteAccountForm()
     return render(request, 'capstone/mentor-delete_account.html', {'form': form})
 
+from django.core.mail import send_mail
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.conf import settings
+from .models import User, Notification, JobListing
+from .forms import JobUploadForm
+
 @login_required
 @user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
 def mentor_job_listings(request):
@@ -952,19 +1133,49 @@ def mentor_job_listings(request):
         form = JobUploadForm(request.POST)
         if form.is_valid():
             job = form.save(commit=False)
-            job.employer = request.user 
+            job.employer = request.user
             job.save()
 
-             
-            participants = User.objects.filter(user_type='participant')
-            for participant in participants:
-                Notification.objects.create(
-                    user=participant,
-                    message=f"A new job has been posted: {job.title}."
-                )
+            # ✅ Fetch Participants & Their Emails
+            participants = User.objects.filter(user_type='participant').exclude(email__isnull=True).exclude(email='')
+
+            # Convert QuerySet to List (Fixes Email Issues)
+            participant_emails = list(participants.values_list('email', flat=True))
+
+            # 🔍 Debugging: Print Fetched Emails
+            print("📧 Participant Emails:", participant_emails)
+
+            if not participant_emails:
+                print("🚨 No valid participant emails found! Skipping email sending.")
+            else:
+                # ✅ Send System Notification to Participants
+                for participant in participants:
+                    Notification.objects.create(
+                        user=participant,
+                        message=f"A new job has been posted: {job.title}."
+                    )
+
+                # ✅ Send Email Notification to Participants
+                subject = "New Job Opportunity Available!"
+                message = f"Hello,\n\nA new job opportunity titled '{job.title}' has been posted by {request.user.full_name}.\n\n" \
+                          f"Log in to your dashboard to view and apply.\n\n" \
+                          f"Best regards,\nYour Mentorship Team"
+
+                try:
+                    send_mail(
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        participant_emails,
+                        fail_silently=False,
+                    )
+                    print("✅ Emails sent successfully!")
+                except Exception as e:
+                    print(f"🚨 Email Sending Failed: {e}")
 
             messages.success(request, "Job listing created successfully!")
             return redirect('mentor_job_listings')
+
     else:
         form = JobUploadForm()
 
@@ -973,6 +1184,7 @@ def mentor_job_listings(request):
         'form': form,
     }
     return render(request, 'capstone/mentor-job_listings.html', context)
+
 
 @login_required
 def rate_mentor(request, mentor_id):
@@ -985,6 +1197,22 @@ def rate_mentor(request, mentor_id):
             feedback.mentor = mentor
             feedback.mentee = request.user  
             feedback.save()
+
+            # Send email notification to the mentor
+            subject = "New Mentor Rating Received"
+            message = f"Hello {mentor.first_name},\n\n" \
+                      f"You have received a new rating and feedback from {request.user.full_name}.\n\n" \
+                      f"Please log in to your dashboard to view the feedback.\n\n" \
+                      f"Best regards,\nYour Mentorship Team"
+
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [mentor.email],
+                fail_silently=False,
+            )
+
             messages.success(request, "Your feedback has been submitted successfully!")
             return redirect('participant_dashboard')
 
@@ -1032,11 +1260,37 @@ def update_application_status(request, application_id, status):
     # ✅ Notify the participant
     Notification.objects.create(
         user=job_application.user,  # Notify the applicant
-        message=f"Your application for '{job_application.job_listing.title}' has been {status.replace('_', ' ')}.",
+        message=f"📢 Your application for '{job_application.job_listing.title}' has been {status.replace('_', ' ')}.",
     )
 
+    # ✅ Send Email Notification to Participant
+    subject = f"📢 Job Application Status Update - {job_application.job_listing.title}"
+    email_body = f"""
+        <p>Dear {job_application.user.full_name},</p>
+        <p>Your job application for <strong>{job_application.job_listing.title}</strong> has been updated to: <strong>{status.replace('_', ' ')}</strong>.</p>
+        <p>💼 You can check your application status by logging into your dashboard.</p>
+        <p><a href="https://your-platform.com/job-application-tracker">🔍 View Application Status</a></p>
+        <br>
+        <p>Best regards,<br> Hustle Platform Team</p>
+    """
+
+    email = EmailMessage(
+        subject=subject,
+        body=email_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[job_application.user.email],
+    )
+    email.content_subtype = "html"  # Send as HTML email
+
+    try:
+        email.send(fail_silently=False)
+        logger.info(f"✅ Email sent successfully to {job_application.user.email} for job application update: {status}")
+    except Exception as e:
+        logger.error(f"❌ Email sending failed: {e}")
+        messages.error(request, "Email notification could not be sent. Please check your email configuration.")
+
     # ✅ Remove application from Manage Applicants Page (Redirect back)
-    messages.success(request, f"Application {status.replace('_', ' ')} successfully!")
+    messages.success(request, f"🎉 Application status updated to '{status.replace('_', ' ')}'. The applicant has been notified.")
     return redirect('manage_applicants', job_id=job_application.job_listing.id)
 
 
@@ -1085,7 +1339,8 @@ def issue_certificate(request, resource_id):
     
     certificate = generate_certificate(resource, progress.final_score)
 
-    messages.success(request, "Certificate generated successfully!")
+
+    messages.success(request, "Certificate generated successfully! You will receive an email with further details.")
     return redirect("participant_profile", participant_id=request.user.id)
 
 
@@ -1262,12 +1517,32 @@ def upload_resource(request):
 
             # ✅ Notify All Participants
             participants = User.objects.filter(user_type='participant')
+            participant_emails = list(participants.values_list('email', flat=True))
+
             for participant in participants:
                 Notification.objects.create(
                     user=participant,
                     message=f"A new course '{resource.title}' has been uploaded!",
                     is_seen=False
                 )
+
+                participant_emails.append(participant.email)
+
+            # ✅ Send Email Notification to Participants
+            if participant_emails:
+                subject = "New Course Uploaded!"
+                message = f"Hello,\n\nA new course titled '{resource.title}' has been uploaded by {request.user.full_name}.\n\n" \
+                          f"Log in to your dashboard to explore the content.\n\n" \
+                          f"Best regards,\nYour Mentorship Team"
+                
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    participant_emails,
+                    fail_silently=False,
+                )
+
 
             messages.success(request, "Course uploaded with 5 chapters successfully!")
             return redirect('mentor_dashboard')
@@ -1414,42 +1689,61 @@ def check_progress(request, resource_id):
 
         if created or not certificate.certificate_file:
             buffer = BytesIO()
-            pdf = canvas.Canvas(buffer, pagesize=landscape(letter))  # **Set to Landscape**
+            c = canvas.Canvas(buffer, pagesize=landscape(letter))  # **Set to Landscape**
             width, height = landscape(letter)  # Get width & height for centering
 
-            pdf.setTitle("Certificate of Completion")
+            c.setTitle("Certificate of Completion")
 
             # **Certificate Design (Now Adjusted for Landscape)**
-            pdf.setFont("Helvetica-Bold", 30)
-            pdf.drawCentredString(width / 2, height - 100, "Certificate of Completion")
+            c.setFont("Helvetica-Bold", 36)
+            c.drawCentredString(width / 2, height - 100, "Certificate of Completion")
 
-            pdf.setFont("Helvetica", 16)
-            pdf.drawCentredString(width / 2, height - 140, "This is proudly presented to")
+            c.setFont("Helvetica", 18)
+            c.drawCentredString(width / 2, height - 160, "This is proudly presented to")
 
-            pdf.setFont("Helvetica-Bold", 24)
-            pdf.setFillColor("blue")
-            pdf.drawCentredString(width / 2, height - 180, f"{request.user.get_full_name()}")
-            pdf.setFillColor("black")
+            c.setFont("Helvetica-Bold", 28)
+            c.setFillColor("blue")
+            c.drawCentredString(width / 2, height - 210, f"{request.user.get_full_name()}")
+            c.setFillColor("black")
 
-            pdf.setFont("Helvetica", 14)
-            pdf.drawCentredString(width / 2, height - 220, "for successfully completing the course:")
+            c.setFont("Helvetica", 16)
+            c.drawCentredString(width / 2, height - 260, "for successfully completing the course:")
 
-            pdf.setFont("Helvetica-Bold", 18)
-            pdf.drawCentredString(width / 2, height - 250, f"{resource.title}")
+            c.setFont("Helvetica-Bold", 20)
+            c.drawCentredString(width / 2, height - 300, f"{resource.title}")
 
-            pdf.setFont("Helvetica", 12)
-            pdf.drawCentredString(width / 2, height - 300, "Issued by: Hustle Platform")
+            c.setFont("Helvetica", 14)
+            c.drawCentredString(width / 2, height - 350, "Issued by: Hustle Platform")
 
-            pdf.setFont("Helvetica", 12)
-            pdf.drawCentredString(width / 2, height - 320, f"Date: {now().strftime('%Y-%m-%d')}")
+            c.setFont("Helvetica", 14)
+            c.drawCentredString(width / 2, height - 370, f"Date: {now().strftime('%Y-%m-%d')}")
 
-            pdf.showPage()
-            pdf.save()
+            c.showPage()
+            c.save()
 
             buffer.seek(0)
             certificate_filename = f"certificates/{request.user.username}_{resource.id}_certificate.pdf"
             certificate.certificate_file.save(certificate_filename, ContentFile(buffer.read()))
             certificate.save()
+
+            # ✅ **Send Email Notification with Certificate Link**
+        email_subject = "🎉 Congratulations! Your Certificate is Ready!"
+        email_body = f"""
+        <p>Dear {request.user.get_full_name()},</p>
+        <p>🎉 Congratulations! You have successfully completed the course <strong>{resource.title}</strong>.</p>
+        <p>Your certificate is now available for download. Click go and collect it in your profile</p>
+        <p>Thank you for learning with Hustle Platform! Keep striving for excellence. 🚀</p>
+        <p>Best regards,<br><strong>Hustle Platform Team</strong></p>
+        """
+
+        email = EmailMessage(
+            subject=email_subject,
+            body=email_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[request.user.email],
+        )
+        email.content_subtype = "html"
+        email.send(fail_silently=True)
 
     return render(request, 'capstone/progress.html', {
         "resource": resource,
@@ -1587,16 +1881,16 @@ def generate_certificate(request, resource_id):
 
         resource = get_object_or_404(Resource, id=resource_id)
 
-        # Check if the user already has a certificate
+        # ✅ Check if the user already has a certificate
         certificate, created = Certificate.objects.get_or_create(
             user=request.user, resource=resource,
             defaults={"issued_at": now()}
         )
 
-        # ✅ Dynamically locate Pacifico font
+        # ✅ Locate Pacifico font
         pacifico_path = os.path.join(settings.STATICFILES_DIRS[0], "fonts", "Pacifico.ttf")
 
-        # Check if the font file exists before registering it
+        # ✅ Ensure Pacifico font file exists
         if not os.path.exists(pacifico_path):
             messages.error(request, "Pacifico font file is missing! Please upload the font to static/fonts.")
             return redirect("course_detail", resource_id=resource_id)
@@ -1607,65 +1901,92 @@ def generate_certificate(request, resource_id):
         certificates_dir = os.path.join(settings.MEDIA_ROOT, "certificates")
         os.makedirs(certificates_dir, exist_ok=True)
 
-        # File Path
+        # ✅ Define file path
         pdf_filename = f"certificate_{request.user.username}_{resource.id}.pdf"
         pdf_path = os.path.join(certificates_dir, pdf_filename)
 
-        # ✅ Create and style the certificate
-        c = canvas.Canvas(pdf_path, pagesize=letter)
-        width, height = letter
+        # ✅ Create certificate in landscape format
+        buffer = BytesIO()
+        c = canvas.Canvas(buffer, pagesize=landscape(letter))
+        width, height = landscape(letter)
 
-        # Add border
+        # 🎨 **Stylish Border**
         c.setStrokeColor(colors.black)
-        c.setLineWidth(4)
-        c.rect(20, 20, width - 40, height - 40)
+        c.setLineWidth(5)
+        c.rect(25, 25, width - 50, height - 50)
 
-        # Title
-        c.setFont("Helvetica-Bold", 30)
-        c.drawCentredString(width / 2, height - 100, "Certificate of Completion")
-
-        # Subtitle
-        c.setFont("Helvetica", 16)
-        c.drawCentredString(width / 2, height - 140, "This is proudly presented to")
-
-        # Participant's Name
-        c.setFont("Helvetica-Bold", 24)
+        # 🎖 **Title: Certificate of Completion**
+        c.setFont("Helvetica-Bold", 40)
         c.setFillColor(colors.darkblue)
-        c.drawCentredString(width / 2, height - 180, full_name)
+        c.drawCentredString(width / 2, height - 90, "CERTIFICATE OF COMPLETION")
         c.setFillColor(colors.black)
 
-        # Course Completion Text
+        # 🏆 **Subtitle: This is proudly presented to**
+        c.setFont("Helvetica", 18)
+        c.drawCentredString(width / 2, height - 150, "This is proudly presented to")
+
+        # 🏅 **Participant's Name in Stylish Font**
+        c.setFont("Pacifico", 35)
+        c.setFillColor(colors.blue)
+        c.drawCentredString(width / 2, height - 200, full_name)
+        c.setFillColor(colors.black)
+
+        # 📜 **Course Completion Statement**
+        c.setFont("Helvetica", 16)
+        c.drawCentredString(width / 2, height - 250, "For successfully completing the course:")
+
+        # 🎓 **Course Title in Bold**
+        c.setFont("Helvetica-Bold", 22)
+        c.setFillColor(colors.darkred)
+        c.drawCentredString(width / 2, height - 280, course_title)
+        c.setFillColor(colors.black)
+
+        # 🏛 **Issuer Info**
         c.setFont("Helvetica", 14)
-        c.drawCentredString(width / 2, height - 220, "for successfully completing the course:")
+        c.drawCentredString(width / 2, height - 340, "Issued by: Hustle Platform")
+        c.drawCentredString(width / 2, height - 360, f"Date: {now().strftime('%Y-%m-%d')}")
 
-        # ✅ Bold Course Title
-        c.setFont("Helvetica-Bold", 16)
-        c.drawCentredString(width / 2, height - 250, course_title)
-
-        # Issuer Info
-        c.setFont("Helvetica", 12)
-        c.drawCentredString(width / 2, height - 290, f"Issued by: Hustle Platform")
-        c.drawCentredString(width / 2, height - 310, f"Date: {now().strftime('%Y-%m-%d')}")
-
-        # Signature Line
-        c.line(width / 2 - 100, height - 370, width / 2 + 100, height - 370)
-
-        # ✅ Styled Mentor's Signature in Pacifico Font (Size 50)
+        # ✍️ **Signature Line & Placeholder**
+        c.line(width / 2 - 120, height - 430, width / 2 + 120, height - 430)
         c.setFont("Pacifico", 50)
         c.setFillColor(colors.blue)
-        c.drawCentredString(width / 2, height - 410, "HP")
+        c.drawCentredString(width / 2, height - 460, "HusP")
         c.setFillColor(colors.black)
 
-        # Save Certificate
+        # ✅ Save certificate
+        c.showPage()
         c.save()
 
-        # Save path to model
-        certificate.certificate_file.save(f"certificates/{pdf_filename}", ContentFile(open(pdf_path, "rb").read()))
+        buffer.seek(0)
+        certificate.certificate_file.save(
+            f"certificates/{pdf_filename}", 
+            ContentFile(buffer.read())
+        )
         certificate.save()
+
+        # ✅ **Send Email Notification with Certificate Link**
+        certificate_url = request.build_absolute_uri(certificate.certificate_file.url)
+        email_subject = "🎉 Congratulations! Your Certificate is Ready!"
+        email_body = f"""
+        <p>Dear {request.user.get_full_name()},</p>
+        <p>🎉 Congratulations! You have successfully completed the course <strong>{resource.title}</strong>.</p>
+        <p>Your certificate is now available for download. Go and Download it from your Profile</p>
+        <p>Thank you for learning with Hustle Platform! Keep striving for excellence. 🚀</p>
+        <p>Best regards,<br><strong>Hustle Platform Team</strong></p>
+        """
+
+        email = EmailMessage(
+            subject=email_subject,
+            body=email_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[request.user.email],
+        )
+        email.content_subtype = "html"
+        email.send(fail_silently=True)
 
         messages.success(request, "🎓 Certificate generated successfully! You can now download it from your profile.")
 
-        # Offer direct download
+        # ✅ Return certificate file for download
         return FileResponse(open(pdf_path, "rb"), as_attachment=True, filename=f"{full_name}_certificate.pdf")
 
     return redirect("course_detail", resource_id=resource_id)
@@ -1704,9 +2025,12 @@ def remove_emojis(text):
         flags=re.UNICODE,
     )
     return emoji_pattern.sub(r"", text)  # Remove emojis
-
 @login_required
 def schedule_session(request, mentor_id, session_id):
+    """
+    Allows participants to book a session using a mentor's pre-defined availability slot.
+    The participant only adds notes; date & time are pre-filled.
+    """
     mentor = get_object_or_404(User, id=mentor_id, user_type='mentor')
     available_session = get_object_or_404(MentorAvailability, id=session_id, mentor=mentor)
 
@@ -1714,15 +2038,16 @@ def schedule_session(request, mentor_id, session_id):
     print(f"🔍 Mentor: {mentor.full_name}, Session ID: {session_id}")
     print(f"📅 Date: {available_session.date}, Time: {available_session.start_time}, Booked: {available_session.is_booked}")
 
-
     if request.method == 'POST':
         form = ScheduleSessionForm(request.POST)
+
         if form.is_valid():
             session = form.save(commit=False)
             session.participant = request.user
             session.mentor = mentor
-            session.date = available_session.date
-            session.start_time = available_session.start_time
+            session.date = available_session.date  # ✅ Pre-filled from mentor's slot
+            session.start_time = available_session.start_time  # ✅ Pre-filled
+            session.end_time = available_session.end_time  # ✅ Pre-filled if needed
             session.notes = form.cleaned_data['notes']
             session.is_confirmed = False
             session.save()
@@ -1737,9 +2062,29 @@ def schedule_session(request, mentor_id, session_id):
                 message=f"📅 New session request from {request.user.full_name} on {session.date} at {session.start_time}. Notes: {session.notes}"
             )
 
+            # ✅ Send email notification to mentor
+            subject = "New Mentorship Session Request"
+            message = f"Hello {mentor.first_name},\n\n" \
+                      f"You have a new session request from {request.user.full_name}.\n\n" \
+                      f"📅 Date: {session.date}\n" \
+                      f"⏰ Time: {session.start_time}\n" \
+                      f"📝 Notes: {session.notes}\n\n" \
+                      f"Please log in to your dashboard to confirm or reschedule this session.\n\n" \
+                      f"Best regards,\nYour Mentorship Team"
+
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [mentor.email],
+                fail_silently=False,
+            )
+
             messages.success(request, "✅ Session scheduled successfully! The mentor has been notified.")
             return redirect('participant_dashboard')
+
     else:
+        # ✅ Create form with only "notes" (without date & time)
         form = ScheduleSessionForm()
 
     return render(request, 'capstone/schedule_session.html', {
@@ -1747,6 +2092,7 @@ def schedule_session(request, mentor_id, session_id):
         'mentor': mentor,
         'available_session': available_session,
     })
+
 
 @login_required
 def participant_schedule(request):
@@ -1774,17 +2120,18 @@ def available_sessions(request):
     })
 
 
-
 @login_required
 def mentor_sessions(request):
     if request.user.user_type != 'mentor':
         return redirect('mentor_dashboard')
 
+    # ✅ Fetch only unconfirmed sessions
     sessions = ScheduledSession.objects.filter(
-        mentor=request.user
+        mentor=request.user,
+        is_confirmed=False  # Exclude confirmed sessions
     ).select_related('participant').order_by('date', 'start_time')
 
-    print(f"✅ Sessions Fetched for {request.user.full_name}: {sessions}")  # Debugging
+    print(f"✅ Unconfirmed Sessions Fetched for {request.user.full_name}: {sessions}")  # Debugging
 
     return render(request, 'capstone/mentor_sessions.html', {'sessions': sessions})
 
@@ -1794,63 +2141,59 @@ def mentor_sessions(request):
 def confirm_session(request, session_id):
     session = get_object_or_404(ScheduledSession, id=session_id, mentor=request.user)
 
-    if request.method == "POST":
-        meeting_link = request.POST.get("meeting_link")  # Mentor enters the meeting link
+    # ✅ Automatically assign the predefined Google Meet link
+    meeting_link = f"https://meet.google.com/hsj-kuen-tky"
 
-        if not meeting_link:
-            messages.error(request, "❌ Please provide a valid meeting link.")
-            return redirect("confirm_session", session_id=session.id)
+    # ✅ Convert `session.start_time` to `datetime.datetime` if it's a `time`
+    if isinstance(session.start_time, time):  
+        start_time = datetime.combine(session.date, session.start_time)  # Merge date & time
+    else:
+        start_time = session.start_time  # It's already a full datetime object
 
-        # ✅ Convert `session.start_time` to `datetime.datetime` if it's a `time`
-        if isinstance(session.start_time, time):  
-            start_time = datetime.combine(session.date, session.start_time)  # Merge date & time
-        else:
-            start_time = session.start_time  # It's already a full datetime object
+    # ✅ Ensure `start_time` is timezone-aware
+    if start_time.tzinfo is None:
+        start_time = make_aware(start_time)
+    else:
+        start_time = localtime(start_time)
 
-        # ✅ Ensure `start_time` is timezone-aware
-        if start_time.tzinfo is None:
-            start_time = make_aware(start_time)
-        else:
-            start_time = localtime(start_time)
+    # ✅ Define `end_time`
+    end_time = start_time + timedelta(hours=1)
 
-        # ✅ Define `end_time`
-        end_time = start_time + timedelta(hours=1)
+    # ✅ Update session in the database
+    session.is_confirmed = True
+    session.meeting_link = meeting_link  # ✅ Automatically set the meeting link
+    session.save()
 
-        # ✅ Update session in the database
-        session.is_confirmed = True
-        session.meeting_link = meeting_link
-        session.save()
+    # 🔹 Generate Google Calendar Link
+    google_calendar_url = (
+        "https://www.google.com/calendar/render?"
+        + urllib.parse.urlencode({
+            "action": "TEMPLATE",
+            "text": f"Session with {session.mentor.full_name}",
+            "dates": f"{start_time.strftime('%Y%m%dT%H%M%S')}/{end_time.strftime('%Y%m%dT%H%M%S')}",
+            "details": f"Organized by Hustle Platform\n\nMeeting with {session.mentor.full_name}\nMeeting Link: {meeting_link}",
+            "location": meeting_link,
+            "sf": "true",
+            "output": "xml",
+            "add": f"{settings.DEFAULT_FROM_EMAIL}",
+        })
+    )
 
-        # 🔹 Generate Google Calendar Link
-        google_calendar_url = (
-            "https://www.google.com/calendar/render?"
-            + urllib.parse.urlencode({
-                "action": "TEMPLATE",
-                "text": f"Mentorship Session with {session.mentor.full_name}",
-                "dates": f"{start_time.strftime('%Y%m%dT%H%M%S')}/{end_time.strftime('%Y%m%dT%H%M%S')}",
-                "details": f"Organized by Hustle Platform\n\nMeeting with {session.mentor.full_name}\nMeeting Link: {meeting_link}",
-                "location": meeting_link,
-                "sf": "true",
-                "output": "xml",
-                "add": f"{settings.DEFAULT_FROM_EMAIL}",
-            })
-        )
+    # 🔹 Generate Outlook Calendar Link
+    outlook_calendar_url = (
+        "https://outlook.live.com/calendar/0/deeplink/compose?"
+        + urllib.parse.urlencode({
+            "subject": f"Mentorship Session with {session.mentor.full_name}",
+            "startdt": start_time.isoformat(),
+            "enddt": end_time.isoformat(),
+            "body": f"Organized by Hustle Platform\n\nMeeting with {session.mentor.full_name}\nMeeting Link: {meeting_link}",
+            "location": meeting_link,
+            "organizer": f"{settings.DEFAULT_FROM_EMAIL}",  # ✅ Correctly format the organizer
+        })
+    )
 
-        # 🔹 Generate Outlook Calendar Link
-        outlook_calendar_url = (
-            "https://outlook.live.com/calendar/0/deeplink/compose?"
-            + urllib.parse.urlencode({
-                "subject": f"Mentorship Session with {session.mentor.full_name}",
-                "startdt": start_time.isoformat(),
-                "enddt": end_time.isoformat(),
-                "body": f"Organized by Hustle Platform\n\nMeeting with {session.mentor.full_name}\nMeeting Link: {meeting_link}",
-                "location": meeting_link,
-                "organizer": f"{settings.DEFAULT_FROM_EMAIL}",  # ✅ Correctly format the organizer
-            })
-        )
-
-        # 🔹 Generate ICS File Content (for Apple & Other Calendar Apps)
-        ics_content = f"""BEGIN:VCALENDAR
+    # 🔹 Generate ICS File Content (for Apple & Other Calendar Apps)
+    ics_content = f"""BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Hustle Platform//Mentorship Sessions//EN
 BEGIN:VEVENT
@@ -1863,50 +2206,49 @@ LOCATION:{meeting_link}
 END:VEVENT
 END:VCALENDAR
 """
-        ics_filename = f"mentorship_session_{session.id}.ics"
+    ics_filename = f"mentorship_session_{session.id}.ics"
 
-        # 📧 Email Content with Shortened Links
-        email_body = f"""
-        <p>✅ Your session with <strong>{session.mentor.full_name}</strong> has been confirmed!</p>
-        <p><strong>📅 Date:</strong> {session.date}</p>
-        <p><strong>⏰ Time:</strong> {start_time.strftime('%H:%M %p')} (CAT)</p>
-        <p><strong>🔗 Meeting Link:</strong> <a href="{meeting_link}">Join Meeting</a></p>
+    # 📧 Email Content with Shortened Links
+    email_body = f"""
+    <p>✅ Your session with <strong>{session.mentor.full_name}</strong> has been confirmed!</p>
+    <p><strong>📅 Date:</strong> {session.date}</p>
+    <p><strong>⏰ Time:</strong> {start_time.strftime('%H:%M %p')} (CAT)</p>
+    <p><strong>🔗 Meeting Link:</strong> <a href="{meeting_link}">Join Meeting</a></p>
 
-        <h3>📅 Add to Calendar:</h3>
-        <ul>
-            <li><a href="{google_calendar_url}">📅 Add to Google Calendar</a></li>
-            <li><a href="{outlook_calendar_url}">📅 Add to Outlook Calendar</a></li>
-        </ul>
+    <h3>📅 Add to Calendar:</h3>
+    <ul>
+        <li><a href="{google_calendar_url}">📅 Add to Google Calendar</a></li>
+        <li><a href="{outlook_calendar_url}">📅 Add to Outlook Calendar</a></li>
+    </ul>
 
-        <p>Alternatively, you can download the attached <strong>ICS file</strong> to manually add it to your calendar.</p>
-        """
+    <p>Alternatively, you can download the attached <strong>ICS file</strong> to manually add it to your calendar.</p>
+    """
 
-        # 📧 Send Email to Participant with Calendar Options
-        participant_email = EmailMessage(
-            subject="📅 Session Confirmed - Hustle Platform!",
-            body=email_body.strip(),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[session.participant.email],
-        )
-        participant_email.attach(ics_filename, ics_content, "text/calendar")
-        participant_email.content_subtype = "html"  
-        participant_email.send(fail_silently=True)
+    # 📧 Send Email to Participant with Calendar Options
+    participant_email = EmailMessage(
+        subject="📅 Session Confirmed - Hustle Platform!",
+        body=email_body.strip(),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[session.participant.email],
+    )
+    participant_email.attach(ics_filename, ics_content, "text/calendar")
+    participant_email.content_subtype = "html"  
+    participant_email.send(fail_silently=True)
 
-        # 📧 Send Email to Mentor with Calendar Options
-        mentor_email = EmailMessage(
-            subject="📅 Your Session is Confirmed - Hustle Platform!",
-            body=email_body.strip(),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[session.mentor.email],
-        )
-        mentor_email.attach(ics_filename, ics_content, "text/calendar")
-        mentor_email.content_subtype = "html"  
-        mentor_email.send(fail_silently=True)
+    # 📧 Send Email to Mentor with Calendar Options
+    mentor_email = EmailMessage(
+        subject="📅 Your Session is Confirmed - Hustle Platform!",
+        body=email_body.strip(),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[session.mentor.email],
+    )
+    mentor_email.attach(ics_filename, ics_content, "text/calendar")
+    mentor_email.content_subtype = "html"  
+    mentor_email.send(fail_silently=True)
 
-        messages.success(request, "✅ Session confirmed! Participants notified with calendar options.")
-        return redirect("mentor_dashboard")
+    messages.success(request, "✅ Session confirmed! Participants notified with calendar options.")
+    return redirect("mentor_dashboard")
 
-    return render(request, "capstone/confirm_session.html", {"session": session})
 
 @login_required
 def view_mentor_availability(request, mentor_id):
@@ -2516,3 +2858,41 @@ def set_language_preference(request):
         return redirect("homepage")  # Redirect user to homepage or another page
 
     return render(request, "capstone/set_language.html")
+
+
+def create_notification(user, message):
+    """Creates a notification and sends an email notification."""
+    notification = Notification.objects.create(user=user, message=message)
+
+    # Send an email notification
+    send_mail(
+        subject="📢 New Notification - Hustle Platform",
+        message=f"Hello {user.username},\n\n{message}\n\nBest regards,\nHustle Platform Team",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
+def notify_users(message, thread_id):
+    """
+    Notify all users in their dashboard and via email when a new thread, comment, or vote is created.
+    """
+    all_users = User.objects.all()
+
+    for user in all_users:
+        # ✅ Create Dashboard Notification
+        Notification.objects.create(
+            user=user,
+            message=message,
+        )
+
+        # ✅ Send Email Notification
+        subject = "🔔 New Activity on Hustle Platform"
+        email_message = f"{message}\n\nVisit your dashboard to see what's new🔔🔔🔔!!/"
+        send_mail(
+            subject,
+            strip_tags(email_message),  # Removes HTML
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=True,
+        )

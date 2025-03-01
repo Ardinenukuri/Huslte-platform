@@ -15,10 +15,10 @@
                 <li class="list-group-item">
                     <h3>
                         <a href="{% url 'thread_detail' thread.id %}" class="text-decoration-none">
-                            {{ thread.title }}
+                            {{ thread.title|translate:user.language_preference }}
                         </a>
                     </h3>
-                    <p>{{ thread.description|truncatewords:30 }}</p>
+                    <p>{{ thread.description|translate:user.language_preference|truncatewords:30 }}</p>
                     <p><small>{{ "Created by"|translate:user.language_preference }}: {{ thread.created_at }}</small></p>
                     <p>
                         <strong>{{ "Upvotes"|translate:user.language_preference }}:</strong> {{ thread.upvotes }} | 

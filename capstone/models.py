@@ -13,9 +13,9 @@ class User(AbstractUser):
         ("fr", "French"),
         ("es", "Spanish"),
         ("sw", "Swahili"),
-        ("ki", "Kirundi")
+        ("rw", "Kinyarwanda")
     ]
-    language_preference = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default="fr")
+    language_preference = models.CharField(max_length=4, choices=LANGUAGE_CHOICES, default="fr")
     full_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15)

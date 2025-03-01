@@ -3,16 +3,16 @@
 
 {% block participant_content %}
 <div class="container mt-4">
-    <h1>{{ thread.title }}</h1>
+    <h1>{{ thread.title|translate:user.language_preference }}</h1>
     <p class="text-muted">{{ "Created by"|translate:user.language_preference }}: {{ thread.created_at }}</p>
-    <p>{{ thread.description }}</p>
+    <p>{{ thread.description|translate:user.language_preference }}</p>
 
     <!-- Comments Section -->
     <h2>{{ "Comments"|translate:user.language_preference }}</h2>
     <ul class="list-group">
         {% for comment in thread.comments.all %}
             <li class="list-group-item">
-                <p>{{ comment.text }}</p>
+                <p>{{ comment.text|translate:user.language_preference }}</p>
                 <p class="text-muted">
                     {{ "Upvotes"|translate:user.language_preference }}: {{ comment.upvotes }} | 
                     {{ "Downvotes"|translate:user.language_preference }}: {{ comment.downvotes }}

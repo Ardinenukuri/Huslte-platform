@@ -31,7 +31,7 @@
     {% for notification in notifications %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
             <div>
-                <p>{{ notification.message }}</p>
+                <p>{{ notification.message|translate:user.language_preference }}</p>
                 <p><small class="text-muted">{{ notification.created_at|date:"M d, Y H:i" }}</small></p>
             </div>
             {% if not notification.is_seen %}
