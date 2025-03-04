@@ -373,7 +373,7 @@ def submit_mentorship_request(request):
             message = f"Hello {mentorship_request.mentor.first_name},\n\n" \
                       f"You have received a new mentorship request from {request.user.first_name} {request.user.last_name}.\n\n" \
                       f"Please log in to your dashboard to respond.\n\n" \
-                      f"Best regards,\nYour Mentorship Team"
+                      f"Best regards,\nHustle Platform Team"
 
             send_mail(
                 subject,
@@ -422,16 +422,16 @@ def schedule_session(request, request_id):
             )
 
             # Send email notifications
-            subject = "New Mentorship Session Scheduled"
+            subject = "New Session Scheduled"
             mentee_message = f"Hello {request.user.first_name},\n\n" \
-                             f"Your mentorship session with {mentorship_request.mentor.full_name} is scheduled on {session.scheduled_time}.\n\n" \
+                             f"Your session with {mentorship_request.mentor.full_name} is scheduled on {session.scheduled_time}.\n\n" \
                              f"You can join using this link: {event_link}\n\n" \
-                             f"Best regards,\nYour Mentorship Team"
+                             f"Best regards,\nHustle Platform Team"
 
             mentor_message = f"Hello {mentorship_request.mentor.first_name},\n\n" \
-                             f"You have a mentorship session scheduled with {request.user.full_name} on {session.scheduled_time}.\n\n" \
+                             f"You have a session scheduled with {request.user.full_name} on {session.scheduled_time}.\n\n" \
                              f"Join the session here: {event_link}\n\n" \
-                             f"Best regards,\nYour Mentorship Team"
+                             f"Best regards,\nHustle Platform Team"
 
             send_mail(
                 subject,
@@ -515,7 +515,7 @@ def approve_mentorship_request(request, request_id):
                       f"Your mentorship request has been approved by {request.user.full_name}.\n\n" \
                       f"Mentor's Response: {mentorship_request.mentor_response}\n\n" \
                       f"You can now communicate with your mentor and schedule sessions as needed.\n\n" \
-                      f"Best regards,\nYour Mentorship Team"
+                      f"Best regards,\nHustle Platform Team"
 
             send_mail(
                 subject,
@@ -552,7 +552,7 @@ def decline_mentorship_request(request, request_id):
                       f"We regret to inform you that your mentorship request has been declined by {request.user.full_name}.\n\n" \
                       f"Mentor's Response: {mentorship_request.mentor_response}\n\n" \
                       f"You may consider requesting another mentor or reapplying in the future.\n\n" \
-                      f"Best regards,\nYour Mentorship Team"
+                      f"Best regards,\nHustle Platform Team"
 
             send_mail(
                 subject,
@@ -1159,7 +1159,7 @@ def mentor_job_listings(request):
                 subject = "New Job Opportunity Available!"
                 message = f"Hello,\n\nA new job opportunity titled '{job.title}' has been posted by {request.user.full_name}.\n\n" \
                           f"Log in to your dashboard to view and apply.\n\n" \
-                          f"Best regards,\nYour Mentorship Team"
+                          f"Best regards,\nHustle Platform Team"
 
                 try:
                     send_mail(
@@ -1203,7 +1203,7 @@ def rate_mentor(request, mentor_id):
             message = f"Hello {mentor.first_name},\n\n" \
                       f"You have received a new rating and feedback from {request.user.full_name}.\n\n" \
                       f"Please log in to your dashboard to view the feedback.\n\n" \
-                      f"Best regards,\nYour Mentorship Team"
+                      f"Best regards,\nHustle Platform Team"
 
             send_mail(
                 subject,
@@ -1533,7 +1533,7 @@ def upload_resource(request):
                 subject = "New Course Uploaded!"
                 message = f"Hello,\n\nA new course titled '{resource.title}' has been uploaded by {request.user.full_name}.\n\n" \
                           f"Log in to your dashboard to explore the content.\n\n" \
-                          f"Best regards,\nYour Mentorship Team"
+                          f"Best regards,\nHustle Platform Team"
                 
                 send_mail(
                     subject,
@@ -2063,14 +2063,14 @@ def schedule_session(request, mentor_id, session_id):
             )
 
             # ✅ Send email notification to mentor
-            subject = "New Mentorship Session Request"
+            subject = "New Session Request"
             message = f"Hello {mentor.first_name},\n\n" \
                       f"You have a new session request from {request.user.full_name}.\n\n" \
                       f"📅 Date: {session.date}\n" \
                       f"⏰ Time: {session.start_time}\n" \
                       f"📝 Notes: {session.notes}\n\n" \
                       f"Please log in to your dashboard to confirm or reschedule this session.\n\n" \
-                      f"Best regards,\nYour Mentorship Team"
+                      f"Best regards,\nHustle Platform Team"
 
             send_mail(
                 subject,
@@ -2183,7 +2183,7 @@ def confirm_session(request, session_id):
     outlook_calendar_url = (
         "https://outlook.live.com/calendar/0/deeplink/compose?"
         + urllib.parse.urlencode({
-            "subject": f"Mentorship Session with {session.mentor.full_name}",
+            "subject": f"Session with {session.mentor.full_name}",
             "startdt": start_time.isoformat(),
             "enddt": end_time.isoformat(),
             "body": f"Organized by Hustle Platform\n\nMeeting with {session.mentor.full_name}\nMeeting Link: {meeting_link}",
@@ -2195,10 +2195,10 @@ def confirm_session(request, session_id):
     # 🔹 Generate ICS File Content (for Apple & Other Calendar Apps)
     ics_content = f"""BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Hustle Platform//Mentorship Sessions//EN
+PRODID:-//Hustle Platform//Sessions//EN
 BEGIN:VEVENT
 ORGANIZER;CN=Hustle Platform:MAILTO:{settings.DEFAULT_FROM_EMAIL}  # ✅ Correct organizer email
-SUMMARY:Mentorship Session with {session.mentor.full_name}
+SUMMARY:Session with {session.mentor.full_name}
 DTSTART:{start_time.strftime('%Y%m%dT%H%M%S')}
 DTEND:{end_time.strftime('%Y%m%dT%H%M%S')}
 DESCRIPTION:Organized by Hustle Platform\\nMeeting with {session.mentor.full_name}\\nMeeting Link: {meeting_link}
@@ -2459,7 +2459,9 @@ def admin_view_resource(request, resource_id):
 @staff_member_required
 def admin_view_resource_progress(request, resource_id):
     resource = get_object_or_404(Resource, id=resource_id)
-    user_progress = UserProgress.objects.filter(resource=resource)
+    
+    # ✅ Fetch only participants' progress
+    user_progress = UserProgress.objects.filter(resource=resource, user__user_type="participant")
 
     participants_progress = []
     for progress in user_progress:
@@ -2469,9 +2471,9 @@ def admin_view_resource_progress(request, resource_id):
             "total_chapters": resource.chapters.count(),
             "completed_quizzes": progress.completed_quizzes.count(),
             "total_quizzes": Quiz.objects.filter(resource=resource).count(),
-            "final_score": progress.final_score if progress.final_score is not None else "N/A",  # ✅ Final Score Handling
+            "final_score": progress.final_score if progress.final_score is not None else "N/A",
             "progress_percentage": progress.progress_percentage,
-            "certificate": Certificate.objects.filter(user=progress.user, resource=resource).exists()  # ✅ Check if user has a certificate
+            "certificate": Certificate.objects.filter(user=progress.user, resource=resource).exists()  
         })
 
     return render(request, "capstone/admin_view_resource_progress.html", {
