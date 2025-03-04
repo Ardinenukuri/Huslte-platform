@@ -5,7 +5,20 @@ from django.conf import settings
 from capstone.models import Certificate
 import PyPDF2
 import docx
+import os
+import re
+import json
+import requests
+from django.conf import settings
+from dotenv import load_dotenv
+from capstone.models import Certificate
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+import PyPDF2
+import docx
+from googletrans import Translator
 
+translator = Translator()
 
 def generate_certificate(resource, final_score):
     # ✅ Define file path
@@ -85,3 +98,13 @@ def extract_text_from_docx(uploaded_docx):
     except Exception as e:
         print(f"❌ Error extracting text from DOCX: {e}")
         return None
+    
+def translate_text(text, target_lang):
+    """Translates text into the target language."""
+    if text and target_lang:
+        try:
+            translation = translator.translate(text, dest=target_lang)
+            return translation.text
+        except Exception as e:
+            print(f"❌ Translation error: {e}")
+    return text 

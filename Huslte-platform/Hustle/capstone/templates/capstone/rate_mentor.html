@@ -1,13 +1,26 @@
 {% extends 'participant-base.html' %}
-{% block title %}Rate Mentor - Hustle Platform{% endblock %}
+{% load custom_filters %}
+
+{% block title %}{{ "Rate Mentor - Hustle Platform"|translate:user.language_preference }}{% endblock %}
 
 {% block participant_content %}
 <div class="container mt-4">
-    <h1>Rate Mentor: {{ mentor.full_name }}</h1>
+    <h1>{{ "Rate Mentor:"|translate:user.language_preference }} {{ mentor.full_name }}</h1>
+    
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Submit Rating</button>
+        
+        <div class="mb-3">
+            <label class="form-label"><strong>{{ "Rating"|translate:user.language_preference }}</strong></label>
+            {{ form.rating }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label"><strong>{{ "Feedback"|translate:user.language_preference }}</strong></label>
+            {{ form.feedback }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">{{ "Submit Rating"|translate:user.language_preference }}</button>
     </form>
 </div>
 {% endblock %}

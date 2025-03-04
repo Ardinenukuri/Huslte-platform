@@ -18,7 +18,6 @@ urlpatterns = [
     path('upload-resource/', views.upload_resource, name='upload_resource'),
     path('rate-resource/<int:resource_id>/', views.rate_resource, name='rate_resource'),
     path('submit-mentorship-request/', views.submit_mentorship_request, name='submit_mentorship_request'),
-    path('schedule-session/<int:request_id>/', views.schedule_session, name='schedule_session'),
     path('chat-with-mentor/<int:request_id>/', views.chat_with_mentor, name='chat_with_mentor'),
     path('manage-mentorship-requests/', views.manage_mentorship_requests, name='manage_mentorship_requests'),
     path('approve-mentorship-request/<int:request_id>/', views.approve_mentorship_request, name='approve_mentorship_request'),
@@ -70,7 +69,9 @@ urlpatterns = [
     path("issue-certificate/", views.issue_certificate, name="issue_certificate"),
     path('delete-certificate/<int:certificate_id>/', views.delete_certificate, name='delete_certificate'),
     path('enroll/<int:resource_id>/', views.enroll_course, name='enroll_course'),
+    path('menroll/<int:resource_id>/', views.menroll_course, name='menroll_course'),
     path('course/<int:resource_id>/', views.course_detail, name='course_detail'),
+    path('mcourse/<int:resource_id>/', views.mcourse_detail, name='mcourse_detail'),
     path('chapter/<int:chapter_id>/done/', views.mark_chapter_done, name='mark_chapter_done'),
     path('quiz/<int:quiz_id>/', views.take_quiz, name='take_quiz'),
     path("final-quiz/<int:quiz_id>/", views.take_final_quiz, name="take_final_quiz"),
@@ -80,13 +81,10 @@ urlpatterns = [
     path('final-quiz/<int:quiz_id>/reset/', views.reset_final_quiz, name='reset_final_quiz'),
     path('generate-certificate/<int:resource_id>/', views.generate_certificate, name='generate_certificate'),
     path('participant/mentors/<int:mentor_id>/availability/', views.view_mentor_availability, name='view_mentor_availability'),
-    path('participant/mentors/<int:mentor_id>/schedule/', views.schedule_session, name='schedule_session'),
     path('participant/notifications/mark-seen/<int:notification_id>/', views.mark_notification_seen, name='mark_notification_seen'),
     path('mentor/availability/', views.mentor_add_availability, name='mentor_add_availability'),
     path('mentor/sessions/', views.mentor_sessions, name='mentor_sessions'),
     path('mentor/sessions/confirm/<int:session_id>/', views.confirm_session, name='confirm_session'),
-    path('mentor/<int:mentor_id>/schedule/<int:session_id>/', views.schedule_session, name='schedule_session'),
-    path('schedule_session/<int:mentor_id>/<int:session_id>/', views.schedule_session, name='schedule_session'),
     path('notification/seen/<int:notification_id>/', views.mark_notification_seen, name='mark_notification_seen'),
     path('pnotification/seen/<int:notification_id>/', views.pmark_notification_seen, name='pmark_notification_seen'),
     path('api/quiz/<int:quiz_id>/', views.get_quiz, name='get_quiz'),
@@ -122,10 +120,18 @@ urlpatterns = [
     path("ad/resource/progress/<int:resource_id>/", views.admin_view_resource_progress, name="admin_view_resource_progress"),
     path('participant/<int:participant_id>/edit/', views.edit_participant_profile, name='edit_participant_profile'),
     path('mentor/<int:mentor_id>/edit/', views.edit_mentor_profile, name='edit_mentor_profile'),
+    path('participant/schedule/', views.available_sessions, name='available_sessions'),
+    path('schedule_session/<int:mentor_id>/<int:session_id>/', views.schedule_session, name='schedule_session'),
+    path('upload-ai-chapter-quiz/', views.upload_ai_chapter_quiz, name='upload_chapter_ai_quiz'),
+    path('upload-ai-final-quiz/', views.upload_final_ai_quiz, name='upload_final_ai_quiz'),
+    path('api/ai-generate-chapter-quiz/<int:chapter_id>/', views.ai_generate_chapter_quiz, name='ai_generate_chapter_quiz'),
+    path('api/ai-generate-final-quiz/<int:resource_id>/', views.ai_generate_final_quiz, name='ai_generate_final_quiz'),
+    path('mentor/profile-settings/', views.mentor_profile_settings, name='mentor_profile_settings'),
+    path('participant/profile-settings/', views.participant_profile_settings, name='participant_profile_settings'),
+    path("set-language/", views.set_language_preference, name="set_language_preference"),
 
 
-
-
+    
 
 ]
 

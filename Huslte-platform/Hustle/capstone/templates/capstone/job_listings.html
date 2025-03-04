@@ -1,33 +1,35 @@
 {% extends 'participant-base.html' %}
-{% block title %}Job Listings - Hustle Platform{% endblock %}
+{% load custom_filters %}
+
+{% block title %}{{ "Job Listings - Hustle Platform"|translate:user.language_preference }}{% endblock %}
 
 {% block participant_content %}
-    <h1>Job Listings</h1>
+    <h1>{{ "Job Listings"|translate:user.language_preference }}</h1>
 
     <!-- Search and Filters -->
     <form method="get" class="mb-4">
         <div class="row g-3">
             <div class="col-md-4">
-                <input type="text" name="location" class="form-control" placeholder="Location">
+                <input type="text" name="location" class="form-control" placeholder="{{ 'Location'|translate:user.language_preference }}">
             </div>
             <div class="col-md-4">
-                <input type="text" name="industry" class="form-control" placeholder="Industry">
+                <input type="text" name="industry" class="form-control" placeholder="{{ 'Industry'|translate:user.language_preference }}">
             </div>
             <div class="col-md-4">
                 <select name="job_type" class="form-select">
-                    <option value="">All Types</option>
-                    <option value="full_time">Full-Time</option>
-                    <option value="part_time">Part-Time</option>
+                    <option value="">{{ "All Types"|translate:user.language_preference }}</option>
+                    <option value="full_time">{{ "Full-Time"|translate:user.language_preference }}</option>
+                    <option value="part_time">{{ "Part-Time"|translate:user.language_preference }}</option>
                 </select>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary mt-3">Search</button>
+        <button type="submit" class="btn btn-primary mt-3">{{ "Search"|translate:user.language_preference }}</button>
     </form>
 
     <!-- Job Application Tracker Link -->
     <div class="text-end mb-3">
         <a href="{% url 'job_application_tracker' %}" class="btn btn-outline-primary">
-            View My Job Applications
+            {{ "View My Job Applications"|translate:user.language_preference }}
         </a>
     </div>
 
@@ -35,18 +37,17 @@
     <ul class="list-group">
         {% for job in job_listings %}
         <li class="list-group-item">
-            <h3>{{ job.title }}</h3>
-            <p>{{ job.description }}</p>
-            <p><strong>Location:</strong> {{ job.location }}</p>
-            <p><strong>Industry:</strong> {{ job.industry }}</p>
-            <p><strong>Type:</strong> {{ job.get_job_type_display }}</p>
-            <a href="{% url 'apply_for_job' job.id %}" class="btn btn-sm btn-outline-primary">Apply</a>
-            <a href="{% url 'save_job' job.id %}" class="btn btn-sm btn-outline-secondary">Save for Later</a>
+            <h3>{{ job.title|translate:user.language_preference }}</h3>
+            <p>{{ job.description|translate:user.language_preference }}</p>
+            <p><strong>{{ "Location"|translate:user.language_preference }}:</strong> {{ job.location }}</p>
+            <p><strong>{{ "Industry"|translate:user.language_preference }}:</strong> {{ job.industry }}</p>
+            <p><strong>{{ "Type"|translate:user.language_preference }}:</strong> {{ job.get_job_type_display }}</p>
+            <a href="{% url 'apply_for_job' job.id %}" class="btn btn-sm btn-outline-primary">{{ "Apply"|translate:user.language_preference }}</a>
+            <a href="{% url 'save_job' job.id %}" class="btn btn-sm btn-outline-secondary">{{ "Save for Later"|translate:user.language_preference }}</a>
         </li>
         {% empty %}
-        <li class="list-group-item">No job listings found.</li>
+        <li class="list-group-item">{{ "No job listings found."|translate:user.language_preference }}</li>
         {% endfor %}
     </ul>
 
-    
 {% endblock %}

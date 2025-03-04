@@ -1,15 +1,16 @@
 {% extends 'mentor-base.html' %}
+{% load custom_filters %}
 
-{% block title %}Edit Mentor Profile{% endblock %}
+{% block title %}{{ "Edit Mentor Profile"|translate:user.language_preference }}{% endblock %}
 
 {% block mentor_content %}
 <div class="container mt-4">
-    <h1 class="text-primary">✏️ Edit Profile</h1>
+    <h1 class="text-primary">{{ "✏️ Edit Profile"|translate:user.language_preference }}</h1>
 
     <!-- Display Form Errors -->
     {% if form.errors %}
         <div class="alert alert-danger">
-            <strong>⚠️ Please correct the errors below:</strong>
+            <strong>⚠️ {{ "Please correct the errors below:"|translate:user.language_preference }}</strong>
             {{ form.errors }}
         </div>
     {% endif %}
@@ -23,10 +24,10 @@
                 <div class="overflow-auto" style="max-height: 400px; padding-right: 15px;">
                     {% for field in form %}
                         <div class="mb-3">
-                            <label class="form-label fw-bold">{{ field.label }}</label>
+                            <label class="form-label fw-bold">{{ field.label|translate:user.language_preference }}</label>
                             {{ field }}
                             {% if field.help_text %}
-                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                                <small class="form-text text-muted">{{ field.help_text|translate:user.language_preference }}</small>
                             {% endif %}
                         </div>
                     {% endfor %}
@@ -34,8 +35,12 @@
 
                 <!-- Buttons (Sticky at bottom) -->
                 <div class="text-center mt-3">
-                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
-                    <a href="{% url 'mentor_profile' mentor.id %}" class="btn btn-secondary">❌ Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        {{ "💾 Save Changes"|translate:user.language_preference }}
+                    </button>
+                    <a href="{% url 'mentor_profile' mentor.id %}" class="btn btn-secondary">
+                        {{ "❌ Cancel"|translate:user.language_preference }}
+                    </a>
                 </div>
             </form>
         </div>

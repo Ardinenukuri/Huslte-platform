@@ -1,9 +1,11 @@
 {% extends 'mentor-base.html' %}
-{% block title %}Upload Course - Hustle Platform{% endblock %}
+{% load custom_filters %}
+
+{% block title %}{{ "Upload Course - Hustle Platform"|translate:user.language_preference }}{% endblock %}
 
 {% block mentor_content %}
 <div class="container mt-4">
-    <h2 class="mb-4">Upload a New Course</h2>
+    <h2 class="mb-4">{{ "Upload a New Course"|translate:user.language_preference }}</h2>
 
     <!-- Display Messages -->
     {% if messages %}
@@ -19,35 +21,23 @@
         {% csrf_token %}
 
         <div class="card p-4 mb-3">
-            <h4>Course Details</h4>
+            <h4>{{ "Course Details"|translate:user.language_preference }}</h4>
             {{ form.as_p }}
         </div>
 
-        <!-- Chapter Formset -->
-        <div class="card p-4 mb-3">
-            <h4>Chapters (Required: 5 Chapters)</h4>
-            {{ formset.management_form }}
-            {% for form in formset %}
-            <div class="border p-3 mb-3">
-                <h5>Chapter {{ forloop.counter }}</h5>
-                {{ form.as_p }}
-            </div>
-            {% endfor %}
-        </div>
-
-        <button type="submit" class="btn btn-primary">Upload Course</button>
+        <button type="submit" class="btn btn-primary">{{ "Upload Course"|translate:user.language_preference }}</button>
     </form>
 </div>
 
 <!-- Link to Upload Chapter Quizzes -->
 <div class="container mt-4">
-    <h3 class="mb-3">Next Steps:</h3>
-    <p>After uploading the course, add chapter quizzes and a final quiz.</p>
-    <a href="{% url 'upload_chapter_quiz' %}" class="btn btn-warning mb-2">📚 Upload Chapter Quizzes</a>
-    <a href="{% url 'upload_final_quiz' %}" class="btn btn-danger mb-2">🎯 Upload Final Quiz</a>
+    <h3 class="mb-3">{{ "Next Steps:"|translate:user.language_preference }}</h3>
+    <p>{{ "After uploading the course, add chapter quizzes and a final quiz."|translate:user.language_preference }}</p>
+    
+    <a href="{% url 'upload_chapter_quiz' %}" class="btn btn-warning mb-2">📚 {{ "Upload Chapter Quizzes"|translate:user.language_preference }}</a>
+    <a href="{% url 'upload_final_quiz' %}" class="btn btn-danger mb-2">🎯 {{ "Upload Final Quiz"|translate:user.language_preference }}</a>
+    <a href="{% url 'upload_chapter_ai_quiz' %}" class="btn btn-warning mb-2">📚 {{ "Upload AI Chapter Quizzes"|translate:user.language_preference }}</a>
+    <a href="{% url 'upload_final_ai_quiz' %}" class="btn btn-danger mb-2">🎯 {{ "Upload AI Final Quiz"|translate:user.language_preference }}</a>
 </div>
-
-<!-- 🔹 New Section: Upload Document for AI Quiz Generation -->
-
 
 {% endblock %}

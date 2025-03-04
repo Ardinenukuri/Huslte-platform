@@ -50,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'capstone.middleware.DefaultLanguageMiddleware',
 ]
 
 ROOT_URLCONF = 'Hustle.urls'
@@ -85,6 +86,9 @@ DATABASES = {
         'PASSWORD': 'Nukurimartine2004@',
         'HOST': 'localhost',
         'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
     }
 }
 

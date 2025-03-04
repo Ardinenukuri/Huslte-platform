@@ -1,13 +1,29 @@
-{% extends 'mentor-base.html' %}
-{% block title %}Confirm Session{% endblock %}
+{% extends "mentor-base.html" %}
+{% load custom_filters %}
+
+{% block title %}{{ "Confirm Session"|translate:user.language_preference }}{% endblock %}
 
 {% block mentor_content %}
-<h2>Confirm Session</h2>
-<p>Session with {{ session.participant.full_name }} on {{ session.date }} at {{ session.time }}</p>
-<p>Notes: {{ session.notes }}</p>
+<div class="container mt-4">
+    <h1 class="text-primary">✅ {{ "Confirm Session"|translate:user.language_preference }}</h1>
+    <p><strong>📅 {{ "Date"|translate:user.language_preference }}:</strong> {{ session.date }}</p>
+    <p><strong>⏰ {{ "Time"|translate:user.language_preference }}:</strong> {{ session.start_time }}</p>
+    <p><strong>👤 {{ "Participant"|translate:user.language_preference }}:</strong> {{ session.participant.full_name }}</p>
 
-<form method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-success">Confirm Session</button>
-</form>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="meeting_link" class="form-label">🔗 {{ "Meeting Link"|translate:user.language_preference }}:</label>
+            <input type="url" name="meeting_link" id="meeting_link" class="form-control" 
+                   placeholder="{{ 'Enter Google Meet or Zoom link'|translate:user.language_preference }}" required>
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            {{ "Confirm & Send Link"|translate:user.language_preference }}
+        </button>
+        <a href="{% url 'mentor_dashboard' %}" class="btn btn-secondary">
+            {{ "Cancel"|translate:user.language_preference }}
+        </a>
+    </form>
+</div>
 {% endblock %}

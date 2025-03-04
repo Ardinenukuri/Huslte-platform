@@ -1,28 +1,34 @@
 {% extends 'mentor-base.html' %}
+{% load custom_filters %}
 
-{% block title %}Scheduled Sessions{% endblock %}
+{% block title %}{{ "Scheduled Sessions"|translate:user.language_preference }}{% endblock %}
 
 {% block mentor_content %}
-<h2>Scheduled Sessions</h2>
+<h2>{{ "Scheduled Sessions"|translate:user.language_preference }}</h2>
+
 <ul class="list-group">
     {% for session in sessions %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
             <div>
-                <p><strong>Participant:</strong> {{ session.participant.full_name }}</p>
-                <p><strong>Date:</strong> {{ session.date }} | <strong>Time:</strong> {{ session.start_time }} | {{ session.end_time }}</p>
-                <p><strong>Notes:</strong> {{ session.notes }}</p>
+                <p><strong>{{ "Participant"|translate:user.language_preference }}:</strong> {{ session.participant.full_name }}</p>
+                <p><strong>{{ "Date"|translate:user.language_preference }}:</strong> {{ session.date }} | 
+                   <strong>{{ "Time"|translate:user.language_preference }}:</strong> {{ session.start_time }} - {{ session.end_time }}</p>
+                <p><strong>{{ "Notes"|translate:user.language_preference }}:</strong> {{ session.notes|default:"-" }}</p>
             </div>
+
             {% if not session.is_confirmed %}
                 <form method="post" action="{% url 'confirm_session' session.id %}">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-outline-success">Confirm</button>
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                        {{ "Confirm"|translate:user.language_preference }}
+                    </button>
                 </form>
             {% else %}
-                <span class="badge bg-success">Confirmed</span>
+                <span class="badge bg-success">{{ "Confirmed"|translate:user.language_preference }}</span>
             {% endif %}
         </li>
     {% empty %}
-        <li class="list-group-item text-center">No scheduled sessions yet.</li>
+        <li class="list-group-item text-center">{{ "No scheduled sessions yet."|translate:user.language_preference }}</li>
     {% endfor %}
 </ul>
 {% endblock %}

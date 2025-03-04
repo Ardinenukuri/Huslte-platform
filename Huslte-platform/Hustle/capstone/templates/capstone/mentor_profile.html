@@ -1,30 +1,29 @@
 {% extends 'mentor-base.html' %}
+{% load custom_filters %}
 
-{% block title %}Mentor Profile - Hustle Platform{% endblock %}
+{% block title %}{{ "Mentor Profile - Hustle Platform"|translate:user.language_preference }}{% endblock %}
 
 {% block mentor_content %}
 <div class="container mt-4">
-    <h1 class="text-primary">Mentor Profile</h1>
+    <h1 class="text-primary">👨‍🏫 {{ "Mentor Profile"|translate:user.language_preference }}</h1>
 
     <!-- Mentor Profile Details -->
     <section class="mb-4 p-3 border rounded shadow-sm bg-white">
-        <h3 class="text-secondary">📝 About Me</h3>
+        <h3 class="text-secondary">📝 {{ "About Me"|translate:user.language_preference }}</h3>
 
-        <div class="d-flex justify-content-between align-items-center">
-            <p><strong>📜 Bio:</strong> {{ profile.bio|default:"Not provided" }}</p>
-        </div>
-        
-        <div class="d-flex justify-content-between align-items-center">
-            <p><strong>🛠️ Expertise:</strong> {{ profile.expertise_areas|default:"Not provided" }}</p>
-        </div>
+        <p><strong>📜 {{ "Bio:"|translate:user.language_preference }}</strong> {{ profile.bio|default:"Not provided"|translate:user.language_preference }}</p>
+        <p><strong>🛠️ {{ "Expertise:"|translate:user.language_preference }}</strong> {{ profile.expertise_areas|default:"Not provided"|translate:user.language_preference }}</p>
 
-
-        <a href="{% url 'edit_mentor_profile' mentor.id %}" class="btn btn-outline-primary mt-2">✏️ Edit Profile</a>
+        {% if request.user == mentor %}
+            <a href="{% url 'edit_mentor_profile' mentor.id %}" class="btn btn-outline-primary mt-2">
+                ✏️ {{ "Edit Profile"|translate:user.language_preference }}
+            </a>
+        {% endif %}
     </section>
 
     <!-- Mentees Section -->
     <section class="mb-4 p-3 border rounded shadow-sm bg-white">
-        <h3 class="text-secondary">👥 Mentees</h3>
+        <h3 class="text-secondary">👥 {{ "Mentees"|translate:user.language_preference }}</h3>
         <ul class="list-group">
             {% for mentee in mentees %}
                 <li class="list-group-item">
@@ -33,43 +32,47 @@
                     </a>
                 </li>
             {% empty %}
-                <li class="list-group-item">No mentees yet.</li>
+                <li class="list-group-item">{{ "No mentees yet."|translate:user.language_preference }}</li>
             {% endfor %}
         </ul>
     </section>
 
     <!-- Availability Slots -->
     <section class="mb-4 p-3 border rounded shadow-sm bg-white">
-        <h3 class="text-secondary">📅 Available Slots</h3>
+        <h3 class="text-secondary">📅 {{ "Available Slots"|translate:user.language_preference }}</h3>
         <ul class="list-group">
             {% for slot in availability_slots %}
                 {% if not slot.is_booked %}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
-                            <p><strong>Date:</strong> {{ slot.date }}</p>
-                            <p><strong>Time:</strong> {{ slot.start_time }} - {{ slot.end_time }}</p>
+                            <p><strong>{{ "Date:"|translate:user.language_preference }}</strong> {{ slot.date }}</p>
+                            <p><strong>{{ "Time:"|translate:user.language_preference }}</strong> {{ slot.start_time }} - {{ slot.end_time }}</p>
                         </div>
-                        <a href="{% url 'schedule_session' mentor.id slot.id %}" class="btn btn-primary btn-sm">📅 Schedule Session</a>
+                        {% if request.user.user_type == "participant" %}
+                            <a href="{% url 'schedule_session' mentor.id slot.id %}" class="btn btn-primary btn-sm">
+                                📅 {{ "Schedule Session"|translate:user.language_preference }}
+                            </a>
+                        {% endif %}
                     </li>
                 {% endif %}
             {% empty %}
-                <li class="list-group-item text-center">No available slots.</li>
+                <li class="list-group-item text-center">{{ "No available slots."|translate:user.language_preference }}</li>
             {% endfor %}
         </ul>
     </section>
 
     <!-- Feedback and Ratings -->
     <section class="mb-4 p-3 border rounded shadow-sm bg-white">
-        <h3 class="text-secondary">📝 Feedback & Ratings</h3>
+        <h3 class="text-secondary">📝 {{ "Feedback & Ratings"|translate:user.language_preference }}</h3>
         <ul class="list-group">
             {% for feedback in feedbacks %}
                 <li class="list-group-item">
-                    <strong>From:</strong> Anonymous User<br>
-                    <strong>Rating:</strong> ⭐{{ feedback.rating }}/5 <br>
-                    <strong>Feedback:</strong> {{ feedback.feedback }}
+                    <strong>{{ "From:"|translate:user.language_preference }}</strong> {{ "Anonymous User"|translate:user.language_preference }}<br>
+                    <strong>{{ "Rating:"|translate:user.language_preference }}</strong> ⭐{{ feedback.rating }}/5 <br>
+                    <strong>{{ "Feedback:"|translate:user.language_preference }}</strong> {{ feedback.feedback }}
                 </li>
             {% empty %}
-                <li class="list-group-item">No feedback yet.</li>
+                <li class="list-group-item">{{ "No feedback yet."|translate:user.language_preference }}</li>
             {% endfor %}
         </ul>
     </section>

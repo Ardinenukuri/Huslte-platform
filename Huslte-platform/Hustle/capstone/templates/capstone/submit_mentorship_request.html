@@ -1,13 +1,14 @@
 {% extends 'participant-base.html' %}
+{% load custom_filters %}
 
-{% block title %}Submit Mentorship Request - Hustle Platform{% endblock %}
+{% block title %}{{ "Submit Mentorship Request - Hustle Platform"|translate:user.language_preference }}{% endblock %}
 
 {% block participant_content %}
-    <h1>Submit Mentorship Request</h1>
+    <h1>{{ "Submit Mentorship Request"|translate:user.language_preference }}</h1>
 
     <!-- ✅ List of Available Mentors -->
     <section class="mb-4">
-        <h3>Available Mentors</h3>
+        <h3>{{ "Available Mentors"|translate:user.language_preference }}</h3>
         <ul class="list-group">
             {% for mentor in mentors %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -17,7 +18,7 @@
                     <span class="text-muted">{{ mentor.email }}</span>
                 </li>
             {% empty %}
-                <li class="list-group-item">No mentors available.</li>
+                <li class="list-group-item">{{ "No mentors available."|translate:user.language_preference }}</li>
             {% endfor %}
         </ul>
     </section>
@@ -28,6 +29,6 @@
         <div class="mb-3">
             {{ form.as_p }}
         </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" class="btn btn-primary">{{ "Submit"|translate:user.language_preference }}</button>
     </form>
 {% endblock %}

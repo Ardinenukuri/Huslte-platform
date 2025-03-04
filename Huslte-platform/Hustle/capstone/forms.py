@@ -174,9 +174,15 @@ class JobSubmitForm(forms.ModelForm):
 
 
 class ResourceUploadForm(forms.ModelForm):
+    resource_file = forms.FileField(
+        required=False,  # Optional file upload
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        label="Upload Resource File (PDF, DOCX)"
+    )
+
     class Meta:
         model = Resource
-        fields = ['title', 'description', 'cover_image']  # Added cover_image
+        fields = ['title', 'description', 'cover_image', 'resource_file']  # Added `resource_file`
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
@@ -186,6 +192,7 @@ class ResourceUploadForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['cover_image'].widget.attrs.update({'class': 'form-control'})
+
 
 class ChapterForm(forms.ModelForm):
     """
@@ -235,7 +242,7 @@ class MentorAvailabilityForm(forms.ModelForm):
 class ScheduleSessionForm(forms.ModelForm):
     class Meta:
         model = ScheduledSession
-        fields = ['date', 'start_time', 'end_time', 'notes']
+        fields = ['notes']
 
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),

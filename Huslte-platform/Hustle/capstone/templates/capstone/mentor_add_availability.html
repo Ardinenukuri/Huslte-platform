@@ -1,23 +1,13 @@
 {% extends 'mentor-base.html' %}
-{% block title %}Manage Availability{% endblock %}
+{% load custom_filters %}
+
+{% block title %}{{ "Manage Availability"|translate:user.language_preference }}{% endblock %}
 
 {% block mentor_content %}
-<h2>Manage Availability</h2>
+<h2>{{ "Manage Availability"|translate:user.language_preference }}</h2>
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit" class="btn btn-success">Save Availability</button>
+    <button type="submit" class="btn btn-success">{{ "Save Availability"|translate:user.language_preference }}</button>
 </form>
-
-<h3>My Available Slots</h3>
-<ul class="list-group">
-    {% for slot in availability_slots %}
-        <li class="list-group-item">
-            <strong>Date:</strong> {{ slot.date }} | 
-            <strong>Time:</strong> {{ slot.start_time }} - {{ slot.end_time }}
-        </li>
-    {% empty %}
-        <li class="list-group-item text-muted">No availability added yet.</li>
-    {% endfor %}
-</ul>
 {% endblock %}
