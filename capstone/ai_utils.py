@@ -3,13 +3,17 @@ import json
 import re
 from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
+from django.conf import settings
 
 # ✅ Load API key from .env file
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# ✅ Initialize Gemini model
-model = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=GOOGLE_API_KEY)
+def get_google_api_model():
+    api_key = os.getenv('GOOGLE_API_KEY')
+    if not api_key:
+        raise ValueError("Google API key not found in environment variables")
+    return ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=api_key)
 
 def generate_quiz_questions(title, content, num_questions=5, quiz_type="chapter"):
     """
@@ -43,6 +47,7 @@ def generate_quiz_questions(title, content, num_questions=5, quiz_type="chapter"
     """
 
     try:
+        model = get_google_api_model()
         response = model.invoke(prompt)
         raw_quiz_data = response.content.strip()
 
@@ -60,5 +65,5 @@ def generate_quiz_questions(title, content, num_questions=5, quiz_type="chapter"
         print("🔍 Error details:", e)
         return None
     except Exception as e:
-        print(f"❌ Error generating quiz: {e}")
+        print(f"Error generating quiz questions: {e}")
         return None

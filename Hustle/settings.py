@@ -12,10 +12,13 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from .env file
+load_dotenv()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -24,10 +27,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-zq3&&^6u2gir-ep_+u@+y51%91ej*=$141_k7#_$k#r0)%*y@m'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = 'RENDER' not in os.environ
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
+# Add after SECRET_KEY
+GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY', '')
 
 # Application definition
 
@@ -81,10 +86,10 @@ WSGI_APPLICATION = 'Hustle.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'hustle',
-        'USER': 'root',
-        'PASSWORD': 'Nukurimartine2004@',
-        'HOST': 'localhost',
+        'NAME': os.environ.get('DATABASE_NAME', 'hustle'),
+        'USER': os.environ.get('DATABASE_USER', 'root'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'Nukurimartine2004@'),
+        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
         'PORT': '3306',
         'OPTIONS': {
             'charset': 'utf8mb4',
@@ -179,3 +184,6 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
 INSTALLED_APPS += ['django_celery_beat']
+
+# Add render.com domain to CSRF trusted origins
+CSRF_TRUSTED_ORIGINS = ['https://*.render.com']
