@@ -1,8 +1,6 @@
 from datetime import datetime, time
-from msvcrt import getch
-from sre_parse import parse_template
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from .forms import LoginForm, SignUpForm, ParticipantProfileForm,FileUploadForm, ScheduleSessionForm, ScheduledSessionForm,MentorAvailabilityForm,ChapterQuizForm, FinalQuizForm,JobSubmitForm, MentorProfileForm, MentorRatingForm, JobUploadForm, FeedbackForm, ResourceSearchForm, ResourceUploadForm, RatingForm, MentorshipRequestForm, SessionForm, ChatMessageForm, JobApplicationForm, MentorshipResponseForm, ThreadForm, ChangeEmailForm, PasswordChangeForm, DeleteAccountForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.admin.views.decorators import staff_member_required
@@ -16,7 +14,7 @@ from django.utils.timezone import now
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.http import HttpResponseForbidden
-from django.contrib.auth import update_session_auth_hash, logout
+from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
@@ -103,7 +101,6 @@ def signup_view(request):
             user.set_password(form.cleaned_data['password'])
             user.username = form.cleaned_data['username']
             user.save()
-
             
             send_mail(
                 'Welcome to Hustle Platform!',
