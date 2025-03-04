@@ -12,6 +12,7 @@ REDIS_URL=${REDIS_URL}
 EOF
 
 echo "Installing dependencies..."
+pip install --upgrade pip
 pip install -r requirements.txt
 
 echo "Collecting static files..."
