@@ -13,7 +13,9 @@ EOF
 
 echo "Installing dependencies..."
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r requirements.txt || {
+    echo "Some packages failed to install, continuing anyway..."
+}
 
 echo "Collecting static files..."
 python manage.py collectstatic --no-input

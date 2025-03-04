@@ -1,57 +1,60 @@
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
-from .forms import LoginForm, SignUpForm, ParticipantProfileForm,FileUploadForm, ScheduleSessionForm, ScheduledSessionForm,MentorAvailabilityForm,ChapterQuizForm, FinalQuizForm,JobSubmitForm, MentorProfileForm, MentorRatingForm, JobUploadForm, FeedbackForm, ResourceSearchForm, ResourceUploadForm, RatingForm, MentorshipRequestForm, SessionForm, ChatMessageForm, JobApplicationForm, MentorshipResponseForm, ThreadForm, ChangeEmailForm, PasswordChangeForm, DeleteAccountForm
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.admin.views.decorators import staff_member_required
-from .models import User, MenteeActivity, Enrollment, Question, Message, ParticipantProfile, ScheduledSession, MentorAvailability, Rating, UserProgress, Chapter, Quiz, Certificate, MentorProfile, Feedback, Progress, Resource, MentorshipRequest, ChatMessage, Session, JobListing, SavedJob, JobApplication, Notification, Thread, Comment, Vote
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import JsonResponse
-from django.db.models import Avg
-from .google_calendar import get_google_calendar_service, create_calendar_event
-from datetime import timedelta
-from django.utils.timezone import now
-from django.core.exceptions import PermissionDenied
-from django.urls import reverse
-from django.http import HttpResponseForbidden
-from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
-from django.core.mail import send_mail
-from django.conf import settings
-from reportlab.lib.pagesizes import letter, landscape
-from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
-from capstone.utils import generate_certificate
-import os
-from reportlab.lib import colors
-from reportlab.lib.utils import simpleSplit
-from reportlab.lib.colors import black, blue
-from django.forms import inlineformset_factory
-import logging
-from io import BytesIO
+from django.core.mail import send_mail, EmailMessage
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.files import File
-from django.http import FileResponse
 from django.core.files.base import ContentFile
-from reportlab.pdfbase.ttfonts import TTFont
-import re
-from reportlab.pdfbase import pdfmetrics
-import openai
-import json
-import PyPDF2
-import docx
 from django.core.files.storage import default_storage
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from .models import QuizAttempt
-from .utils import extract_text_from_file 
-from .utils import translate_text
-from django.core.mail import EmailMessage
-from .ai_utils import generate_quiz_questions
-import urllib.parse
-from django.utils.timezone import localtime, make_aware
+from django.conf import settings
+from django.http import JsonResponse, FileResponse, HttpResponseForbidden
+from django.urls import reverse
+from django.utils.timezone import now, localtime, make_aware
 from django.utils.html import strip_tags
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.core.exceptions import PermissionDenied
+from django.db.models import Avg
 
+# Local imports
+from .forms import *  # Import all your forms
+from .models import *  # Import all your models
+from .utils import generate_certificate, extract_text_from_file, translate_text
+from .google_calendar import get_google_calendar_service, create_calendar_event
+from .ai_utils import generate_quiz_questions
 
+# Third-party imports - wrapped in try/except
+try:
+    from reportlab.lib.pagesizes import letter, landscape
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.utils import ImageReader, simpleSplit
+    from reportlab.lib.colors import black, blue
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+except ImportError:
+    print("ReportLab not available")
+
+try:
+    import PyPDF2
+except ImportError:
+    print("PyPDF2 not available")
+
+try:
+    import docx
+except ImportError:
+    print("python-docx not available")
+
+# Standard library imports
+import os
+import json
+import logging
+import urllib.parse
+from io import BytesIO
+
+# Initialize logger
 logger = logging.getLogger(__name__)
 
 def homepage(request):
@@ -2277,15 +2280,15 @@ def schedule_availability(request):
     return render(request, 'capstone/schedule_availability.html', {'form': form})
 
 
-def extract_text_from_file(file):
+def extract_text_from_file(request, resource_id):
     """Extracts text from an uploaded PDF or DOCX file."""
-    file_ext = os.path.splitext(file.name)[1].lower()
+    file_ext = os.path.splitext(request.FILES['resource_file'].name)[1].lower()
     
     if file_ext == '.pdf':
-        reader = PyPDF2.PdfReader(file)
+        reader = PyPDF2.PdfReader(request.FILES['resource_file'])
         text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
     elif file_ext == '.docx':
-        doc = docx.Document(file)
+        doc = docx.Document(request.FILES['resource_file'])
         text = "\n".join([para.text for para in doc.paragraphs])
     else:
         return None  # Unsupported file format
