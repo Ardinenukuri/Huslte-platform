@@ -81,9 +81,8 @@ DEFAULT_FROM_EMAIL = f'Hustle Platform <{os.environ.get("EMAIL_HOST_USER")}>'
 # Static files configuration
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
+STATICFILES_DIRS = (os.path.join(BASE_DIR,'static'),)
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_ROOT = os.path .join(BASE_DIR,'media')
