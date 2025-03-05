@@ -19,6 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import PermissionDenied
 from django.db.models import Avg
 
+
 # Local imports
 from .forms import *  # Import all your forms
 from .models import *  # Import all your models
@@ -53,6 +54,7 @@ import json
 import logging
 import urllib.parse
 from io import BytesIO
+import re
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -1426,20 +1428,19 @@ def extract_chapters(file):
     file_path = default_storage.path(file_path)
     
     text = ""
+    try:
+        if file.name.endswith(".pdf"):
+            text = extract_text_from_pdf(file_path)
+        elif file.name.endswith(".docx"):
+            text = extract_text_from_docx(file_path)
 
-    # Extract text based on file type
-    if file.name.endswith(".pdf"):
-        text = extract_text_from_pdf(file_path)
-    elif file.name.endswith(".docx"):
-        text = extract_text_from_docx(file_path)
-
-    # Extract chapters correctly
-    chapters = split_into_chapters_by_title(text)
-
-    # Clean up temporary file
-    default_storage.delete(file_path)
-
-    return chapters
+        chapters = split_into_chapters_by_title(text)
+        return chapters
+    except Exception as e:
+        logger.error(f"Error extracting chapters: {e}")
+        return [("Chapter 1: Complete Content", text or "Error processing file")]
+    finally:
+        default_storage.delete(file_path)
 
 def extract_text_from_pdf(pdf_path):
     """Extracts text from a PDF file."""
@@ -1458,27 +1459,24 @@ def extract_text_from_docx(docx_path):
 def split_into_chapters_by_title(text):
     """
     Splits text into chapters based on 'Chapter X: Title' format.
-    Ensures that chapter titles are retained exactly as they are in the document.
     """
-    # Regular expression pattern to detect "Chapter X: Title"
+    if not text:
+        return [("Chapter 1: Complete Content", "No content available")]
+        
     chapter_pattern = re.compile(r"(Chapter\s+\d+:\s+[^\n]+)", re.IGNORECASE)
-
-    # Find all matches for chapter titles
     matches = list(chapter_pattern.finditer(text))
-
+    
+    if not matches:
+        return [("Chapter 1: Complete Content", text)]
+        
     chapters = []
-
     for i in range(len(matches)):
         start = matches[i].start()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
-        
-        # Extract the full chapter text (title + content)
         chapter_text = text[start:end].strip()
-
-        # Ensure the extracted text includes the full title only once
         if chapter_text:
             chapters.append(chapter_text)
-
+    
     return chapters
 
     
@@ -1486,73 +1484,42 @@ def split_into_chapters_by_title(text):
 @login_required
 @user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
 def upload_resource(request):
-    """
-    Allows mentors to upload a course along with a file, automatically extracting 5 chapters.
-    """
     if request.method == 'POST':
         form = ResourceUploadForm(request.POST, request.FILES)
-
         if form.is_valid():
             resource = form.save(commit=False)
             resource.created_by = request.user
             
-            uploaded_file = request.FILES.get('resource_file')
-            if uploaded_file:
-                resource.resource_file = uploaded_file
+            if 'resource_file' in request.FILES:
+                resource.resource_file = request.FILES['resource_file']
                 resource.save()
 
-                # Extract chapters
                 chapters_content = extract_chapters(resource.resource_file)
-
-                # Store extracted chapters properly
+                
                 for i, chapter_text in enumerate(chapters_content, start=1):
                     title, content = chapter_text.split("\n", 1) if "\n" in chapter_text else (chapter_text, "")
-                    
                     Chapter.objects.create(
                         resource=resource,
-                        title=title.strip(),  # Store full chapter title
-                        content=content.strip(),  # Store chapter content
+                        title=title.strip(),
+                        content=content.strip(),
                         chapter_number=i
                     )
 
-            # ✅ Notify All Participants
-            participants = User.objects.filter(user_type='participant')
-            participant_emails = list(participants.values_list('email', flat=True))
+                # Notify participants
+                participants = User.objects.filter(user_type='participant')
+                for participant in participants:
+                    Notification.objects.create(
+                        user=participant,
+                        message=f"A new course '{resource.title}' has been uploaded!"
+                    )
 
-            for participant in participants:
-                Notification.objects.create(
-                    user=participant,
-                    message=f"A new course '{resource.title}' has been uploaded!",
-                    is_seen=False
-                )
-
-                participant_emails.append(participant.email)
-
-            # ✅ Send Email Notification to Participants
-            if participant_emails:
-                subject = "New Course Uploaded!"
-                message = f"Hello,\n\nA new course titled '{resource.title}' has been uploaded by {request.user.full_name}.\n\n" \
-                          f"Log in to your dashboard to explore the content.\n\n" \
-                          f"Best regards,\nHustle Platform Team"
-                
-                send_mail(
-                    subject,
-                    message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    participant_emails,
-                    fail_silently=False,
-                )
-
-
-            messages.success(request, "Course uploaded with 5 chapters successfully!")
-            return redirect('mentor_dashboard')
-
+                messages.success(request, "Resource uploaded successfully!")
+                return redirect('mentor_dashboard')
         else:
             messages.error(request, "Error uploading resource. Please check the form.")
-
     else:
         form = ResourceUploadForm()
-
+    
     return render(request, 'capstone/upload_resource.html', {'form': form})
 
 
