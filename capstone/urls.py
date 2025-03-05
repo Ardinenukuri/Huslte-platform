@@ -129,12 +129,5 @@ urlpatterns = [
     path('mentor/profile-settings/', views.mentor_profile_settings, name='mentor_profile_settings'),
     path('participant/profile-settings/', views.participant_profile_settings, name='participant_profile_settings'),
     path("set-language/", views.set_language_preference, name="set_language_preference"),
-
-
-    
-
-]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
