@@ -1,7 +1,5 @@
 from django.urls import path
 from . import views
-from django.conf import settings
-from django.conf.urls.static import static
 
 urlpatterns = [
     path('login/', views.login_view, name='login'),
@@ -129,5 +127,5 @@ urlpatterns = [
     path('mentor/profile-settings/', views.mentor_profile_settings, name='mentor_profile_settings'),
     path('participant/profile-settings/', views.participant_profile_settings, name='participant_profile_settings'),
     path("set-language/", views.set_language_preference, name="set_language_preference"),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] 
 
