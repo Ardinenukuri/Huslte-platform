@@ -86,10 +86,10 @@ STATICFILES_DIRS = [
 ]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files configuration
-if not DEBUG:
-    MEDIA_ROOT = '/media'
-    MEDIA_URL = '/media/'
+# # Media files configuration
+# if not DEBUG:
+#     MEDIA_ROOT = '/media'
+#     MEDIA_URL = '/media/'
 
 # Celery Configuration
 CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
