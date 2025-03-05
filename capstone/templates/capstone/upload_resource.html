@@ -1,43 +1,56 @@
-{% extends 'mentor-base.html' %}
-{% load custom_filters %}
-
-{% block title %}{{ "Upload Course - Hustle Platform"|translate:user.language_preference }}{% endblock %}
-
-{% block mentor_content %}
+{% extends 'mentor-base.html' %} {% load custom_filters %} {% block title %}
+{{"Upload Course - Hustle Platform"|translate:user.language_preference }}
+{%endblock %} {% block mentor_content %}
 <div class="container mt-4">
-    <h2 class="mb-4">{{ "Upload a New Course"|translate:user.language_preference }}</h2>
+  <h2 class="mb-4">
+    {{ "Upload a New Course"|translate:user.language_preference }}
+  </h2>
 
-    <!-- Display Messages -->
-    {% if messages %}
-    <div class="alert alert-info">
-        {% for message in messages %}
-        <p>{{ message }}</p>
-        {% endfor %}
+  <!-- Display Messages -->
+  {% if messages %}
+  <div class="alert alert-info">
+    {% for message in messages %}
+    <p>{{ message }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Upload Course Form -->
+  <form method="POST" enctype="multipart/form-data">
+    <!-- ✅ Added enctype for file uploads -->
+    {% csrf_token %}
+
+    <div class="card p-4 mb-3">
+      <h4>{{ "Course Details"|translate:user.language_preference }}</h4>
+      {{ form.as_p }}
     </div>
-    {% endif %}
 
-    <!-- Upload Course Form -->
-    <form method="POST" enctype="multipart/form-data">  <!-- ✅ Added enctype for file uploads -->
-        {% csrf_token %}
-
-        <div class="card p-4 mb-3">
-            <h4>{{ "Course Details"|translate:user.language_preference }}</h4>
-            {{ form.as_p }}
-        </div>
-
-        <button type="submit" class="btn btn-primary">{{ "Upload Course"|translate:user.language_preference }}</button>
-    </form>
+    <button type="submit" class="btn btn-primary">
+      {{ "Upload Course"|translate:user.language_preference }}
+    </button>
+  </form>
 </div>
 
 <!-- Link to Upload Chapter Quizzes -->
 <div class="container mt-4">
-    <h3 class="mb-3">{{ "Next Steps:"|translate:user.language_preference }}</h3>
-    <p>{{ "After uploading the course, add chapter quizzes and a final quiz."|translate:user.language_preference }}</p>
-    
-    <a href="{% url 'upload_chapter_quiz' %}" class="btn btn-warning mb-2">📚 {{ "Upload Chapter Quizzes"|translate:user.language_preference }}</a>
-    <a href="{% url 'upload_final_quiz' %}" class="btn btn-danger mb-2">🎯 {{ "Upload Final Quiz"|translate:user.language_preference }}</a>
-    <a href="{% url 'upload_chapter_ai_quiz' %}" class="btn btn-warning mb-2">📚 {{ "Upload AI Chapter Quizzes"|translate:user.language_preference }}</a>
-    <a href="{% url 'upload_final_ai_quiz' %}" class="btn btn-danger mb-2">🎯 {{ "Upload AI Final Quiz"|translate:user.language_preference }}</a>
+  <h3 class="mb-3">{{ "Next Steps:"|translate:user.language_preference }}</h3>
+  <p>
+    {{ "After uploading the course, add chapter quizzes and a final
+    quiz."|translate:user.language_preference }}
+  </p>
+
+  <a href="{% url 'upload_chapter_quiz' %}" class="btn btn-warning mb-2"
+    >📚 {{ "Upload Chapter Quizzes"|translate:user.language_preference }}</a
+  >
+  <a href="{% url 'upload_final_quiz' %}" class="btn btn-danger mb-2"
+    >🎯 {{ "Upload Final Quiz"|translate:user.language_preference }}</a
+  >
+  <a href="{% url 'upload_chapter_ai_quiz' %}" class="btn btn-warning mb-2"
+    >📚 {{ "Upload AI Chapter Quizzes"|translate:user.language_preference }}</a
+  >
+  <a href="{% url 'upload_final_ai_quiz' %}" class="btn btn-danger mb-2"
+    >🎯 {{ "Upload AI Final Quiz"|translate:user.language_preference }}</a
+  >
 </div>
 
 {% endblock %}

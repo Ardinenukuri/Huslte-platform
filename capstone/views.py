@@ -1,59 +1,62 @@
-from datetime import datetime, time
-from msvcrt import getch
-from sre_parse import parse_template
+from datetime import datetime, time, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login
-from .forms import LoginForm, SignUpForm, ParticipantProfileForm,FileUploadForm, ScheduleSessionForm, ScheduledSessionForm,MentorAvailabilityForm,ChapterQuizForm, FinalQuizForm,JobSubmitForm, MentorProfileForm, MentorRatingForm, JobUploadForm, FeedbackForm, ResourceSearchForm, ResourceUploadForm, RatingForm, MentorshipRequestForm, SessionForm, ChatMessageForm, JobApplicationForm, MentorshipResponseForm, ThreadForm, ChangeEmailForm, PasswordChangeForm, DeleteAccountForm
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.admin.views.decorators import staff_member_required
-from .models import User, MenteeActivity, Enrollment, Question, Message, ParticipantProfile, ScheduledSession, MentorAvailability, Rating, UserProgress, Chapter, Quiz, Certificate, MentorProfile, Feedback, Progress, Resource, MentorshipRequest, ChatMessage, Session, JobListing, SavedJob, JobApplication, Notification, Thread, Comment, Vote
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import JsonResponse
-from django.db.models import Avg
-from .google_calendar import get_google_calendar_service, create_calendar_event
-from datetime import timedelta
-from django.utils.timezone import now
-from django.core.exceptions import PermissionDenied
-from django.urls import reverse
-from django.http import HttpResponseForbidden
-from django.contrib.auth import update_session_auth_hash, logout
 from django.contrib import messages
-from django.core.mail import send_mail
-from django.conf import settings
-from reportlab.lib.pagesizes import letter, landscape
-from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
-from capstone.utils import generate_certificate
-import os
-from reportlab.lib import colors
-from reportlab.lib.utils import simpleSplit
-from reportlab.lib.colors import black, blue
-from django.forms import inlineformset_factory
-import logging
-from io import BytesIO
+from django.core.mail import send_mail, EmailMessage
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.files import File
-from django.http import FileResponse
 from django.core.files.base import ContentFile
-from reportlab.pdfbase.ttfonts import TTFont
-import re
-from reportlab.pdfbase import pdfmetrics
-import openai
-import json
-import PyPDF2
-import docx
 from django.core.files.storage import default_storage
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from .models import QuizAttempt
-from .utils import extract_text_from_file 
-from .utils import translate_text
-from django.core.mail import EmailMessage
-from .ai_utils import generate_quiz_questions
-import urllib.parse
-from django.utils.timezone import localtime, make_aware
+from django.conf import settings
+from django.http import JsonResponse, FileResponse, HttpResponseForbidden
+from django.urls import reverse
+from django.utils.timezone import now, localtime, make_aware
 from django.utils.html import strip_tags
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.core.exceptions import PermissionDenied
+from django.db.models import Avg
 
 
+# Local imports
+from .forms import *  # Import all your forms
+from .models import *  # Import all your models
+from .utils import generate_certificate, extract_text_from_file, translate_text
+from .google_calendar import get_google_calendar_service, create_calendar_event
+from .ai_utils import generate_quiz_questions
+
+# Third-party imports - wrapped in try/except
+try:
+    from reportlab.lib.pagesizes import letter, landscape
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.utils import ImageReader, simpleSplit
+    from reportlab.lib.colors import black, blue
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+except ImportError:
+    print("ReportLab not available")
+
+try:
+    import PyPDF2
+except ImportError:
+    print("PyPDF2 not available")
+
+try:
+    import docx
+except ImportError:
+    print("python-docx not available")
+
+# Standard library imports
+import os
+import json
+import logging
+import urllib.parse
+from io import BytesIO
+import re
+
+# Initialize logger
 logger = logging.getLogger(__name__)
 
 def homepage(request):
@@ -103,7 +106,6 @@ def signup_view(request):
             user.set_password(form.cleaned_data['password'])
             user.username = form.cleaned_data['username']
             user.save()
-
             
             send_mail(
                 'Welcome to Hustle Platform!',
@@ -1426,20 +1428,19 @@ def extract_chapters(file):
     file_path = default_storage.path(file_path)
     
     text = ""
+    try:
+        if file.name.endswith(".pdf"):
+            text = extract_text_from_pdf(file_path)
+        elif file.name.endswith(".docx"):
+            text = extract_text_from_docx(file_path)
 
-    # Extract text based on file type
-    if file.name.endswith(".pdf"):
-        text = extract_text_from_pdf(file_path)
-    elif file.name.endswith(".docx"):
-        text = extract_text_from_docx(file_path)
-
-    # Extract chapters correctly
-    chapters = split_into_chapters_by_title(text)
-
-    # Clean up temporary file
-    default_storage.delete(file_path)
-
-    return chapters
+        chapters = split_into_chapters_by_title(text)
+        return chapters
+    except Exception as e:
+        logger.error(f"Error extracting chapters: {e}")
+        return [("Chapter 1: Complete Content", text or "Error processing file")]
+    finally:
+        default_storage.delete(file_path)
 
 def extract_text_from_pdf(pdf_path):
     """Extracts text from a PDF file."""
@@ -1458,27 +1459,24 @@ def extract_text_from_docx(docx_path):
 def split_into_chapters_by_title(text):
     """
     Splits text into chapters based on 'Chapter X: Title' format.
-    Ensures that chapter titles are retained exactly as they are in the document.
     """
-    # Regular expression pattern to detect "Chapter X: Title"
+    if not text:
+        return [("Chapter 1: Complete Content", "No content available")]
+        
     chapter_pattern = re.compile(r"(Chapter\s+\d+:\s+[^\n]+)", re.IGNORECASE)
-
-    # Find all matches for chapter titles
     matches = list(chapter_pattern.finditer(text))
-
+    
+    if not matches:
+        return [("Chapter 1: Complete Content", text)]
+        
     chapters = []
-
     for i in range(len(matches)):
         start = matches[i].start()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
-        
-        # Extract the full chapter text (title + content)
         chapter_text = text[start:end].strip()
-
-        # Ensure the extracted text includes the full title only once
         if chapter_text:
             chapters.append(chapter_text)
-
+    
     return chapters
 
     
@@ -1486,73 +1484,42 @@ def split_into_chapters_by_title(text):
 @login_required
 @user_passes_test(lambda u: u.user_type == 'mentor' or u.is_superuser)
 def upload_resource(request):
-    """
-    Allows mentors to upload a course along with a file, automatically extracting 5 chapters.
-    """
     if request.method == 'POST':
         form = ResourceUploadForm(request.POST, request.FILES)
-
         if form.is_valid():
             resource = form.save(commit=False)
             resource.created_by = request.user
             
-            uploaded_file = request.FILES.get('resource_file')
-            if uploaded_file:
-                resource.resource_file = uploaded_file
+            if 'resource_file' in request.FILES:
+                resource.resource_file = request.FILES['resource_file']
                 resource.save()
 
-                # Extract chapters
                 chapters_content = extract_chapters(resource.resource_file)
-
-                # Store extracted chapters properly
+                
                 for i, chapter_text in enumerate(chapters_content, start=1):
                     title, content = chapter_text.split("\n", 1) if "\n" in chapter_text else (chapter_text, "")
-                    
                     Chapter.objects.create(
                         resource=resource,
-                        title=title.strip(),  # Store full chapter title
-                        content=content.strip(),  # Store chapter content
+                        title=title.strip(),
+                        content=content.strip(),
                         chapter_number=i
                     )
 
-            # ✅ Notify All Participants
-            participants = User.objects.filter(user_type='participant')
-            participant_emails = list(participants.values_list('email', flat=True))
+                # Notify participants
+                participants = User.objects.filter(user_type='participant')
+                for participant in participants:
+                    Notification.objects.create(
+                        user=participant,
+                        message=f"A new course '{resource.title}' has been uploaded!"
+                    )
 
-            for participant in participants:
-                Notification.objects.create(
-                    user=participant,
-                    message=f"A new course '{resource.title}' has been uploaded!",
-                    is_seen=False
-                )
-
-                participant_emails.append(participant.email)
-
-            # ✅ Send Email Notification to Participants
-            if participant_emails:
-                subject = "New Course Uploaded!"
-                message = f"Hello,\n\nA new course titled '{resource.title}' has been uploaded by {request.user.full_name}.\n\n" \
-                          f"Log in to your dashboard to explore the content.\n\n" \
-                          f"Best regards,\nHustle Platform Team"
-                
-                send_mail(
-                    subject,
-                    message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    participant_emails,
-                    fail_silently=False,
-                )
-
-
-            messages.success(request, "Course uploaded with 5 chapters successfully!")
-            return redirect('mentor_dashboard')
-
+                messages.success(request, "Resource uploaded successfully!")
+                return redirect('mentor_dashboard')
         else:
             messages.error(request, "Error uploading resource. Please check the form.")
-
     else:
         form = ResourceUploadForm()
-
+    
     return render(request, 'capstone/upload_resource.html', {'form': form})
 
 
@@ -1868,7 +1835,6 @@ def download_certificate(request, resource_id):
         messages.error(request, "Certificate not found.")
         return redirect('participant_profile', participant_id=request.user.id)
 
-
 @login_required
 def generate_certificate(request, resource_id):
     if request.method == "POST":
@@ -1887,17 +1853,16 @@ def generate_certificate(request, resource_id):
             defaults={"issued_at": now()}
         )
 
-        # ✅ Locate Pacifico font
+        # ✅ Locate and register Pacifico font
         pacifico_path = os.path.join(settings.STATICFILES_DIRS[0], "fonts", "Pacifico.ttf")
 
-        # ✅ Ensure Pacifico font file exists
         if not os.path.exists(pacifico_path):
             messages.error(request, "Pacifico font file is missing! Please upload the font to static/fonts.")
             return redirect("course_detail", resource_id=resource_id)
 
         pdfmetrics.registerFont(TTFont("Pacifico", pacifico_path))
 
-        # ✅ Create directory if it doesn't exist
+        # ✅ Ensure the certificates directory exists
         certificates_dir = os.path.join(settings.MEDIA_ROOT, "certificates")
         os.makedirs(certificates_dir, exist_ok=True)
 
@@ -1905,72 +1870,76 @@ def generate_certificate(request, resource_id):
         pdf_filename = f"certificate_{request.user.username}_{resource.id}.pdf"
         pdf_path = os.path.join(certificates_dir, pdf_filename)
 
-        # ✅ Create certificate in landscape format
+        # ✅ Generate PDF Certificate in landscape format
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=landscape(letter))
         width, height = landscape(letter)
 
-        # 🎨 **Stylish Border**
+        # 🎨 *Stylish Border*
         c.setStrokeColor(colors.black)
         c.setLineWidth(5)
         c.rect(25, 25, width - 50, height - 50)
 
-        # 🎖 **Title: Certificate of Completion**
+        # 🎖 *Title: Certificate of Completion*
         c.setFont("Helvetica-Bold", 40)
         c.setFillColor(colors.darkblue)
         c.drawCentredString(width / 2, height - 90, "CERTIFICATE OF COMPLETION")
         c.setFillColor(colors.black)
 
-        # 🏆 **Subtitle: This is proudly presented to**
+        # 🏆 *Subtitle: This is proudly presented to*
         c.setFont("Helvetica", 18)
         c.drawCentredString(width / 2, height - 150, "This is proudly presented to")
 
-        # 🏅 **Participant's Name in Stylish Font**
-        c.setFont("Pacifico", 35)
+        # 🏅 *Participant's Name in Stylish Font*
+        c.setFont("Helvetica-Bold", 35)
         c.setFillColor(colors.blue)
         c.drawCentredString(width / 2, height - 200, full_name)
         c.setFillColor(colors.black)
 
-        # 📜 **Course Completion Statement**
+        # 📜 *Course Completion Statement*
         c.setFont("Helvetica", 16)
         c.drawCentredString(width / 2, height - 250, "For successfully completing the course:")
 
-        # 🎓 **Course Title in Bold**
+        # 🎓 *Course Title in Bold*
         c.setFont("Helvetica-Bold", 22)
         c.setFillColor(colors.darkred)
         c.drawCentredString(width / 2, height - 280, course_title)
         c.setFillColor(colors.black)
 
-        # 🏛 **Issuer Info**
+        # 🏛 *Issuer Info*
         c.setFont("Helvetica", 14)
         c.drawCentredString(width / 2, height - 340, "Issued by: Hustle Platform")
         c.drawCentredString(width / 2, height - 360, f"Date: {now().strftime('%Y-%m-%d')}")
 
-        # ✍️ **Signature Line & Placeholder**
+        # ✍ *Signature Line & Placeholder*
         c.line(width / 2 - 120, height - 430, width / 2 + 120, height - 430)
         c.setFont("Pacifico", 50)
         c.setFillColor(colors.blue)
         c.drawCentredString(width / 2, height - 460, "HusP")
         c.setFillColor(colors.black)
 
-        # ✅ Save certificate
+        # ✅ Finalize and Save PDF to Buffer
         c.showPage()
         c.save()
+        buffer.seek(0)  # Reset buffer pointer
 
-        buffer.seek(0)
+        # ✅ Save buffer content to the certificate file
         certificate.certificate_file.save(
             f"certificates/{pdf_filename}", 
             ContentFile(buffer.read())
         )
         certificate.save()
 
-        # ✅ **Send Email Notification with Certificate Link**
+        # ✅ Ensure buffer is reset before sending response
+        buffer.seek(0)
+
+        # ✅ *Send Email Notification with Certificate Link*
         certificate_url = request.build_absolute_uri(certificate.certificate_file.url)
         email_subject = "🎉 Congratulations! Your Certificate is Ready!"
         email_body = f"""
         <p>Dear {request.user.get_full_name()},</p>
         <p>🎉 Congratulations! You have successfully completed the course <strong>{resource.title}</strong>.</p>
-        <p>Your certificate is now available for download. Go and Download it from your Profile</p>
+        <p>Your certificate is now available for download. Go and Download it from your Profile.</p>
         <p>Thank you for learning with Hustle Platform! Keep striving for excellence. 🚀</p>
         <p>Best regards,<br><strong>Hustle Platform Team</strong></p>
         """
@@ -1987,9 +1956,10 @@ def generate_certificate(request, resource_id):
         messages.success(request, "🎓 Certificate generated successfully! You can now download it from your profile.")
 
         # ✅ Return certificate file for download
-        return FileResponse(open(pdf_path, "rb"), as_attachment=True, filename=f"{full_name}_certificate.pdf")
+        return FileResponse(buffer, as_attachment=True, filename=f"{full_name}_certificate.pdf")
 
     return redirect("course_detail", resource_id=resource_id)
+
 
 @login_required
 @user_passes_test(lambda u: u.user_type == "mentor")
@@ -2280,15 +2250,15 @@ def schedule_availability(request):
     return render(request, 'capstone/schedule_availability.html', {'form': form})
 
 
-def extract_text_from_file(file):
+def extract_text_from_file(request, resource_id):
     """Extracts text from an uploaded PDF or DOCX file."""
-    file_ext = os.path.splitext(file.name)[1].lower()
+    file_ext = os.path.splitext(request.FILES['resource_file'].name)[1].lower()
     
     if file_ext == '.pdf':
-        reader = PyPDF2.PdfReader(file)
+        reader = PyPDF2.PdfReader(request.FILES['resource_file'])
         text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
     elif file_ext == '.docx':
-        doc = docx.Document(file)
+        doc = docx.Document(request.FILES['resource_file'])
         text = "\n".join([para.text for para in doc.paragraphs])
     else:
         return None  # Unsupported file format
