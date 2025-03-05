@@ -1835,7 +1835,6 @@ def download_certificate(request, resource_id):
         messages.error(request, "Certificate not found.")
         return redirect('participant_profile', participant_id=request.user.id)
 
-
 @login_required
 def generate_certificate(request, resource_id):
     if request.method == "POST":
@@ -1854,17 +1853,16 @@ def generate_certificate(request, resource_id):
             defaults={"issued_at": now()}
         )
 
-        # ✅ Locate Pacifico font
+        # ✅ Locate and register Pacifico font
         pacifico_path = os.path.join(settings.STATICFILES_DIRS[0], "fonts", "Pacifico.ttf")
 
-        # ✅ Ensure Pacifico font file exists
         if not os.path.exists(pacifico_path):
             messages.error(request, "Pacifico font file is missing! Please upload the font to static/fonts.")
             return redirect("course_detail", resource_id=resource_id)
 
         pdfmetrics.registerFont(TTFont("Pacifico", pacifico_path))
 
-        # ✅ Create directory if it doesn't exist
+        # ✅ Ensure the certificates directory exists
         certificates_dir = os.path.join(settings.MEDIA_ROOT, "certificates")
         os.makedirs(certificates_dir, exist_ok=True)
 
@@ -1872,72 +1870,76 @@ def generate_certificate(request, resource_id):
         pdf_filename = f"certificate_{request.user.username}_{resource.id}.pdf"
         pdf_path = os.path.join(certificates_dir, pdf_filename)
 
-        # ✅ Create certificate in landscape format
+        # ✅ Generate PDF Certificate in landscape format
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=landscape(letter))
         width, height = landscape(letter)
 
-        # 🎨 **Stylish Border**
+        # 🎨 *Stylish Border*
         c.setStrokeColor(colors.black)
         c.setLineWidth(5)
         c.rect(25, 25, width - 50, height - 50)
 
-        # 🎖 **Title: Certificate of Completion**
+        # 🎖 *Title: Certificate of Completion*
         c.setFont("Helvetica-Bold", 40)
         c.setFillColor(colors.darkblue)
         c.drawCentredString(width / 2, height - 90, "CERTIFICATE OF COMPLETION")
         c.setFillColor(colors.black)
 
-        # 🏆 **Subtitle: This is proudly presented to**
+        # 🏆 *Subtitle: This is proudly presented to*
         c.setFont("Helvetica", 18)
         c.drawCentredString(width / 2, height - 150, "This is proudly presented to")
 
-        # 🏅 **Participant's Name in Stylish Font**
-        c.setFont("Pacifico", 35)
+        # 🏅 *Participant's Name in Stylish Font*
+        c.setFont("Helvetica-Bold", 35)
         c.setFillColor(colors.blue)
         c.drawCentredString(width / 2, height - 200, full_name)
         c.setFillColor(colors.black)
 
-        # 📜 **Course Completion Statement**
+        # 📜 *Course Completion Statement*
         c.setFont("Helvetica", 16)
         c.drawCentredString(width / 2, height - 250, "For successfully completing the course:")
 
-        # 🎓 **Course Title in Bold**
+        # 🎓 *Course Title in Bold*
         c.setFont("Helvetica-Bold", 22)
         c.setFillColor(colors.darkred)
         c.drawCentredString(width / 2, height - 280, course_title)
         c.setFillColor(colors.black)
 
-        # 🏛 **Issuer Info**
+        # 🏛 *Issuer Info*
         c.setFont("Helvetica", 14)
         c.drawCentredString(width / 2, height - 340, "Issued by: Hustle Platform")
         c.drawCentredString(width / 2, height - 360, f"Date: {now().strftime('%Y-%m-%d')}")
 
-        # ✍️ **Signature Line & Placeholder**
+        # ✍ *Signature Line & Placeholder*
         c.line(width / 2 - 120, height - 430, width / 2 + 120, height - 430)
         c.setFont("Pacifico", 50)
         c.setFillColor(colors.blue)
         c.drawCentredString(width / 2, height - 460, "HusP")
         c.setFillColor(colors.black)
 
-        # ✅ Save certificate
+        # ✅ Finalize and Save PDF to Buffer
         c.showPage()
         c.save()
+        buffer.seek(0)  # Reset buffer pointer
 
-        buffer.seek(0)
+        # ✅ Save buffer content to the certificate file
         certificate.certificate_file.save(
             f"certificates/{pdf_filename}", 
             ContentFile(buffer.read())
         )
         certificate.save()
 
-        # ✅ **Send Email Notification with Certificate Link**
+        # ✅ Ensure buffer is reset before sending response
+        buffer.seek(0)
+
+        # ✅ *Send Email Notification with Certificate Link*
         certificate_url = request.build_absolute_uri(certificate.certificate_file.url)
         email_subject = "🎉 Congratulations! Your Certificate is Ready!"
         email_body = f"""
         <p>Dear {request.user.get_full_name()},</p>
         <p>🎉 Congratulations! You have successfully completed the course <strong>{resource.title}</strong>.</p>
-        <p>Your certificate is now available for download. Go and Download it from your Profile</p>
+        <p>Your certificate is now available for download. Go and Download it from your Profile.</p>
         <p>Thank you for learning with Hustle Platform! Keep striving for excellence. 🚀</p>
         <p>Best regards,<br><strong>Hustle Platform Team</strong></p>
         """
@@ -1954,9 +1956,10 @@ def generate_certificate(request, resource_id):
         messages.success(request, "🎓 Certificate generated successfully! You can now download it from your profile.")
 
         # ✅ Return certificate file for download
-        return FileResponse(open(pdf_path, "rb"), as_attachment=True, filename=f"{full_name}_certificate.pdf")
+        return FileResponse(buffer, as_attachment=True, filename=f"{full_name}_certificate.pdf")
 
     return redirect("course_detail", resource_id=resource_id)
+
 
 @login_required
 @user_passes_test(lambda u: u.user_type == "mentor")
