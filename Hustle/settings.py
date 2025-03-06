@@ -12,7 +12,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-zq3&&^6u2gir-ep_+u@+y51%91ej*=$141_k7#_$k#r0)%*y@m')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = 'RENDER' not in os.environ
+# Setting DEBUG to True for Render deployment
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://*.render.com', 'https://*.onrender.com']
@@ -65,7 +66,6 @@ DATABASES = {
     }
 }
 
-
 # Make sure you have ROOT_URLCONF defined
 ROOT_URLCONF = 'Hustle.urls'
 
@@ -85,14 +85,9 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR,'static'),)
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-if DEBUG:
-    # Development settings
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-    MEDIA_URL = '/media/'
-else:
-    # Production settings for Render with persistent disk
-    MEDIA_ROOT = '/app/media'  # Path to the mounted disk on Render
-    MEDIA_URL = '/media/'
+# Media files configuration - simplified for debug mode
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
 
 # Celery Configuration
 CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
@@ -101,13 +96,3 @@ CELERY_TASK_SERIALIZER = 'json'
 
 # Custom User Model
 AUTH_USER_MODEL = 'capstone.User'
-
-
-if not DEBUG:
-    WHITENOISE_MIMETYPES = {
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.png': 'image/png',
-        '.gif': 'image/gif',
-        '.pdf': 'application/pdf',
-    }
