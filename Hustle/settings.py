@@ -90,8 +90,8 @@ if DEBUG:
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
     MEDIA_URL = '/media/'
 else:
-    # Production settings for Render
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    # Production settings for Render with persistent disk
+    MEDIA_ROOT = '/app/media'  # Path to the mounted disk on Render
     MEDIA_URL = '/media/'
 
 # Celery Configuration

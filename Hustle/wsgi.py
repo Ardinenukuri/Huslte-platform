@@ -7,5 +7,4 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Hustle.settings')
 application = get_wsgi_application()
 if 'RENDER' in os.environ:
     application = WhiteNoise(application)
-    # Add media files to be served
     application.add_files('media/', prefix='media/')

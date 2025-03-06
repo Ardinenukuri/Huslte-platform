@@ -21,9 +21,15 @@ echo "Collecting static files..."
 python manage.py collectstatic --no-input
 
 echo "Creating media directory..."
-mkdir -p media/certificates
-mkdir -p media/resumes
-chmod -R 755 media
+if [ -d "/app/media" ]; then
+    mkdir -p /app/media/certificates
+    mkdir -p /app/media/resumes
+    chmod -R 755 /app/media
+else
+    mkdir -p media/certificates
+    mkdir -p media/resumes
+    chmod -R 755 media
+fi
 
 
 echo "Applying migrations..."
