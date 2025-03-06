@@ -32,7 +32,7 @@ try:
     from reportlab.lib.pagesizes import letter, landscape
     from reportlab.pdfgen import canvas
     from reportlab.lib.utils import ImageReader, simpleSplit
-    from reportlab.lib.colors import black, blue
+    from reportlab.lib import colors
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
 except ImportError:
