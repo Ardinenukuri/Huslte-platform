@@ -32,7 +32,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -85,13 +85,14 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR,'static'),)
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_ROOT = os.path .join(BASE_DIR,'media')
-MEDIA_URL = '/media/'
-
-# # Media files configuration
-# if not DEBUG:
-#     MEDIA_ROOT = '/media'
-#     MEDIA_URL = '/media/'
+if DEBUG:
+    # Development settings
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    MEDIA_URL = '/media/'
+else:
+    # Production settings for Render
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    MEDIA_URL = '/media/'
 
 # Celery Configuration
 CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
@@ -100,3 +101,13 @@ CELERY_TASK_SERIALIZER = 'json'
 
 # Custom User Model
 AUTH_USER_MODEL = 'capstone.User'
+
+
+if not DEBUG:
+    WHITENOISE_MIMETYPES = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.pdf': 'application/pdf',
+    }

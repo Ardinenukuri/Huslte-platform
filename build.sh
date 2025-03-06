@@ -23,6 +23,7 @@ python manage.py collectstatic --no-input
 echo "Creating media directory..."
 mkdir -p media/certificates
 mkdir -p media/resumes
+chmod -R 755 media
 
 
 echo "Applying migrations..."
