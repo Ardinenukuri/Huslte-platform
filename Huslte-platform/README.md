@@ -20,25 +20,25 @@ Hustle Platform is an **online learning and mentorship platform** that provides 
 
 ## 🛠️ **Setup Instructions**
 
-### 1️⃣ **Clone the Repository**
+### 1⃣ **Clone the Repository**
 ```sh
 git clone https://github.com/Ardinenukuri/Huslte-platform.git
 cd Huslte-platform
 ```
 
-### 2️⃣ **Set Up Virtual Environment**
+### 2⃣ **Set Up Virtual Environment**
 ```sh
 python -m venv myenv
 source myenv/bin/activate  # For Linux/macOS
 myenv\Scripts\activate    # For Windows
 ```
 
-### 3️⃣ **Install Dependencies**
+### 3⃣ **Install Dependencies**
 ```sh
 pip install -r requirements.txt
 ```
 
-### 4️⃣ **Configure Environment Variables**
+### 4⃣ **Configure Environment Variables**
 Create a `.env` file in the root directory:
 ```
 SECRET_KEY='your-secret-key'
@@ -51,28 +51,28 @@ EMAIL_HOST_USER='your-email@gmail.com'
 EMAIL_HOST_PASSWORD='your-email-password'
 ```
 
-### 5️⃣ **Apply Migrations**
+### 5⃣ **Apply Migrations**
 ```sh
 python manage.py makemigrations
 python manage.py migrate
 ```
 
-### 6️⃣ **Create Superuser (For Admin Access)**
+### 6⃣ **Create Superuser (For Admin Access)**
 ```sh
 python manage.py createsuperuser
 ```
 
-### 7️⃣ **Run the Server**
+### 7⃣ **Run the Server**
 ```sh
 python manage.py runserver
 ```
-➡ **Access the platform at:** **http://127.0.0.1:8000/**
+🥽 **Access the platform at:** **http://127.0.0.1:8000/**
 
 ---
 
-# **🚀 Deployment Plan**
+# 🚀 **Deployment Plan**
 
-## **🏗️ Infrastructure Setup**
+## **🏰 Infrastructure Setup**
 
 ### ✅ **Deployed on Render**
 - **Frontend:** Static site hosting on Render
@@ -85,7 +85,7 @@ python manage.py runserver
 
 ## 🚀 **Deployment Steps**
 
-### 1️⃣ **Deploy Django Backend on Render**
+### 1⃣ **Deploy Django Backend on Render**
 1. **Log in to Render** and **create a new Web Service**.
 2. **Connect GitHub repository** to Render.
 3. **Set the build command:**
@@ -104,7 +104,7 @@ python manage.py runserver
 
 ---
 
-### 2️⃣ **Deploy Frontend on Render**
+### 2⃣ **Deploy Frontend on Render**
 1. **Create a new Static Site** on Render.
 2. **Connect to GitHub repository** (if separate frontend repo exists).
 3. **Set the build command** (if applicable).
@@ -112,7 +112,7 @@ python manage.py runserver
 
 ---
 
-### 3️⃣ **Automated CI/CD Pipeline**
+### 3⃣ **Automated CI/CD Pipeline**
 - **On every push to the `main` branch**, Render **automatically triggers a build and deployment**.
 - **Optional:** Use **GitHub Actions** for **pre-deployment testing**.
 
@@ -124,8 +124,6 @@ python manage.py runserver
 - **Mentorship Requests** → Mentor receives **email notifications**.
 - **New Comments, Threads & Votes** → Users get notified **via email** and **dashboard**.
 - **etc...**
-
-
 
 ---
 
@@ -143,30 +141,23 @@ python manage.py runserver
 
 ---
 
-----------------------------+
-```
-
-📩 **Users receive an email with the certificate link after course completion**.
-
----
-
 ## 🚀 **GitHub Repository**
-🔗 **[Hustle Platform GitHub Repo](https://github.com/Ardinenukuri/Huslte-platform)**
+👉 **[Hustle Platform GitHub Repo](https://github.com/Ardinenukuri/Huslte-platform)**
 
 ---
 
 ## 📜 **Project Schema**
-🔗 **[Database Schema](https://drive.google.com/file/d/1k_WE9_2RY-QUunSFpTm-XDA9FpMIgj_M/view?usp=sharing)**
+👉 **[Database Schema](https://drive.google.com/file/d/1k_WE9_2RY-QUunSFpTm-XDA9FpMIgj_M/view?usp=sharing)**
 
 ---
 
 ## 🎨 **Figma UI Design**
-🔗 **[Figma Link](https://www.figma.com/design/yWNk3qBfrRcBgWTraBCbpo/Hustle-Platform?node-id=11-161&t=lLQtFwR3sOn4T14o-1)**
+👉 **[Figma Link](https://www.figma.com/design/yWNk3qBfrRcBgWTraBCbpo/Hustle-Platform?node-id=11-161&t=lLQtFwR3sOn4T14o-1)**
 
 ---
 
 ## 🎥 **Demo Video**
-🔗 **[Watch on YouTube](https://youtu.be/cijsDEU4_FE)**
+👉 **[Watch on YouTube](https://youtu.be/cijsDEU4_FE)**
 
 ---
 
@@ -180,3 +171,4 @@ python manage.py runserver
 ---
 
 🎉 **Enjoy Learning with Hustle Platform! 🚀🔥**
+
