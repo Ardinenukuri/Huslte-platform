@@ -156,6 +156,13 @@ python manage.py runserver
 
 ---
 
+##  **🌍Live Deployment**
+👉 **[Hustle-platform](https://huslte-platform.onrender.com)**
+
+---
+
+
+
 ## 🎥 **Demo Video**
 👉 **[Watch on YouTube](https://youtu.be/cijsDEU4_FE)**
 
