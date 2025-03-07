@@ -164,7 +164,9 @@ python manage.py runserver
 
 
 ## 🎥 **Demo Video**
-👉 **[Watch on YouTube](https://youtu.be/cijsDEU4_FE)**
+👉 **[Initial Software](https://youtu.be/cijsDEU4_FE)**
+
+👉 **[Final Software](https://youtu.be/cI6usJ8-iHA)**
 
 ---
 
