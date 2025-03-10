@@ -179,7 +179,7 @@ Here’s a breakdown of important files and directories in this project:
 ---
 
 ## **🌍 Live Deployment**
-🔗 **[Hustle Platform on Render](https://huslte-platform.onrender.com)**
+🔗 **[Hustle Platform on Render](https://huslte-platform-mjln.onrender.com)**
 
 ---
 
