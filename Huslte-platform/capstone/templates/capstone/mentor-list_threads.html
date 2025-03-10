@@ -1,0 +1,49 @@
+{% extends 'mentor-base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ "Discussion Forum - Hustle Platform"|translate:user.language_preference }}{% endblock %}
+
+{% block mentor_content %}
+    <h1>{{ "Discussion Forum"|translate:user.language_preference }}</h1>
+    <a href="{% url 'mcreate_thread' %}" class="btn btn-primary mb-3">{{ "Create New Thread"|translate:user.language_preference }}</a>
+
+    {% if threads %}
+        <ul class="list-group">
+            {% for thread in threads %}
+                <li class="list-group-item">
+                    <h3>
+                        <a href="{% url 'mentorthread_detail' thread.id %}" class="text-decoration-none">
+                            {{ thread.title|translate:user.language_preference }}
+                        </a>
+                    </h3>
+                    <p>{{ thread.description|translate:user.language_preference|truncatewords:30 }}</p>
+                    <p><small>{{ "Created by:"|translate:user.language_preference }} {{ thread.created_at }}</small></p>
+                    <p><strong>{{ "Upvotes:"|translate:user.language_preference }}</strong> {{ thread.upvotes }} | 
+                       <strong>{{ "Downvotes:"|translate:user.language_preference }}</strong> {{ thread.downvotes }}</p>
+                    
+                    <!-- Voting Actions for Threads -->
+                    <div class="comment-actions mt-2">
+                        <a href="{% url 'mvote_thread' thread.id 'upvote' %}" class="btn btn-sm btn-success">
+                            {{ "Like"|translate:user.language_preference }}
+                        </a>
+                        <a href="{% url 'mvote_thread' thread.id 'downvote' %}" class="btn btn-sm btn-danger">
+                            {{ "Unlike"|translate:user.language_preference }}
+                        </a>
+                        
+                        {% if request.user == thread.created_by or request.user.is_staff or request.user.is_superuser %}
+                            <a href="{% url 'mdelete_thread' thread.id %}" class="btn btn-sm btn-outline-danger">
+                                {{ "Delete"|translate:user.language_preference }}
+                            </a>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>{{ "No threads available. Be the first to"|translate:user.language_preference }}
+            <a href="{% url 'mcreate_thread' %}" class="text-primary">
+                {{ "create a thread"|translate:user.language_preference }}
+            </a>!
+        </p>
+    {% endif %}
+{% endblock %}

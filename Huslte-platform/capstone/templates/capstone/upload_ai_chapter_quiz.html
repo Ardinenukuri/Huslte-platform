@@ -1,0 +1,80 @@
+{% extends 'mentor-base.html' %}
+{% load custom_filters %}  <!-- ✅ Load translation filter -->
+
+{% block title %}{{ "Upload Chapter Quiz"|translate:user.language_preference }} - Hustle Platform{% endblock %}
+
+{% block mentor_content %}
+<div class="container mt-4">
+    <h2>{{ "Upload Quiz for Chapter"|translate:user.language_preference }}</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="resource">{{ "Select Course"|translate:user.language_preference }}:</label>
+            <select name="resource" id="resource" class="form-control">
+                {% for resource in resources %}
+                <option value="{{ resource.id }}">{{ resource.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="chapter">{{ "Select Chapter"|translate:user.language_preference }}:</label>
+            <select name="chapter" id="chapter" class="form-control">
+                {% for chapter in chapters %}
+                <option value="{{ chapter.id }}">{{ chapter.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <h4>{{ "AI-Generated Quiz Questions"|translate:user.language_preference }}</h4>
+        <div id="quiz-questions">
+            <p class="text-muted">{{ "Click 'Generate Quiz' to auto-generate 5 questions."|translate:user.language_preference }}</p>
+        </div>
+
+        <button type="button" class="btn btn-info" onclick="generateQuiz()">{{ "Generate Quiz"|translate:user.language_preference }}</button>
+        <button type="submit" class="btn btn-primary">{{ "Upload Quiz"|translate:user.language_preference }}</button>
+    </form>
+</div>
+
+<!-- JavaScript for AI Quiz Generation -->
+<script>
+    function generateQuiz() {
+        let chapterId = document.getElementById("chapter").value;
+
+        if (!chapterId) {
+            alert("{{ 'Please select a chapter first.'|translate:user.language_preference }}");
+            return;
+        }
+
+        document.getElementById("quiz-questions").innerHTML = "<p>{{ 'Generating quiz... Please wait.'|translate:user.language_preference }}</p>";
+
+        fetch(`/api/ai-generate-chapter-quiz/${chapterId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let quizHTML = "";
+                    data.questions.forEach((q, index) => {
+                        quizHTML += `
+                            <div class="border p-3 mb-3">
+                                <h5>{{ "Question"|translate:user.language_preference }} ${index + 1}</h5>
+                                <input type="text" name="quiz_question_${index + 1}" class="form-control" value="${q.question}" required>
+                                <input type="text" name="quiz_options_${index + 1}" class="form-control" value="${q.options.join(', ')}" required>
+                                <input type="text" name="quiz_correct_answer_${index + 1}" class="form-control" value="${q.correct_answer}" required>
+                            </div>
+                        `;
+                    });
+                    document.getElementById("quiz-questions").innerHTML = quizHTML;
+                } else {
+                    document.getElementById("quiz-questions").innerHTML = "<p class='text-danger'>{{ 'Failed to generate quiz. Try again.'|translate:user.language_preference }}</p>";
+                }
+            })
+            .catch(error => {
+                console.error("Error generating quiz:", error);
+                document.getElementById("quiz-questions").innerHTML = "<p class='text-danger'>{{ 'Error generating quiz. Please try again.'|translate:user.language_preference }}</p>";
+            });
+    }
+</script>
+
+{% endblock %}

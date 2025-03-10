@@ -1,0 +1,33 @@
+{% extends 'mentor-base.html' %}
+{% load custom_filters %}  <!-- ✅ Load translation filter -->
+
+{% block title %}{{ "Account Settings"|translate:user.language_preference }}{% endblock %}
+
+{% block mentor_content %}
+<div class="container mt-4">
+    <h1>{{ "Account Settings"|translate:user.language_preference }}</h1>
+    <ul class="list-group">
+
+        <li class="list-group-item">
+            <a href="{% url 'mentor_profile_settings' %}" class="btn btn-outline-secondary">
+                {{ "Preferred Language"|translate:user.language_preference }}
+            </a>
+        </li>
+        <li class="list-group-item">
+            <a href="{% url 'mchange_email' %}" class="btn btn-outline-primary">
+                {{ "Change Email"|translate:user.language_preference }}
+            </a>
+        </li>
+        <li class="list-group-item">
+            <a href="{% url 'mchange_password' %}" class="btn btn-outline-warning">
+                {{ "Change Password"|translate:user.language_preference }}
+            </a>
+        </li>
+        <li class="list-group-item">
+            <a href="{% url 'mdelete_account' %}" class="btn btn-outline-danger">
+                {{ "Delete Account"|translate:user.language_preference }}
+            </a>
+        </li>
+    </ul>
+</div>
+{% endblock %}

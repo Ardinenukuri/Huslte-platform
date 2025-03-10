@@ -1,0 +1,46 @@
+{% extends 'participant-base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ "Apply for"|translate:user.language_preference }} {{ job_listing.title }} - Hustle Platform{% endblock %}
+
+{% block participant_content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h1 class="card-title text-center mb-4">
+                        {{ "Apply for"|translate:user.language_preference }} <span class="text-primary">{{ job_listing.title }}</span>
+                    </h1>
+                    
+                    <p class="text-muted text-center">
+                        <strong>{{ "Location"|translate:user.language_preference }}:</strong> {{ job_listing.location }} | 
+                        <strong>{{ "Industry"|translate:user.language_preference }}:</strong> {{ job_listing.industry }}
+                    </p>
+
+                    <form method="post" enctype="multipart/form-data">  <!-- ✅ Important for file uploads -->
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_resume" class="form-label">{{ "Upload Resume (PDF)"|translate:user.language_preference }}</label>
+                            {{ form.resume }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_cover_letter" class="form-label">{{ "Cover Letter"|translate:user.language_preference }}</label>
+                            {{ form.cover_letter }}
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">{{ "Submit Application"|translate:user.language_preference }}</button>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <a href="{% url 'job_listings' %}" class="btn btn-outline-secondary">
+                            {{ "Back to Job Listings"|translate:user.language_preference }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

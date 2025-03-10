@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ "Features - Hustle Platform"|translate:user.language_preference }}{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="container">
+        <h2>{{ "Features"|translate:user.language_preference }}</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="card-title">{{ "Mentorship"|translate:user.language_preference }}</h3>
+                        <p class="card-text">
+                            {{ "Connect with experienced mentors who can guide you through your entrepreneurial journey."|translate:user.language_preference }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="card-title">{{ "Resources"|translate:user.language_preference }}</h3>
+                        <p class="card-text">
+                            {{ "Access a library of resources, including articles, videos, and tools to help you succeed."|translate:user.language_preference }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="card-title">{{ "Community"|translate:user.language_preference }}</h3>
+                        <p class="card-text">
+                            {{ "Join a supportive community of like-minded women who are on the same journey as you."|translate:user.language_preference }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

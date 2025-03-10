@@ -1,0 +1,56 @@
+{% extends "admin-base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h3><i class="fas fa-book"></i> 📚 Resources</h3>
+        </div>
+        <div class="card-body">
+            <ul class="list-group">
+                {% for resource in resources %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <!-- ⭐ Display Rating Stars Before the Title -->
+                        {% with resource.average_rating|floatformat:"0"|default:0 as stars %}
+                            {% for _ in ""|ljust:stars %}
+                                <i class="fas fa-star text-warning"></i>
+                            {% endfor %}
+                        {% endwith %}
+                        
+                        <!-- 📌 Course Title -->
+                        <a href="{% url 'admin_resource_detail' resource.id %}" class="text-decoration-none fw-bold">
+                            {{ resource.title }}
+                        </a>
+                        <span>
+                            {% with resource.average_rating|floatformat:"0"|default:0 as stars %}
+                                {% for _ in ""|ljust:stars %}
+                                    ⭐
+                                {% endfor %}
+                            {% endwith %}
+                        </span>
+                
+                    </div>
+                    <div>
+                        <a href="{% url 'admin_view_resource_progress' resource.id %}" class="btn btn-info btn-sm">
+                            📊 View Progress
+                        </a>
+                        <a href="{% url 'admin_delete_resource' resource.id %}" class="btn btn-danger btn-sm"
+                           onclick="return confirm('Are you sure you want to delete this resource?')">
+                            ❌ Delete
+                        </a>
+                    </div>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-center text-muted">No resources found.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="card-footer text-center">
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

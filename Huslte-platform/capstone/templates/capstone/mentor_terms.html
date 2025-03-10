@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ "Mentor Terms & Conditions - Hustle Platform"|translate:user.language_preference }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-body">
+            <h1 class="text-center text-primary">
+                {{ "Terms & Conditions"|translate:user.language_preference }}
+            </h1>
+            <p class="text-muted text-center">
+                {{ "Thank you for joining Hustle Platform as a Mentor! 🚀 Your guidance helps aspiring professionals reach their goals. Please review and accept our terms before proceeding."
+                |translate:user.language_preference }}
+            </p>
+
+            <h2 class="mt-4">
+                {{ "Mentorship & Responsibilities"|translate:user.language_preference }}
+            </h2>
+            <ul class="list-group">
+                <li class="list-group-item">✔️ {{ "You must have mentorship experience and a passion for helping participants."|translate:user.language_preference }}</li>
+                <li class="list-group-item">✔️ {{ "You must be fluent in at least two of the following languages: Kirundi, French, English, Swahili."|translate:user.language_preference }}</li>
+                <li class="list-group-item">✔️ {{ "You must review job applications before submission."|translate:user.language_preference }}</li>
+            </ul>
+
+            <h2 class="mt-4">
+                {{ "Reporting & Accountability"|translate:user.language_preference }}
+            </h2>
+            <ul class="list-group">
+                <li class="list-group-item">✔️ {{ "You must provide weekly reports to the Platform Manager via email."|translate:user.language_preference }}</li>
+                <li class="list-group-item">✔️ {{ "You must communicate effectively and ensure mentee progress."|translate:user.language_preference }}</li>
+            </ul>
+
+            <h2 class="mt-4">
+                {{ "Job Application Submission"|translate:user.language_preference }}
+            </h2>
+            <ul class="list-group">
+                <li class="list-group-item">✔️ {{ "Once you approve an application, your email will be shared for direct communication."|translate:user.language_preference }}</li>
+                <li class="list-group-item">✔️ {{ "You must professionally submit job applications and ensure the best results for participants."|translate:user.language_preference }}</li>
+            </ul>
+
+            <h2 class="mt-4">
+                {{ "Compensation & Ethics"|translate:user.language_preference }}
+            </h2>
+            <ul class="list-group">
+                <li class="list-group-item">✔️ {{ "You will receive payment from the platform service fee."|translate:user.language_preference }}</li>
+                <li class="list-group-item">✔️ {{ "Helping comes before earning—this platform is for those who genuinely want to assist."|translate:user.language_preference }}</li>
+                <li class="list-group-item">✔️ {{ "All mentors must act ethically and fairly in mentorship and application processes."|translate:user.language_preference }}</li>
+            </ul>
+
+            <h2 class="mt-4">
+                {{ "Professionalism & Conduct"|translate:user.language_preference }}
+            </h2>
+            <ul class="list-group">
+                <li class="list-group-item">✔️ {{ "Always be polite and professional in conversations with participants."|translate:user.language_preference }}</li>
+                <li class="list-group-item">✔️ {{ "Keep discussions instructive and goal-oriented."|translate:user.language_preference }}</li>
+            </ul>
+
+            <h3 class="text-center mt-4 text-success">
+                {{ "By signing up, you agree to these terms."|translate:user.language_preference }}
+            </h3>
+            <p class="text-center text-muted">
+                {{ "Your mentorship has the power to change lives. Thank you for being part of this journey! 💙"|translate:user.language_preference }}
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

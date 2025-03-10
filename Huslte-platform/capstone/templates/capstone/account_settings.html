@@ -1,0 +1,32 @@
+{% extends 'participant-base.html' %}
+{% load custom_filters %}
+
+{% block participant_content %}
+<div class="container mt-4">
+    <h1>{{ "Account Settings"|translate:user.language_preference }}</h1>
+    <ul class="list-group">
+
+        <li class="list-group-item">
+            <a href="{% url 'participant_profile_settings' %}" class="btn btn-outline-secondary">
+                {{ "Preferred Language"|translate:user.language_preference }}
+            </a>
+        </li>
+
+        <li class="list-group-item">
+            <a href="{% url 'change_email' %}" class="btn btn-outline-primary">
+                {{ "Change Email"|translate:user.language_preference }}
+            </a>
+        </li>
+        <li class="list-group-item">
+            <a href="{% url 'change_password' %}" class="btn btn-outline-warning">
+                {{ "Change Password"|translate:user.language_preference }}
+            </a>
+        </li>
+        <li class="list-group-item">
+            <a href="{% url 'delete_account' %}" class="btn btn-outline-danger">
+                {{ "Delete Account"|translate:user.language_preference }}
+            </a>
+        </li>
+    </ul>
+</div>
+{% endblock %}

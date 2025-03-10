@@ -1,0 +1,56 @@
+{% extends 'participant-base.html' %}
+{% load custom_filters %}  <!-- ✅ Load translation filter -->
+
+{% block title %}{{ "Learning Resources - Hustle Platform"|translate:user.language_preference }}{% endblock %}
+
+{% block participant_content %}
+    <h1 class="text-center mb-4">📚 {{ "Learning Resources"|translate:user.language_preference }}</h1>
+
+    <section class="row justify-content-center">
+        {% for resource in resources %}
+        <div class="col-md-6 col-lg-5 mb-5">  <!-- ✅ Increased width for bigger display -->
+            <div class="card shadow-lg border-0">
+                <!-- Display Cover Image -->
+                {% if resource.cover_image %}
+                    <img src="{{ resource.cover_image.url }}" class="card-img-top img-fluid" alt="{{ resource.title }}" style="height: 250px; object-fit: cover;">
+                {% else %}
+                    <img src="/static/default_cover.webp" class="card-img-top img-fluid" alt="{{ 'Default Cover'|translate:user.language_preference }}" style="height: 250px; object-fit: cover;">
+                {% endif %}
+                
+                <div class="card-body">
+                    <!-- Course Title with Star Ratings -->
+                    <h4 class="card-title font-weight-bold">
+                        {{ resource.title|translate:user.language_preference }}  
+                        <span class="rating-stars float-right">
+                            {% for i in "12345" %}
+                                {% if i|add:"0" <= resource.average_rating %}
+                                    <i class="fas fa-star text-warning"></i>  <!-- Filled Star -->
+                                {% else %}
+                                    <i class="far fa-star text-muted"></i>  <!-- Empty Star -->
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                    </h4>
+                    
+                    <p class="card-text text-muted">{{ resource.description|translate:user.language_preference|truncatewords:30 }}</p>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'enroll_course' resource.id %}" class="btn btn-primary w-50">{{ "Go to Course"|translate:user.language_preference }}</a>
+                        <a href="{% url 'rate_resource' resource.id %}" class="btn btn-outline-secondary w-50">{{ "Rate"|translate:user.language_preference }}</a>
+                    </div>
+
+                    {% if resource.resource_file %}
+                    <div class="mt-3 text-center">
+                        <a href="{{ resource.resource_file.url }}" class="btn btn-info" target="_blank">
+                            📥 {{ "Download Course Material"|translate:user.language_preference }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-muted text-center w-100">{{ "No resources found."|translate:user.language_preference }}</p>
+        {% endfor %}
+    </section>
+{% endblock %}
