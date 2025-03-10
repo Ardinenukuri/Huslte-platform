@@ -1,0 +1,149 @@
+.welcome-banner {
+    position: relative;
+    background-image: url("{% static 'okay.webp' %}");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh; /* Adjust as needed */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* Dark overlay */
+.welcome-banner::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6); /* Darkens background */
+}
+
+/* Ensure text is readable */
+.welcome-banner .container {
+    position: relative;
+    z-index: 2;
+    color: white; /* White text for contrast */
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7); /* Adds shadow for better visibility */
+}
+
+
+/* Ensure other sections are not hidden */
+.section {
+    position: relative;
+    z-index: 2; /* Place above the background */
+    padding: 50px 0;
+}
+
+
+
+
+.footer {
+    background-color: #f8f9fa;
+    padding: 20px;
+    text-align: center;
+}
+
+
+/* Custom Styles for Login and Sign Up Pages */
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.card-title {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1.1rem;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.text-decoration-none {
+    color: #007bff;
+}
+
+.text-decoration-none:hover {
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .card {
+        margin: 20px;
+    }
+}
+
+/* Custom Styles for Change Password Page */
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.card-title {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1.1rem;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.alert {
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .card {
+        margin: 20px;
+    }
+}
+
+.progress {
+    height: 25px; /* ✅ Make sure the value exists */
+}
+
+.some-class {
+    background-color: #f8f9fa;
+}

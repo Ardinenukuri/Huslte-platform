@@ -1,0 +1,74 @@
+{% extends 'capstone/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 id="quizTitle"></h2>
+    <form id="quizForm">
+        {% csrf_token %}
+        <div id="questionsContainer"></div>
+        <button type="submit" class="btn btn-success mt-3">Submit Quiz</button>
+    </form>
+    <div id="quizResult" class="mt-4"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async function() {
+        let quizId = window.location.pathname.split("/").pop();
+        let response = await fetch(`/api/quiz/${quizId}/`);
+        let quizData = await response.json();
+
+        document.getElementById("quizTitle").innerText = quizData.title;
+
+        let questionsContainer = document.getElementById("questionsContainer");
+        quizData.questions.forEach(q => {
+            let questionElement = document.createElement("div");
+            questionElement.classList.add("mb-3");
+
+            let label = document.createElement("label");
+            label.innerText = q.question_text;
+            questionElement.appendChild(label);
+
+            if (q.question_type === "MCQ") {
+                q.options.forEach(option => {
+                    let optionElement = document.createElement("div");
+                    optionElement.innerHTML = `
+                        <input type="radio" name="question_${q.id}" value="${option}" required> ${option}
+                    `;
+                    questionElement.appendChild(optionElement);
+                });
+            } else if (q.question_type === "SHORT_ANSWER") {
+                questionElement.innerHTML += `<input type="text" class="form-control" name="question_${q.id}" required>`;
+            } else if (q.question_type === "DOCUMENT_UPLOAD") {
+                questionElement.innerHTML += `<input type="file" class="form-control" name="question_${q.id}" accept=".pdf,.docx" required>`;
+            }
+
+            questionsContainer.appendChild(questionElement);
+        });
+    });
+
+    document.getElementById("quizForm").addEventListener("submit", async function(event) {
+        event.preventDefault();
+        let quizId = window.location.pathname.split("/").pop();
+        let formData = new FormData(this);
+        let answers = {};
+
+        for (let [key, value] of formData.entries()) {
+            answers[key.split("_")[1]] = value;
+        }
+
+        let response = await fetch(`/api/quiz/${quizId}/submit/`, {
+            method: "POST",
+            body: JSON.stringify({answers}),
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+        });
+
+        let result = await response.json();
+        document.getElementById("quizResult").innerHTML = `
+            <div class="alert alert-info">Your score: ${result.score}%</div>
+        `;
+    });
+</script>
+{% endblock %}

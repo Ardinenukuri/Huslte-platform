@@ -1,0 +1,39 @@
+{% extends 'participant-base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ "Job Application Tracker - Hustle Platform"|translate:user.language_preference }}{% endblock %}
+
+{% block participant_content %}
+<div class="container mt-5">
+    <h1 class="text-center">{{ "Job Application Tracker"|translate:user.language_preference }}</h1>
+    
+    {% if job_applications %}
+        <ul class="list-group">
+            {% for application in job_applications %}
+            <li class="list-group-item">
+                <h5>{{ application.job_listing.title|translate:user.language_preference }}</h5>
+                <p><strong>{{ "Status"|translate:user.language_preference }}:</strong> 
+                    {% if application.status == 'accepted' %}
+                        <span class="badge bg-success">{{ "Accepted"|translate:user.language_preference }} ✅</span>
+                        {% if application.accepted_by_mentor_email %}
+                        <p><strong>{{ "Accepted By"|translate:user.language_preference }}:</strong> 
+                            <a href="mailto:{{ application.accepted_by_mentor_email }}" class="text-decoration-none">
+                                {{ application.accepted_by_mentor_email }}
+                            </a>
+                        </p>
+                        {% endif %}
+                    {% elif application.status == 'rejected' %}
+                        <span class="badge bg-danger">{{ "Rejected"|translate:user.language_preference }} ❌</span>
+                    {% else %}
+                        <span class="badge bg-warning">{{ "Under Review"|translate:user.language_preference }} ⏳</span>
+                    {% endif %}
+                </p>
+                <p><strong>{{ "Applied At"|translate:user.language_preference }}:</strong> {{ application.applied_at }}</p>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-center text-muted">{{ "No applications submitted."|translate:user.language_preference }}</p>
+    {% endif %}
+</div>
+{% endblock %}

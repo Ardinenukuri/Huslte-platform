@@ -1,0 +1,94 @@
+{% extends 'participant-base.html' %}
+{% load custom_filters %}  <!-- ✅ Load translation filter -->
+
+{% block title %}{{ "Participant Profile - Hustle Platform"|translate:user.language_preference }}{% endblock %}
+
+{% block participant_content %}
+    <h1>{{ "Participant Profile"|translate:user.language_preference }}</h1>
+    
+    <section class="mb-4 p-3 border rounded shadow-sm bg-white">
+        <h3 class="text-secondary">📝 {{ "About Me"|translate:user.language_preference }}</h3>
+    
+        <div class="d-flex justify-content-between align-items-center">
+            <p><strong>📜 {{ "Bio"|translate:user.language_preference }}:</strong> {{ profile.bio|default:"Not provided"|translate:user.language_preference }}</p>
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center">
+            <p><strong>🛠️ {{ "Skills"|translate:user.language_preference }}:</strong> {{ profile.skills|default:"Not provided"|translate:user.language_preference }}</p>
+        </div>
+    
+        <div class="d-flex justify-content-between align-items-center">
+            <p><strong>🎯 {{ "Interests"|translate:user.language_preference }}:</strong> {{ profile.interests|default:"Not provided"|translate:user.language_preference }}</p>
+        </div>
+    
+        <a href="{% url 'edit_participant_profile' participant.id %}" class="btn btn-outline-primary mt-2">✏️ {{ "Edit Profile"|translate:user.language_preference }}</a>
+    </section>
+    
+    <!-- Progress Section -->
+    <section class="mb-4">
+        <h2>{{ "Ongoing Learning Progress"|translate:user.language_preference }}</h2>
+        <ul class="list-group">
+            {% for progress in user_progress %}
+                {% if progress.progress_percentage < 100 %}
+                    <li class="list-group-item">
+                        <strong>{{ progress.resource.title|translate:user.language_preference }}</strong>
+                        <div class="progress mt-2" style="height: 20px;">
+                            <div class="progress-bar" role="progressbar" style="width: {{ progress.progress_percentage }}%;" aria-valuenow="{{ progress.progress_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ progress.progress_percentage }}%
+                            </div>
+                        </div>
+                    </li>
+                {% endif %}
+            {% empty %}
+                <li class="list-group-item">{{ "No ongoing courses."|translate:user.language_preference }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <!-- Completed Courses & Final Scores -->
+    <section class="mb-4">
+        <h2>{{ "Completed Courses"|translate:user.language_preference }}</h2>
+        <ul class="list-group">
+            {% for progress in user_progress %}
+                {% if progress.progress_percentage == 100 %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><strong>{{ progress.resource.title|translate:user.language_preference }}</strong> - {{ "Final Score"|translate:user.language_preference }}: 
+                            <span class="badge bg-success">
+                                {% if progress.final_score is not None %}
+                                    {{ progress.final_score }}%
+                                {% else %}
+                                    {{ "N/A"|translate:user.language_preference }}
+                                {% endif %}
+                            </span>
+                        </span>
+                    </li>
+                {% endif %}
+            {% empty %}
+                <li class="list-group-item">{{ "No completed courses yet."|translate:user.language_preference }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <!-- Certifications Section -->
+    <section>
+        <h2>{{ "Certifications"|translate:user.language_preference }}</h2>
+        <ul class="list-group">
+            {% for certificate in certificates %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ certificate.resource.title|translate:user.language_preference }} - {{ certificate.issued_at|date:"M d, Y" }}</span>
+                    {% if certificate.certificate_file %}
+                        <a href="{{ certificate.certificate_file.url }}" download class="btn btn-sm btn-success">
+                            {{ "Download Certificate"|translate:user.language_preference }}
+                        </a>
+                        <form action="{% url 'delete_certificate' certificate.id %}" method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">{{ "Delete"|translate:user.language_preference }}</button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% empty %}
+                <li class="list-group-item">{{ "No certifications issued yet."|translate:user.language_preference }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endblock %}

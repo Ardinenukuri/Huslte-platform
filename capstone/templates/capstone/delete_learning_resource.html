@@ -1,0 +1,24 @@
+{% extends 'mentor-base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ "Delete Resource - Hustle Platform"|translate:user.language_preference }}{% endblock %}
+
+{% block mentor_content %}
+<div class="container mt-5">
+    <h2 class="text-danger">⚠️ {{ "Confirm Deletion"|translate:user.language_preference }}</h2>
+    <p>
+        {{ "Are you sure you want to delete the learning resource:"|translate:user.language_preference }} 
+        <strong>{{ resource.title }}</strong>?
+    </p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+            {{ "Delete"|translate:user.language_preference }}
+        </button>
+        <a href="{% url 'mlearning_resources' %}" class="btn btn-secondary">
+            {{ "Cancel"|translate:user.language_preference }}
+        </a>
+    </form>
+</div>
+{% endblock %}

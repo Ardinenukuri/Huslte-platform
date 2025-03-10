@@ -1,0 +1,75 @@
+{% extends "admin-base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white text-center">
+            <h3>👥 Participants in <strong>{{ resource.title }}</strong></h3>
+        </div>
+        <div class="card-body">
+            <table class="table table-hover table-bordered">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>User</th>
+                        <th>Completed Chapters</th>
+                        <th>Completed Quizzes</th>
+                        <th>Final Score</th>
+                        <th>Progress (%)</th>
+                        <th>Certificate Issued</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for progress in user_progress %}
+                    <tr class="text-center">
+                        <td class="fw-bold">{{ progress.user.full_name }}</td>
+                        <td>
+                            <span class="badge bg-success">
+                                {{ progress.completed_chapters.count }}/{{ resource.chapters.count }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">
+                                {{ progress.completed_quizzes.count }}/{{ resource.quizzes.count }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">
+                                {{ progress.final_score|default:"N/A" }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-warning" role="progressbar"
+                                    style="width: {{ progress.progress_percentage }}%;" 
+                                    aria-valuenow="{{ progress.progress_percentage }}" 
+                                    aria-valuemin="0" 
+                                    aria-valuemax="100">
+                                    {{ progress.progress_percentage }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if progress.certificate %}
+                                <span class="badge bg-success">✅ Yes</span>
+                            {% else %}
+                                <span class="badge bg-danger">❌ No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">No participants enrolled yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="text-center mt-4">
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">
+                    ← Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

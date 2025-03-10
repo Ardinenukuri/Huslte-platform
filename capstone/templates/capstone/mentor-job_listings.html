@@ -1,0 +1,88 @@
+{% extends 'mentor-base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ "Job Listings - Hustle Platform"|translate:user.language_preference }}{% endblock %}
+
+{% block mentor_content %}
+<div class="container mt-4">
+    <h1 class="mb-4">{{ "Manage Job Listings"|translate:user.language_preference }}</h1>
+
+    <!-- Job Upload Form -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">{{ "Upload a New Job Listing"|translate:user.language_preference }}</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-success">{{ "Post Job"|translate:user.language_preference }}</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">{{ "Filter Job Listings"|translate:user.language_preference }}</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" name="location" class="form-control" placeholder="{{ 'Location'|translate:user.language_preference }}">
+                </div>
+                <div class="col-md-4">
+                    <input type="text" name="industry" class="form-control" placeholder="{{ 'Industry'|translate:user.language_preference }}">
+                </div>
+                <div class="col-md-4">
+                    <select name="job_type" class="form-select">
+                        <option value="">{{ "All Types"|translate:user.language_preference }}</option>
+                        <option value="full_time">{{ "Full-Time"|translate:user.language_preference }}</option>
+                        <option value="part_time">{{ "Part-Time"|translate:user.language_preference }}</option>
+                    </select>
+                </div>
+                <div class="col-md-12 text-center">
+                    <button type="submit" class="btn btn-primary mt-3">{{ "Filter"|translate:user.language_preference }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Job Listings -->
+    <h2 class="mb-3">{{ "Available Jobs"|translate:user.language_preference }}</h2>
+    <div class="row">
+        {% for job in job_listings %}
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">{{ job.title|translate:user.language_preference }}</h5>
+                    <p class="card-text">{{ job.description|translate:user.language_preference }}</p>
+                    <p><strong>{{ "Location:"|translate:user.language_preference }}</strong> {{ job.location }}</p>
+                    <p><strong>{{ "Industry:"|translate:user.language_preference }}</strong> {{ job.industry }}</p>
+                    <p><strong>{{ "Type:"|translate:user.language_preference }}</strong> {{ job.get_job_type_display }}</p>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'apply_for_job' job.id %}" class="btn btn-sm btn-outline-primary">
+                            {{ "Apply"|translate:user.language_preference }}
+                        </a>
+                        <a href="{% url 'save_job' job.id %}" class="btn btn-sm btn-outline-secondary">
+                            {{ "Save"|translate:user.language_preference }}
+                        </a>
+                        
+                        {% if job.employer == request.user %}
+                            <a href="{% url 'delete_job_listing' job.id %}" class="btn btn-sm btn-danger">
+                                {{ "Delete"|translate:user.language_preference }}
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <a href="{% url 'manage_applicants' job.id %}" class="btn btn-info btn-sm">
+                <i class="fas fa-users"></i> {{ "Manage Applicants"|translate:user.language_preference }}
+            </a>
+        </div>
+        {% empty %}
+        <p class="text-muted text-center">{{ "No job listings available."|translate:user.language_preference }}</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
