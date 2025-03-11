@@ -4,7 +4,7 @@
     <title>{{ "Submit Feedback"|translate:user.language_preference }}</title>
 </head>
 <body>
-    <h1>{{ "Submit Feedback for"|translate:user.language_preference }} {{ mentor.full_name }}</h1>
+    <h1>{{ "Submit Feedback for Mentor: "|translate:user.language_preference }} {{ mentor.full_name }}</h1>
 
     <form method="post">
         {% csrf_token %}
