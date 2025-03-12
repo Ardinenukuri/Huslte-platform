@@ -10,7 +10,7 @@ from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.conf import settings
-from django.http import JsonResponse, FileResponse, HttpResponseForbidden
+from django.http import JsonResponse, FileResponse, HttpResponseForbidden 
 from django.urls import reverse
 from django.utils.timezone import now, localtime, make_aware
 from django.utils.html import strip_tags
@@ -830,11 +830,10 @@ def reply_to_thread(request, thread_id):
         return redirect('thread_detail', thread_id=thread.id)
     return render(request, 'capstone/reply_to_thread.html', {'thread': thread})
 
-@login_required
+@login_required 
 def vote_comment(request, comment_id, vote_type):
     comment = get_object_or_404(Comment, id=comment_id)  
 
-    
     existing_vote = Vote.objects.filter(user=request.user, comment=comment).first()
     if existing_vote:
         if existing_vote.vote_type != vote_type:
@@ -853,14 +852,14 @@ def vote_comment(request, comment_id, vote_type):
             comment.downvotes += 1
         Vote.objects.create(user=request.user, comment=comment, vote_type=vote_type)
 
-    
     comment.save()
-    # ✅ Notify all users
-    
-    notify_users(
-        f"🔥 The comment thread '{comment.thread.title}' received a {vote_type}! 🎉",)
 
-    
+    # ✅ Notify all users (Fixed: Added thread_id argument)
+    notify_users(
+        f"🔥 The comment thread '{comment.thread.title}' received a {vote_type}! 🎉",
+        comment.thread.id  # ✅ Pass the thread ID
+    )
+
     return redirect('thread_detail', thread_id=comment.thread.id)
 
 @login_required
