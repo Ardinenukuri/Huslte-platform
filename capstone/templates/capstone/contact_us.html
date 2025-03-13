@@ -1,63 +1,40 @@
-{% extends 'base.html' %} {% load custom_filters %} {% block title %}{{ "Contact
-Us - Hustle Platform"|translate:user.language_preference }}{% endblock %} {%
-block content %}
-<div class="section">
+{% extends 'base.html' %}
+{% load custom_filters %} 
+
+{% block title %}{{ "Contact Us - Hustle Platform"|translate:user.language_preference }}{% endblock %} 
+
+{% block content %}
+<div class="contact-section">
   <div class="container">
-    <h2>{{ "Contact Us"|translate:user.language_preference }}</h2>
+    <h2 class="section-title">{{ "Contact Us"|translate:user.language_preference }}</h2>
     <div class="row">
       <div class="col-md-6">
-        <h3>{{ "Get in Touch"|translate:user.language_preference }}</h3>
-        <p>
-          {{ "Have questions or need support? We’re here to help! Fill out the
-          form below, and we’ll get back to you as soon as
-          possible."|translate:user.language_preference }}
+        <h3 class="contact-subtitle">{{ "Get in Touch"|translate:user.language_preference }}</h3>
+        <p class="contact-text">
+          {{ "Have questions or need support? We’re here to help! Fill out the form below, and we’ll get back to you as soon as possible."|translate:user.language_preference }}
         </p>
-        <form method="post">
+        <form method="post" class="contact-form">
           {% csrf_token %}
           <div class="mb-3">
-            <label for="name" class="form-label"
-              >{{ "Name"|translate:user.language_preference }}</label
-            >
-            <input
-              type="text"
-              class="form-control"
-              id="name"
-              name="name"
-              required
-            />
+            <label for="name" class="form-label">{{ "Name"|translate:user.language_preference }}</label>
+            <input type="text" class="form-control" id="name" name="name" required />
           </div>
           <div class="mb-3">
-            <label for="email" class="form-label"
-              >{{ "Email"|translate:user.language_preference }}</label
-            >
-            <input
-              type="email"
-              class="form-control"
-              id="email"
-              name="email"
-              required
-            />
+            <label for="email" class="form-label">{{ "Email"|translate:user.language_preference }}</label>
+            <input type="email" class="form-control" id="email" name="email" required />
           </div>
           <div class="mb-3">
-            <label for="message" class="form-label"
-              >{{ "Message"|translate:user.language_preference }}</label
-            >
-            <textarea
-              class="form-control"
-              id="message"
-              name="message"
-              rows="5"
-              required
-            ></textarea>
+            <label for="message" class="form-label">{{ "Message"|translate:user.language_preference }}</label>
+            <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
           </div>
-          <button type="submit" class="btn btn-primary">
+          <button type="submit" class="btn btn-primary contact-btn">
             {{ "Send Message"|translate:user.language_preference }}
           </button>
         </form>
       </div>
       <div class="col-md-6">
-        <h3>{{ "Contact Information"|translate:user.language_preference }}</h3>
-        <p>
+        <h3 class="contact-subtitle">{{ "Contact Information"|translate:user.language_preference }}</h3>
+        <p class="contact-text">
           <strong>{{ "Email"|translate:user.language_preference }}:</strong>
           ardinemartinenukuri@gmail.com<br />
           <strong>{{ "Phone"|translate:user.language_preference }}:</strong>
@@ -65,23 +42,64 @@ block content %}
           <strong>{{ "Address"|translate:user.language_preference }}:</strong>
           Ntahangwa, Bujumbura, Burundi
         </p>
-        <h3>{{ "Follow Us"|translate:user.language_preference }}</h3>
+        <h3 class="contact-subtitle">{{ "Follow Us"|translate:user.language_preference }}</h3>
         <div class="social-links">
-          <a href="#" class="btn btn-outline-primary me-2"
-            ><i class="fab fa-facebook-f"></i
-          ></a>
-          <a href="#" class="btn btn-outline-primary me-2"
-            ><i class="fab fa-twitter"></i
-          ></a>
-          <a href="#" class="btn btn-outline-primary me-2"
-            ><i class="fab fa-instagram"></i
-          ></a>
-          <a href="#" class="btn btn-outline-primary"
-            ><i class="fab fa-linkedin-in"></i
-          ></a>
+          <a href="#" class="btn btn-outline-primary social-btn"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" class="btn btn-outline-primary social-btn"><i class="fab fa-twitter"></i></a>
+          <a href="#" class="btn btn-outline-primary social-btn"><i class="fab fa-instagram"></i></a>
+          <a href="#" class="btn btn-outline-primary social-btn"><i class="fab fa-linkedin-in"></i></a>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<style>
+.contact-section {
+    padding: 60px 0;
+    background: #f8f9fa;
+}
+.section-title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2C3E50;
+    margin-bottom: 20px;
+}
+.contact-subtitle {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #0A1F44;
+    margin-bottom: 10px;
+}
+.contact-text {
+    font-size: 1.1rem;
+    color: #555E68;
+    margin-bottom: 20px;
+}
+.contact-form .form-label {
+    font-weight: bold;
+    color: #333;
+}
+.contact-btn {
+    background-color: #007bff;
+    border-color: #007bff;
+    font-size: 1.1rem;
+    padding: 10px 20px;
+}
+.contact-btn:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+}
+.social-links {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+.social-btn {
+    font-size: 1.2rem;
+    padding: 10px;
+    border-radius: 50%;
+}
+</style>
 {% endblock %}
