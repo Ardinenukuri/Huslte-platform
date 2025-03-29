@@ -17,6 +17,8 @@ from reportlab.lib.pagesizes import letter
 import PyPDF2
 import docx
 from googletrans import Translator
+from django.core.cache import cache
+
 
 translator = Translator()
 
@@ -98,13 +100,23 @@ def extract_text_from_docx(uploaded_docx):
     except Exception as e:
         print(f"❌ Error extracting text from DOCX: {e}")
         return None
-    
+
+
 def translate_text(text, target_lang):
-    """Translates text into the target language."""
-    if text and target_lang:
-        try:
-            translation = translator.translate(text, dest=target_lang)
-            return translation.text
-        except Exception as e:
-            print(f"❌ Translation error: {e}")
-    return text 
+    if not text or not target_lang:
+        return text
+
+    cache_key = f"translation:{text}:{target_lang}"
+    cached_translation = cache.get(cache_key)
+    
+    if cached_translation:
+        return cached_translation
+
+    try:
+        translator = Translator()
+        translated = translator.translate(text, dest=target_lang).text
+        cache.set(cache_key, translated, timeout=60 * 60 * 24)  # Cache for 1 day
+        return translated
+    except Exception as e:
+        print(f"Translation error: {e}")
+        return text

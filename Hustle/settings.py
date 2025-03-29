@@ -96,3 +96,10 @@ CELERY_TASK_SERIALIZER = 'json'
 
 # Custom User Model
 AUTH_USER_MODEL = 'capstone.User'
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-translation-cache",
+    }
+}

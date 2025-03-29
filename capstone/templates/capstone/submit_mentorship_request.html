@@ -12,7 +12,7 @@
         <ul class="list-group">
             {% for mentor in mentors %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <a href="{% url 'mentor_profile' mentor.id %}" class="text-decoration-none">
+                    <a href="{% url 'pmentor_profile' mentor.id %}" class="text-decoration-none">
                         {{ mentor.full_name }}
                     </a>
                     <span class="text-muted">{{ mentor.email }}</span>
