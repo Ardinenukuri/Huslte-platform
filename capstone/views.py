@@ -236,6 +236,30 @@ def mentor_profile(request, mentor_id):
     })
 
 @login_required
+def pmentor_profile(request, mentor_id):
+    mentor = get_object_or_404(User, id=mentor_id, user_type='mentor')
+    
+    # Ensure we get the latest saved profile
+    profile, created = MentorProfile.objects.get_or_create(user=mentor)
+    profile.refresh_from_db()  # 🔥 Ensure it fetches the latest changes
+
+    # ✅ Fetch Mentor Availability
+    availability_slots = MentorAvailability.objects.filter(mentor=mentor).order_by("date", "start_time")
+
+    mentees = User.objects.filter(
+        id__in=MentorshipRequest.objects.filter(mentor=mentor, status='approved').values_list('mentee_id', flat=True)
+    )
+    feedbacks = Feedback.objects.filter(mentor=mentor)
+
+    return render(request, 'capstone/pmentor_profile.html', {
+        'profile': profile,
+        'mentor': mentor,
+        'mentees': mentees,
+        'feedbacks': feedbacks,
+        'availability_slots': availability_slots,
+    })
+
+@login_required
 def edit_mentor_profile(request, mentor_id):
     mentor = get_object_or_404(User, id=mentor_id, user_type='mentor')
 

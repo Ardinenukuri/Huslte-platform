@@ -13,7 +13,7 @@
     {% if mentor %}
     <div class="alert alert-info">
         <strong>{{ "Your Mentor"|translate:user.language_preference }}:</strong> 
-        <a href="{% url 'mentor_profile' mentor.id %}">{{ mentor.full_name }}</a>
+        <a href="{% url 'pmentor_profile' mentor.id %}">{{ mentor.full_name }}</a>
         <a href="{% url 'rate_mentor' mentor.id %}" class="btn btn-outline-primary btn-sm">
             {{ "Rate a Mentor"|translate:user.language_preference }}
         </a>

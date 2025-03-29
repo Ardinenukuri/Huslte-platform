@@ -13,6 +13,7 @@ urlpatterns = [
     path('participant/dashboard/', views.participant_dashboard, name='participant_dashboard'),
     path('mentor/dashboard/', views.mentor_dashboard, name='mentor_dashboard'),
     path('participant/profile/<int:participant_id>/', views.participant_profile, name='participant_profile'),
+    path('pmentor/profile/<int:mentor_id>', views.pmentor_profile, name='pmentor_profile'),
     path('mentor/profile/<int:mentor_id>', views.mentor_profile, name='mentor_profile'),
     path('submit-feedback/<int:mentor_id>/', views.submit_feedback, name='submit_feedback'),
     path('learning-resources/', views.learning_resources, name='learning_resources'),
