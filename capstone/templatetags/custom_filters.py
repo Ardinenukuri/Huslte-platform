@@ -1,5 +1,8 @@
 from django import template
 from googletrans import Translator
+import hashlib
+from django.core.cache import cache
+
 
 register = template.Library()
 translator = Translator() 
@@ -14,24 +17,24 @@ def get_dict_value(dictionary, key):
     """Returns the value from a dictionary based on a given key."""
     return dictionary.get(key, "") if isinstance(dictionary, dict) else ""
 
+def make_cache_key(text, lang):
+    raw = f"{text}:{lang}"
+    return "trans:" + hashlib.md5(raw.encode("utf-8")).hexdigest()
 
 @register.filter
 def translate(text, target_lang):
-    if not text or not target_lang:
-        return text
+    # if not text or not target_lang:
+    #     return text
 
-    # Simple in-memory cache (reset on server reload)
-    if not hasattr(translate, 'memory_cache'):
-        translate.memory_cache = {}
+    # cache_key = make_cache_key(text, target_lang)
+    # cached = cache.get(cache_key)
+    # if cached:
+    #     return cached
 
-    cache_key = f"{text}_{target_lang}"
-    if cache_key in translate.memory_cache:
-        return translate.memory_cache[cache_key]
+    # try:
+    #     from capstone.tasks import background_translate_and_cache
+    #     background_translate_and_cache.delay(text, target_lang)
+    # except Exception as e:
+    #     print(f"Background translation not triggered: {e}")
 
-    try:
-        translation = translator.translate(text, dest=target_lang)
-        translate.memory_cache[cache_key] = translation.text
-        return translation.text
-    except Exception as e:
-        print(f"Translation failed: {e}")
-        return text
+    return text

@@ -5,134 +5,859 @@
 {% block title %}{{ "Home - Hustle Platform"|translate:user.language_preference }}{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<div class="welcome-banner" style="background-image: url('{% static "okay.webp" %}'); height: 60vh;">
-    <div class="container">
-        <h1 style="color: #ffff; font-weight: bold; text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.7)">
+<!-- Hero Section with Navigation Anchors -->
+<section id="home" class="hero-section" style="background-image: url('{% static "okay.webp" %}');">
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+        <h1 class="hero-title">
             {{ "From Home to Hustle"|translate:user.language_preference }}
         </h1>
-        <h2 style="color: #ffff; font-weight: bold; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.5);">
-            {{ "Women’s Journey to Economic Empowerment in Burundi"|translate:user.language_preference }}
+        <h2 class="hero-subtitle">
+            {{ "Women's Journey to Economic Empowerment in Burundi"|translate:user.language_preference }}
         </h2>
         <div class="cta-buttons">
-            <a href="{% url 'login' %}" class="btn btn-primary">{{ "Login"|translate:user.language_preference }}</a>
-            <a href="{% url 'signup' %}" class="btn btn-success">{{ "Sign Up"|translate:user.language_preference }}</a>
+            <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+                {{ "Login"|translate:user.language_preference }}
+            </a>
+            <a href="{% url 'signup' %}" class="btn btn-success btn-lg">
+                {{ "Sign Up"|translate:user.language_preference }}
+            </a>
         </div>
+        <a href="#features" class="scroll-down-arrow">
+            <i class="fas fa-chevron-down"></i>
+        </a>
     </div>
-</div>
+</section>
 
-
-<!-- Overview Section -->
-<section class="overview-section py-5 text-center">
+<!-- Features Section -->
+<section id="features" class="features-section py-5">
     <div class="container">
-        <h2 class="section-title"; style="color: #2C3E50 ">{{ "Overview of the Platform"|translate:user.language_preference }}</h2>
-        <p class="section-text">
-            {{ "The Hustle Platform is designed to empower women in Burundi by providing them with tools, resources, and mentorship to succeed in their entrepreneurial journeys. Whether you're starting a business, enhancing skills, or connecting with mentors, we are here to support you."|translate:user.language_preference }}
+        <h2 class="section-title text-center">
+            {{ "Key Features"|translate:user.language_preference }}
+        </h2>
+        <p class="section-description text-center mb-5">
+            {{ "Everything you need to succeed in your entrepreneurial journey"|translate:user.language_preference }}
         </p>
-    </div>
-</section>
-
-<!-- Key Features Section -->
-<section class="features-section py-5 bg-light">
-    <div class="container">
-        <h2 class="section-title text-center"; style="color: #2C3E50 ">{{ "Key Features"|translate:user.language_preference }}</h2>
-        <div class="row text-center">
+        
+        <div class="row g-4">
             <div class="col-md-4">
                 <div class="feature-card">
-                    <i class="fas fa-user-tie feature-icon"></i>
-                    <h3 class="feature-title"; style="color: #2C3E50 ">{{ "Mentorship"|translate:user.language_preference }}</h3>
-                    <p class="feature-text"; style="color: #2C3E50" >{{ "Connect with experienced mentors to guide you through your entrepreneurial journey."|translate:user.language_preference }}</p>
+                    <div class="feature-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h3 class="feature-title">
+                        {{ "Mentorship"|translate:user.language_preference }}
+                    </h3>
+                    <p class="feature-text">
+                        {{ "Connect with experienced mentors to guide you through your entrepreneurial journey."|translate:user.language_preference }}
+                    </p>
                 </div>
             </div>
+            
             <div class="col-md-4">
                 <div class="feature-card">
-                    <i class="fas fa-book feature-icon"></i>
-                    <h3 class="feature-title"; style="color: #2C3E50 ">{{ "Resources"|translate:user.language_preference }}</h3>
-                    <p class="feature-text"; style="color: #2C3E50 ">{{ "Access a library of resources, including articles, videos, and tools to help you succeed."|translate:user.language_preference }}</p>
+                    <div class="feature-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h3 class="feature-title">
+                        {{ "Resources"|translate:user.language_preference }}
+                    </h3>
+                    <p class="feature-text">
+                        {{ "Access a library of resources, including articles, videos, and tools to help you succeed."|translate:user.language_preference }}
+                    </p>
                 </div>
             </div>
+            
             <div class="col-md-4">
                 <div class="feature-card">
-                    <i class="fas fa-users feature-icon"></i>
-                    <h3 class="feature-title"; style="color: #2C3E50 ">{{ "Community"|translate:user.language_preference }}</h3>
-                    <p class="feature-text"; style="color: #2C3E50 ">{{ "Join a supportive community of like-minded women on the same journey as you."|translate:user.language_preference }}</p>
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="feature-title">
+                        {{ "Community"|translate:user.language_preference }}
+                    </h3>
+                    <p class="feature-text">
+                        {{ "Join a supportive community of like-minded women on the same journey as you."|translate:user.language_preference }}
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Custom Styles -->
+<!-- About Us Section -->
+<section id="about" class="about-section py-5 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <img src="{% static 'logo.webp' %}" alt="Women Entrepreneurs" class="img-fluid rounded shadow">
+            </div>
+            <div class="col-lg-6">
+                <h2 class="section-title">
+                    {{ "About Us"|translate:user.language_preference }}
+                </h2>
+                <p class="about-text">
+                    {{ "The Hustle Platform is a community-driven initiative aimed at empowering women in Burundi to achieve economic independence through entrepreneurship. Our mission is to provide women with the tools, resources, and mentorship they need to start and grow their businesses."|translate:user.language_preference }}
+                </p>
+                <p class="about-text "> 
+                    {{ "Founded in 2025, we believe that every woman has the potential to succeed, and we are committed to creating a supportive environment where they can thrive."|translate:user.language_preference }}
+                </p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6 mb-4">
+                        <div class="mission-card">
+                            <h4 class="mission-title">
+                                <i class="fas fa-bullseye me-2"></i>
+                                {{ "Our Mission"|translate:user.language_preference }}
+                            </h4>
+                            <p>
+                                {{ "To empower women in Burundi by providing access to mentorship, resources, and a supportive community."|translate:user.language_preference }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="vision-card">
+                            <h4 class="vision-title">
+                                <i class="fas fa-eye me-2"></i>
+                                {{ "Our Vision"|translate:user.language_preference }}
+                            </h4>
+                            <p>
+                                {{ "A world where every woman has the opportunity to achieve economic independence and success."|translate:user.language_preference }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section py-5 text-white">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <h3 class="stat-number" data-count="500">0</h3>
+                    <p class="stat-label">
+                        {{ "Women Empowered"|translate:user.language_preference }}
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <h3 class="stat-number" data-count="50">0</h3>
+                    <p class="stat-label">
+                        {{ "Mentors Available"|translate:user.language_preference }}
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <h3 class="stat-number" data-count="100">0</h3>
+                    <p class="stat-label">
+                        {{ "Resources Available"|translate:user.language_preference }}
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <h3 class="stat-number" data-count="25">0</h3>
+                    <p class="stat-label">
+                        {{ "Businesses Started"|translate:user.language_preference }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contact" class="contact-section py-5 bg-light">
+    <div class="container">
+        <h2 class="section-title text-center">
+            {{ "Contact Us"|translate:user.language_preference }}
+        </h2>
+        <p class="section-description text-center mb-5">
+            {{ "Have questions? Get in touch with our team"|translate:user.language_preference }}
+        </p>
+        
+        <div class="row">
+            <div class="col-lg-6">
+                <form method="post" class="contact-form">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="name" class="form-label">
+                            {{ "Name"|translate:user.language_preference }}
+                        </label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="email" class="form-label">
+                            {{ "Email"|translate:user.language_preference }}
+                        </label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="message" class="form-label">
+                            {{ "Message"|translate:user.language_preference }}
+                        </label>
+                        <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        {{ "Send Message"|translate:user.language_preference }}
+                    </button>
+                </form>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="contact-info">
+                    <h4 class="info-title">
+                        {{ "Contact Information"|translate:user.language_preference }}
+                    </h4>
+                    <ul class="info-list">
+                        <li>
+                            <i class="fas fa-envelope"></i>
+                            <span>ardinemartinenukuri@gmail.com</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-phone"></i>
+                            <span>+257 66 306 494</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>{{ "Ntahangwa, Bujumbura, Burundi"|translate:user.language_preference }}</span>
+                        </li>
+                    </ul>
+                    
+                    <div class="social-media mt-4">
+                        <h4 class="info-title">
+                            {{ "Follow Us"|translate:user.language_preference }}
+                        </h4>
+                        <div class="social-links">
+                            <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                            <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Section -->
+<section class="cta-section py-5 text-white text-center">
+    <div class="container">
+        <h2 class="cta-title mb-4">
+            {{ "Ready to Start Your Entrepreneurial Journey?"|translate:user.language_preference }}
+        </h2>
+        <p class="cta-text mb-5">
+            {{ "Join hundreds of women who are transforming their lives through entrepreneurship"|translate:user.language_preference }}
+        </p>
+        <a href="{% url 'signup' %}" class="btn btn-light btn-lg">
+            {{ "Get Started Today"|translate:user.language_preference }}
+        </a>
+    </div>
+</section>
+
 <style>
-.hero-banner {
+/* Hero Section */
+.hero-section {
     position: relative;
+    height: 100vh;
+    min-height: 600px;
     background-size: cover;
     background-position: center;
-    padding: 100px 0;
-    text-align: center;
+    display: flex;
+    align-items: center;
     color: white;
 }
-.hero-banner .overlay {
+
+.hero-overlay {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
 }
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
 .hero-title {
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: 800;
-    text-shadow: 2px 2px 10px rgba(255, 255, 255, 0.5);
-    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6);
+    animation: fadeInDown 1s ease;
 }
+
 .hero-subtitle {
     font-size: 1.8rem;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.85);
-    text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.4);
-    margin-bottom: 20px;
+    font-weight: 500;
+    margin-bottom: 2rem;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
+    animation: fadeInUp 1s ease;
 }
+
 .cta-buttons .btn {
-    margin: 10px;
     padding: 12px 30px;
     font-size: 1.2rem;
-    cursor: pointer;
-    transition: background 0.3s, transform 0.2s;
-    display: inline-block;
+    margin: 0 10px;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    animation: fadeIn 1.5s ease;
 }
-.cta-buttons .btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
-}
-.cta-buttons .btn-success {
-    background-color: #28a745;
-    border-color: #28a745;
-}
+
 .cta-buttons .btn:hover {
     transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
-.section-title {
+
+.scroll-down-arrow {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
     font-size: 2rem;
-    font-weight: bold;
-    margin-bottom: 20px;
+    animation: bounce 2s infinite;
+    cursor: pointer;
 }
-.section-text {
-    font-size: 1.1rem;
-    color: #555;
+
+/* Features Section */
+.features-section {
+    padding: 100px 0;
+    background-color: #fff;
 }
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2C3E50;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.section-title:after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 4px;
+    background: #0A1F44;
+    margin: 15px auto;
+    border-radius: 2px;
+}
+
+.section-description {
+    font-size: 1.2rem;
+    color: #555E68;
+    max-width: 700px;
+    margin: 0 auto 2rem;
+}
+
 .feature-card {
     background: white;
     padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    height: 100%;
+    text-align: center;
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
+
 .feature-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
 }
+
 .feature-icon {
-    font-size: 2.5rem;
+    font-size: 3rem;
     color: #0A1F44;
+    margin-bottom: 20px;
+    display: inline-block;
+    width: 80px;
+    height: 80px;
+    line-height: 80px;
+    background: rgba(10, 31, 68, 0.1);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-icon {
+    background: #0A1F44;
+    color: white;
+}
+
+.feature-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2C3E50;
+    margin-bottom: 15px;
+}
+
+.feature-text {
+    font-size: 1.1rem;
+    color: #555E68;
+}
+
+/* About Section */
+.about-section {
+    padding: 100px 0;
+}
+
+.about-text {
+    font-size: 1.1rem;
+    color: #020a13;
+    line-height: 1.8;
+    margin-bottom: 20px;
+}
+
+.mission-card, .vision-card {
+    padding: 20px;
+    border-radius: 10px;
+    height: 100%;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.mission-card {
+    background: rgba(0, 123, 255, 0.1);
+    border-left: 4px solid #007bff;
+}
+
+.vision-card {
+    background: rgba(40, 167, 69, 0.1);
+    border-left: 4px solid #28a745;
+}
+
+.mission-card:hover, .vision-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.mission-title, .vision-title {
+    font-size: 1.3rem;
+    font-weight: 600;
     margin-bottom: 10px;
 }
+
+.mission-title {
+    color: #007bff;
+}
+
+.vision-title {
+    color: #28a745;
+}
+
+/* Stats Section */
+.stats-section {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #0A1F44 0%, #2C3E50 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.stats-section:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('{% static "pattern.webp" %}') repeat;
+    opacity: 0.1;
+}
+
+.stat-item {
+    position: relative;
+    z-index: 2;
+    padding: 30px;
+}
+
+.stat-number {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.stat-label {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Testimonials Section */
+.testimonials-section {
+    padding: 100px 0;
+    background-color: #fff;
+}
+
+.testimonial-slider {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.testimonial-item {
+    padding: 20px;
+}
+
+.testimonial-content {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    position: relative;
+}
+
+.testimonial-content:before {
+    content: '"';
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 5rem;
+    color: rgba(10, 31, 68, 0.1);
+    font-family: Georgia, serif;
+    line-height: 1;
+}
+
+.testimonial-content p {
+    font-size: 1.2rem;
+    font-style: italic;
+    color: #555E68;
+    position: relative;
+    z-index: 2;
+    padding-left: 40px;
+}
+
+.testimonial-author {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+    padding-left: 40px;
+}
+
+.author-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 15px;
+    border: 3px solid #0A1F44;
+}
+
+.testimonial-author h5 {
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+    color: #2C3E50;
+}
+
+.testimonial-author span {
+    font-size: 0.9rem;
+    color: #555E68;
+}
+
+/* Contact Section */
+.contact-section {
+    padding: 100px 0;
+}
+
+.contact-form .form-control {
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+}
+
+.contact-form .form-label {
+    font-weight: 600;
+    color: #2C3E50;
+    margin-bottom: 8px;
+}
+
+.contact-form .btn {
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    border-radius: 8px;
+}
+
+.contact-info {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    height: 100%;
+}
+
+.info-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2C3E50;
+    margin-bottom: 20px;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+.info-title:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background: #0A1F44;
+}
+
+.info-list {
+    list-style: none;
+    padding: 0;
+}
+
+.info-list li {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.info-list i {
+    font-size: 1.2rem;
+    color: #0A1F44;
+    margin-right: 15px;
+    width: 30px;
+    text-align: center;
+}
+
+.info-list span {
+    font-size: 1.1rem;
+    color: #555E68;
+}
+
+.social-media {
+    margin-top: 30px;
+}
+
+.social-links {
+    display: flex;
+    gap: 15px;
+}
+
+.social-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    color: #0A1F44;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.social-icon:hover {
+    background: #0A1F44;
+    color: white;
+    transform: translateY(-3px);
+}
+
+/* CTA Section */
+.cta-section {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #007bff 0%, #00b4db 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-section:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('{% static "pattern2.webp" %}') repeat;
+    opacity: 0.1;
+}
+
+.cta-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    position: relative;
+    z-index: 2;
+}
+
+.cta-text {
+    font-size: 1.2rem;
+    position: relative;
+    z-index: 2;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.cta-section .btn {
+    position: relative;
+    z-index: 2;
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+}
+
+.cta-section .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0) translateX(-50%);
+    }
+    40% {
+        transform: translateY(-20px) translateX(-50%);
+    }
+    60% {
+        transform: translateY(-10px) translateX(-50%);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.3rem;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .cta-buttons .btn {
+        display: block;
+        width: 80%;
+        margin: 10px auto;
+    }
+    
+    .stat-item {
+        margin-bottom: 30px;
+    }
+    
+    .testimonial-content p {
+        font-size: 1rem;
+    }
+}
 </style>
+
+<script>
+// Smooth scrolling for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+            behavior: 'smooth'
+        });
+    });
+});
+
+// Animate stats counting
+function animateStats() {
+    const statNumbers = document.querySelectorAll('.stat-number');
+    
+    statNumbers.forEach(stat => {
+        const target = parseInt(stat.getAttribute('data-count'));
+        const duration = 2000; // 2 seconds
+        const start = 0;
+        const increment = target / (duration / 16); // 60fps
+        
+        let current = start;
+        const timer = setInterval(() => {
+            current += increment;
+            stat.textContent = Math.floor(current);
+            
+            if (current >= target) {
+                stat.textContent = target;
+                clearInterval(timer);
+            }
+        }, 16);
+    });
+}
+
+// Initialize stats animation when stats section is in view
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            animateStats();
+            observer.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.5 });
+
+const statsSection = document.querySelector('.stats-section');
+if (statsSection) {
+    observer.observe(statsSection);
+}
+
+// Testimonial slider functionality
+let currentTestimonial = 0;
+const testimonials = document.querySelectorAll('.testimonial-item');
+const testimonialCount = testimonials.length;
+
+function showTestimonial(index) {
+    testimonials.forEach((testimonial, i) => {
+        testimonial.style.display = i === index ? 'block' : 'none';
+    });
+}
+
+function nextTestimonial() {
+    currentTestimonial = (currentTestimonial + 1) % testimonialCount;
+    showTestimonial(currentTestimonial);
+}
+
+// Initialize testimonial slider
+if (testimonials.length > 0) {
+    showTestimonial(0);
+    setInterval(nextTestimonial, 5000); // Rotate every 5 seconds
+}
+</script>
 {% endblock %}

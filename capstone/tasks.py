@@ -3,9 +3,12 @@ from django.core.mail import send_mail
 from .models import Notification, User
 from celery.schedules import crontab
 from celery import Celery
+from googletrans import Translator
 from django.conf import settings
+from django.core.cache import cache
 
-app = Celery('your_project_name')
+
+app = Celery('Hustle')
 
 app.conf.beat_schedule = {
     'send-unseen-notifications-email-every-hour': {
@@ -28,3 +31,13 @@ def send_unseen_notifications_email():
             [email],
             fail_silently=False,
         )
+
+@shared_task
+def background_translate_and_cache(text, lang):
+    key = f"trans:{text}:{lang}"
+    try:
+        translator = Translator()
+        translated = translator.translate(text, dest=lang).text
+        cache.set(key, translated, 60 * 60 * 24)
+    except Exception as e:
+        print(f"Translation error: {e}")
